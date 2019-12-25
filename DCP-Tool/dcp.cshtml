@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>DCP-Viewer</title>
+    <style lang="css">
+        .main {
+            display: grid;
+            grid-auto-columns: 1fr;
+            grid-template-rows: auto auto;
+            grid-template-columns: 28px 240px 20px 105px 102px 32px 20px 100px;
+            padding-top: 85px;
+            padding-left: 45px;
+        }
+
+        .bg {
+            background-image: url('dcp.png');
+            background-size: cover;
+            width: 765px;
+            height: 1080px;
+        }
+
+        .column {
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .header {
+            padding-top: 82px;
+            padding-left: 45px;
+        }
+
+        .headerline div {
+            display: inline-block;
+        }
+
+        .headerline {
+            margin-bottom: 9px;
+        }
+
+        #date {
+            margin-left: 470px;
+        }
+
+        #numero {
+            margin-left: 20px;
+        }
+
+        #titoloProg {
+            margin-left: 125px;
+        }
+
+        #durata {
+            margin-left: 380px;
+        }
+
+        #titoloSer {
+            margin-left: 100px;
+        }
+
+        #puntata {
+            margin-left: 370px;
+        }
+
+        #titoloOrig {
+            margin-left: 100px;
+        }
+
+        #contratto {
+            margin-left: 80px;
+        }
+
+        #dataContratto {
+            margin-left: 60px;
+        }
+
+        #line5 {
+            margin-top: 18px;
+        }
+
+        #uorg {
+            margin-left: 50px;
+        }
+
+        #df {
+            margin-left: 55px;
+        }
+
+        #matr {
+            margin-left: 55px;
+        }
+
+        #regista {
+            margin-left: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg">
+        <div class="header">
+            <div class="headerline" id="line0">
+                <div id="date">@DateTime.Now</div>
+                <div id="numero">1</div>
+            </div>
+            <div class="headerline" id="line1">
+                <div id="titoloProg">Zipp TV</div>
+                <div id="durata">25'08"</div>
+            </div>
+            <div class="headerline" id="line2">
+                <div id="titoloSer">Das Kinderfernsehen</div>
+                <div id="puntata">36/19</div>
+            </div>
+            <div class="headerline" id="line3">
+                <div id="titoloOrig">Zipp TV</div>
+            </div>
+            <div class="headerline" id="line4">
+                <div id="contratto">1181801504/00</div>
+                <div id="dataContratto">20.12.2018</div>
+            </div>
+            <div class="headerline" id="line5">
+                <div id="uorg">9016</div>
+                <div id="df">316.75.02</div>
+                <div id="matr">486.840</div>
+            </div>
+            <div class="headerline" id="line6">
+                <div id="regista">Brigitte Margesin</div>
+            </div>
+        </div>
+        <div class="main">
+            <div class="column">01</div>
+            <div class="column">Sportkids "Taekwondo"</div>
+            <div class="column">A</div>
+            <div class="column">Eberhard Forcher</div>
+            <div class="column">Eberhard Forcher</div>
+            <div class="column">1'20"</div>
+            <div class="column">C</div>
+            <div class="column">Sonoton SCDV 91</div>
+
+            <div class="column">01</div>
+            <div class="column">Sportkids "Taekwondo"</div>
+            <div class="column">A</div>
+            <div class="column">Eberhard Forcher</div>
+            <div class="column">Eberhard Forcher</div>
+            <div class="column">1'20"</div>
+            <div class="column">C</div>
+            <div class="column">Sonoton SCDV 91</div>
+        </div>
+
+    </div>
+</body>
+</html>
