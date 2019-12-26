@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Globalization;
 using System.Linq;
 using HtmlAgilityPack;
+using System.Net;
 
 namespace DCP_Tool
 {
@@ -19,6 +20,8 @@ namespace DCP_Tool
         {
             User = user;
             Password = password;
+
+            WebRequest.DefaultWebProxy.Credentials = CredentialCache.DefaultNetworkCredentials;
         }
 
         public async Task Login(string user, string pass) 
@@ -81,11 +84,13 @@ namespace DCP_Tool
 
             File.WriteAllText("uploadRes.html", uploadString);
 
+            //var codiceDCP = 1;
             if (dcp.Lines.Count > 4)
             {
                 viewState = GetInputValue(uploadString, "__VIEWSTATE");
                 viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
-                var appendUrl = uploadRes.RequestMessage.RequestUri + "&ordinamento=&pagina=0";
+                
+                var appendUrl = uploadRes.RequestMessage.RequestUri + $"&ordinamento=&pagina=0";
                 int numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
 
                 for (int i=1; i< numForms; i++)

@@ -6,21 +6,32 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>DCP-Viewer</title>
     <style lang="css">
-        .main {
+
+
+
+
+.main {
             display: grid;
             grid-auto-columns: 1fr;
             grid-template-rows: auto auto;
-            grid-template-columns: 28px 240px 20px 105px 102px 32px 20px 100px;
+            grid-template-columns: 28px 231px 20px 100px 97px 32px 17px 100px;
             padding-top: 85px;
-            padding-left: 45px;
+            padding-left: 30px;
         }
 
-        .bg {
-            background-image: url('dcp.png');
-            background-size: cover;
-            width: 765px;
-            height: 1080px;
-        }
+		.bg {
+/* 			background-image: url('dcp.png');
+			background-size: cover; */
+			position: relative;
+			width: 700px;
+			height: 1000px;
+		}
+		.bg img {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
+		}
 
         .column {
             font-size: 11px;
@@ -29,8 +40,8 @@
         }
 
         .header {
-            padding-top: 82px;
-            padding-left: 45px;
+            padding-top: 42px;
+            padding-left: 25px;
         }
 
         .headerline div {
@@ -42,39 +53,43 @@
         }
 
         #date {
-            margin-left: 470px;
+            margin-left: 460px;
         }
 
         #numero {
-            margin-left: 20px;
+            margin-left: 15px;
         }
 
         #titoloProg {
             margin-left: 125px;
+            width: 380px;
         }
 
         #durata {
-            margin-left: 380px;
+            margin-left: 50px;
         }
 
         #titoloSer {
             margin-left: 100px;
+            width: 440px;
         }
 
         #puntata {
-            margin-left: 370px;
+            margin-left: 45px;
         }
 
         #titoloOrig {
             margin-left: 100px;
+            width: 500px;
         }
 
         #contratto {
             margin-left: 80px;
+            width: 120px;
         }
 
         #dataContratto {
-            margin-left: 60px;
+            margin-left: 40px;
         }
 
         #line5 {
@@ -83,70 +98,73 @@
 
         #uorg {
             margin-left: 50px;
+            width: 50px;
         }
 
         #df {
-            margin-left: 55px;
+            margin-left: 35px;
+            width: 80px;
         }
 
         #matr {
-            margin-left: 55px;
+            margin-left: 40px;
+            width: 70px;
         }
 
         #regista {
             margin-left: 300px;
         }
+    
     </style>
 </head>
 <body>
     <div class="bg">
+        <img src="dcp.png" alt="">
         <div class="header">
             <div class="headerline" id="line0">
-                <div id="date">@DateTime.Now</div>
+                <div id="date">@Model.DataTrasmissione.ToShortDateString()</div>
                 <div id="numero">1</div>
             </div>
             <div class="headerline" id="line1">
-                <div id="titoloProg">Zipp TV</div>
-                <div id="durata">25'08"</div>
+                <div id="titoloProg">@Model.TitoloProgramma</div>
+                <div id="durata">@Model.Durata</div>
             </div>
             <div class="headerline" id="line2">
-                <div id="titoloSer">Das Kinderfernsehen</div>
-                <div id="puntata">36/19</div>
+                <div id="titoloSer">@Model.TitoloSerie</div>
+                <div id="puntata">@Model.Puntata</div>
             </div>
             <div class="headerline" id="line3">
-                <div id="titoloOrig">Zipp TV</div>
+                <div id="titoloOrig">@Model.TitoloOriginale</div>
             </div>
             <div class="headerline" id="line4">
-                <div id="contratto">1181801504/00</div>
-                <div id="dataContratto">20.12.2018</div>
+                <div id="contratto">@Model.NumeroContratto</div>
+                <div id="dataContratto">@Model.DataContratto.ToShortDateString()</div>
             </div>
             <div class="headerline" id="line5">
-                <div id="uorg">9016</div>
+                <div id="uorg">@Model.Uorg</div>
                 <div id="df">316.75.02</div>
-                <div id="matr">486.840</div>
+                <div id="matr">@Model.Matricola</div>
             </div>
             <div class="headerline" id="line6">
-                <div id="regista">Brigitte Margesin</div>
+                <div id="regista">@Model.Regista</div>
             </div>
         </div>
         <div class="main">
-            <div class="column">01</div>
-            <div class="column">Sportkids "Taekwondo"</div>
-            <div class="column">A</div>
-            <div class="column">Eberhard Forcher</div>
-            <div class="column">Eberhard Forcher</div>
-            <div class="column">1'20"</div>
-            <div class="column">C</div>
-            <div class="column">Sonoton SCDV 91</div>
+            @{int i = 1;}
+            @foreach (var line in Model.Lines)
+            {
+                <div class="column">@i</div>
+                <div class="column">@line.Titolo</div>
+                <div class="column">A</div>
+                <div class="column">@line.AutoriString</div>
+                <div class="column">@line.Esecutori</div>
+                <div class="column">@line.Durata.ToString(@"mm\:ss")</div>
+                <div class="column">C</div>
+                <div class="column">@line.SiglaNum</div>
 
-            <div class="column">01</div>
-            <div class="column">Sportkids "Taekwondo"</div>
-            <div class="column">A</div>
-            <div class="column">Eberhard Forcher</div>
-            <div class="column">Eberhard Forcher</div>
-            <div class="column">1'20"</div>
-            <div class="column">C</div>
-            <div class="column">Sonoton SCDV 91</div>
+                i++;
+            }
+
         </div>
 
     </div>

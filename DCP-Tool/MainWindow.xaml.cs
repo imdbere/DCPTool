@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 
 using RazorEngine;
 using RazorEngine.Templating; // For extension methods.
+using System.Diagnostics;
 
 namespace DCP_Tool
 {
@@ -32,7 +33,15 @@ namespace DCP_Tool
         public MainWindow()
         {
             InitializeComponent();
+            
             dataGridDCP.ItemsSource = DCPs;
+            dataGridDCP.AutoGeneratingColumn += (sender, e) =>
+            {
+                if (e.PropertyType == typeof(DateTime))
+                {
+                    ((DataGridTextColumn)e.Column).Binding = new Binding(e.PropertyName) { StringFormat = "d" };
+                }
+            };
         }
 
         async Task<DCPLine> ReadDCPLineFromFile(string filename)
@@ -155,12 +164,25 @@ namespace DCP_Tool
             }
         }
 
-        private async void menuItemUpload_Click(object sender, RoutedEventArgs e)
+        DCP ProcessDCP()
         {
             dataGridLine.CommitEdit();
             dataGridDCP.CommitEdit();
 
             if (dataGridDCP.SelectedItem is DCP dcp)
+            {
+                return dcp;
+            }
+            else
+            {
+                MessageBox.Show("Please select a DCP first");
+                return null;
+            }
+        }
+
+        private async void menuItemUpload_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessDCP() is DCP dcp)
             {
                 progressBar.IsIndeterminate = true;
                 var dcpInterface = new DCPInterface(Settings.Default.Username, Settings.Default.Password);
@@ -178,50 +200,20 @@ namespace DCP_Tool
                 progressBar.IsIndeterminate = false;
                 
             }
-            else
-            {
-                MessageBox.Show("Please select a DCP first");
-            }
-        }
-
-        private async void Button_Click(object sender, RoutedEventArgs e)
-        {
-            var dcp = new DCP()
-            {
-                DataTrasmissione = DateTime.Now,
-                TitoloOriginale = "TestUpload",
-                TitoloItaliano = "TestUploadI",
-                Durata = new TimeSpan(0, 30, 0),
-                OraInizio = new TimeSpan(18, 0, 0),
-                ReteTrasmissione = ReteTrasmissione.TV4,
-                Sede = Sede.Bolzano_DE,
-
-                Uorg = 9016,
-                Matricola = 486840,
-                Puntata = 36
-            };
-
-            dcp.Lines.Add(new DCPLine()
-            {
-                AutoriString = "Aaron Penn, Georg Penn",
-                Durata = new TimeSpan(0, 2, 0),
-                Titolo = "TestMusic",
-                Esecutori = "Aaron Penn Productions",
-                Gensiae = GenereSIAE.ML,
-                Marca = "Sonoton",
-                Ruolo = Ruolo.PP,
-                SiglaNum = "SCD1234",
-                TipoGenerazione = TipoGenerazione.OperaSuDisco
-            });
-
-            var dcpInterface = new DCPInterface(Settings.Default.Username, Settings.Default.Password);
-            await dcpInterface.LoginAndUpload(dcp);
         }
 
         private void menuItemExport_Click(object sender, RoutedEventArgs e)
         {
-            var template = File.ReadAllText("dcp.cshtml");
-            var res = Engine.Razor.RunCompile(template, "key", null, new { Hallo = "Welt" });
+            if (ProcessDCP() is DCP dcp)
+            {
+                var template = File.ReadAllText("dcp.cshtml");
+                var res = Engine.Razor.RunCompile(template, "key", typeof(DCP), dcp);
+
+                var fileName = "dcp_" + dcp.DataTrasmissione.ToString("dd-MM-yyyy") + ".html";
+                File.WriteAllText(fileName, res);
+                Process.Start(fileName);
+            }
+
         }
     }
 }

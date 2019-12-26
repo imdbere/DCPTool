@@ -6,83 +6,119 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>DCP-Viewer</title>
 	<style lang="css">
-		.main {
-			display: grid;
-			grid-auto-columns: 1fr;
-			grid-template-rows: auto auto;
-			grid-template-columns: 28px 240px 20px 105px 102px 32px 20px 100px;
-			padding-top: 85px;
-			padding-left: 45px;
-		}
+
+
+.main {
+            display: grid;
+            grid-auto-columns: 1fr;
+            grid-template-rows: auto auto;
+            grid-template-columns: 28px 240px 20px 105px 102px 32px 20px 100px;
+            padding-top: 85px;
+            padding-left: 35px;
+        }
+
 		.bg {
-			background-image: url('dcp.png');
-			background-size: cover;
-			width: 765px;
-			height: 1080px;
+/* 			background-image: url('dcp.png');
+			background-size: cover; */
+			position: relative;
+			width: 735px;
+			height: 1000px;
 		}
-		.column {
-			font-size: 11px;
-			font-family: Arial, sans-serif;
-			margin-bottom: 10px;
-		}
-		.header {
-			padding-top: 82px;
-			padding-left: 45px;
-		}
-		.headerline div {
-			display: inline-block;
-		}
-		.headerline {
-			margin-bottom: 9px;
+		.bg img {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			z-index: -1;
 		}
 
-		#date {
-			margin-left: 470px;
-		}
-		#numero {
-			margin-left: 20px;
-		}
-		#titoloProg {
-			margin-left: 125px;
-		}
-		#durata {
-			margin-left: 380px;
-		}
-		#titoloSer {
-			margin-left: 100px;
-		}
-		#puntata {
-			margin-left: 370px;
-		}
-		#titoloOrig {
-			margin-left: 100px;
-		}
-		#contratto {
-			margin-left: 80px;
-		}
-		#dataContratto {
-			margin-left: 60px;
-		}
+        .column {
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+            margin-bottom: 10px;
+        }
 
-		#line5 {
-			margin-top: 18px;
-		}
-		#uorg {
-			margin-left: 50px;
-		}
-		#df {
-			margin-left: 55px;
-		}
-		#matr {
-			margin-left: 55px;
-		}
-		#regista {
-			margin-left: 300px;
-		}
+        .header {
+            padding-top: 42px;
+            padding-left: 35px;
+        }
+
+        .headerline div {
+            display: inline-block;
+        }
+
+        .headerline {
+            margin-bottom: 9px;
+        }
+
+        #date {
+            margin-left: 470px;
+        }
+
+        #numero {
+            margin-left: 20px;
+        }
+
+        #titoloProg {
+            margin-left: 125px;
+            width: 380px;
+        }
+
+        #durata {
+            margin-left: 50px;
+        }
+
+        #titoloSer {
+            margin-left: 100px;
+            width: 440px;
+        }
+
+        #puntata {
+            margin-left: 70px;
+        }
+
+        #titoloOrig {
+            margin-left: 100px;
+            width: 500px;
+        }
+
+        #contratto {
+            margin-left: 80px;
+            width: 120px;
+        }
+
+        #dataContratto {
+            margin-left: 40px;
+        }
+
+        #line5 {
+            margin-top: 18px;
+        }
+
+        #uorg {
+            margin-left: 50px;
+            width: 50px;
+        }
+
+        #df {
+            margin-left: 35px;
+            width: 80px;
+        }
+
+        #matr {
+            margin-left: 40px;
+            width: 70px;
+        }
+
+        #regista {
+            margin-left: 300px;
+        }
+    
+    
 	</style>
 </head>
 <body>
 	<div class="bg">
+		<img src="dcp.png" alt="">
 		<div class="header">
 			<div class="headerline" id="line0">
 				<div id="date">09.12.2019</div>

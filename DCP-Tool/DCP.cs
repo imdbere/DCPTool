@@ -9,7 +9,15 @@ namespace DCP_Tool
     {
         //public string CodiceDCP;
         public DateTime DataTrasmissione { get; set; } = DateTime.Now;
-        public string TitoloItaliano { get; set; }
+
+        public string TitoloProgramma { get; set; }
+        public string TitoloSerie { get; set; }
+        private string _TitoloItaliano = null;
+        public string TitoloItaliano
+        {
+            get => _TitoloItaliano ?? TitoloProgramma + " - " + TitoloSerie;
+            set => _TitoloItaliano = value;
+        }
         public string TitoloOriginale { get; set; }
         public ReteTrasmissione ReteTrasmissione { get; set; }
         public Sede Sede { get; set; }
@@ -21,7 +29,12 @@ namespace DCP_Tool
         public int Serie { get; set; }
         public int Puntata { get; set; }
 
-        public DateTime? _DataRegistrazione = null;
+        public string NumeroContratto { get; set; }
+        public DateTime DataContratto { get; set; }
+
+        public string Regista { get; set; }
+
+        private DateTime? _DataRegistrazione = null;
         public DateTime DataRegistrazione
         {
             get => _DataRegistrazione ?? DataTrasmissione - TimeSpan.FromDays(5);
