@@ -7,6 +7,7 @@ namespace DCP_Tool
 {
     public class DCP
     {
+        public string Societa { get; set; }
         //public string CodiceDCP;
         public DateTime DataTrasmissione { get; set; } = DateTime.Now;
 
@@ -21,7 +22,7 @@ namespace DCP_Tool
         public string TitoloOriginale { get; set; }
         public ReteTrasmissione ReteTrasmissione { get; set; }
         public Sede Sede { get; set; }
-        public string Struttura { get; set; }
+        //public string Struttura { get; set; }
         public string Sottotitolo { get; set; }
 
         public int Uorg { get; set; }
@@ -31,6 +32,7 @@ namespace DCP_Tool
 
         public string NumeroContratto { get; set; }
         public DateTime DataContratto { get; set; }
+        public string DF { get; set; }
 
         public string Regista { get; set; }
 
@@ -96,7 +98,7 @@ namespace DCP_Tool
                 { "APControl_UMSP:MatricolaTxt", Matricola != 0 ? Matricola.ToString() : "" },
                 { "APControl_UMSP:SerieTxt", Serie != 0 ? Serie.ToString() : "" },
                 { "APControl_UMSP:PuntataTxt", Puntata != 0 ? Puntata.ToString() : "" },
-                { "Textbox_Committente", Struttura },
+                { "Textbox_Committente", "BZ/" + ((int)Sede).ToString() },
                 { "CheckControl_Struttura:TextBox1", ReteTrasmissione.ToString() },
                 { "CheckControl_Struttura:TextBox_NomeTabella", "TabStrutture" },
                 { "CheckControl_Struttura:TextBox_Errore", "" },
@@ -145,10 +147,10 @@ namespace DCP_Tool
             // Fill with empty lines until there are at least 4 lines
             if (i - offset < count)
             {
+                var emptyLine = new DCPLine();
                 for (int j = i; j < count + offset; j++)
                 {
-                    var emptyLine = new DCPLine();
-                    var fd = emptyLine.ToFormData(j);
+                    var fd = emptyLine.ToFormData(j, true);
                     foreach (var kv in fd)
                     {
                         dict.Add(kv.Key, kv.Value);
@@ -157,6 +159,17 @@ namespace DCP_Tool
             }
 
             return dict;
+        }
+
+        public string GetPaperDCPValue(object obj)
+        {
+            var attributes = obj.GetType().GetMember(obj.ToString())[0].GetCustomAttributes(typeof(PaperDCPValueAttribute), false);
+            if (attributes.Length > 0)
+            {
+                var att = (PaperDCPValueAttribute)attributes[0];
+                return att.Value;
+            }
+            return obj.ToString();
         }
 
     }
@@ -170,8 +183,11 @@ namespace DCP_Tool
     }
     public enum Sede
     {
+        [PaperDCPValue("PRGOG. L. TED.   BZ/16")]
         Bolzano_DE = 16,
+        [PaperDCPValue("PRGOG. L. IT.   BZ/14")]
         Bolzano_IT = 14,
+        [PaperDCPValue("PRGOG. L. LAD.   BZ/15")]
         Bolzano_LAD = 15
     }
 
@@ -183,18 +199,19 @@ namespace DCP_Tool
         public string AutoriString
         {
             get => Autori
-                .Select(a => a.ToString())
-                .Aggregate((s1, s2) => s1 + ", " + s2);
+                ?.Select(a => a.ToString())
+                ?.Aggregate((s1, s2) => s1 + ", " + s2)
+                ?? "";
 
             set => Autori = value
-                .Split(',')
-                .Select(a => new Autore(a.Trim()))
-                .ToArray();
+                ?.Split(',')
+                ?.Select(a => new Autore(a.Trim()))
+                ?.ToArray();
         }
 
         public TimeSpan Durata { get; set; }
 
-        public GenereSIAE? Gensiae { get; set; }
+        public GenereSIAE Gensiae { get; set; }
         public Ruolo Ruolo { get; set; }
 
         // All caps
@@ -203,7 +220,7 @@ namespace DCP_Tool
         public string SiglaNum { get; set; } = "";
         public string Esecutori { get; set; } = "";
 
-        public TipoGenerazione? TipoGenerazione { get; set; }
+        public TipoGenerazione TipoGenerazione { get; set; }
 
         private string NomeString
         {
@@ -213,12 +230,12 @@ namespace DCP_Tool
                     .Select(a => $"{a.Cognome.Replace(' ', '+')}%{a.Nome.Replace(' ', '+')}#")
                     .Aggregate((s1, s2) => s1 + s2);
         }
-        public Dictionary<string, string> ToFormData(int nr)
+        public Dictionary<string, string> ToFormData(int nr, bool emptyLine = false)
         {
             var index = nr + 2;
             return new Dictionary<string, string>()
             {
-                {$"DataGrid1:_ctl{index}:CheckControl_GenereSIAE:TextBox1", Gensiae?.ToString() ?? ""},
+                {$"DataGrid1:_ctl{index}:CheckControl_GenereSIAE:TextBox1", emptyLine ? "" : Gensiae.ToString()},
                 {$"DataGrid1:_ctl{index}:CheckControl_GenereSIAE:TextBox_NomeTabella",  "TabGenereSIAE"},
                 {$"DataGrid1:_ctl{index}:CheckControl_GenereSIAE:TextBox_Errore", ""},
                 {$"DataGrid1:_ctl{index}:CheckControl_GenereSIAE:TextBox_Dimensioni",  "60#60"},
@@ -235,7 +252,7 @@ namespace DCP_Tool
                 {$"DataGrid1:_ctl{index}:TimeControl_Durata:Hidden_Info",  "False#True"},
                 {$"DataGrid1:_ctl{index}:TimeControl_Durata:hidden_TvRf", ""},
                 {$"DataGrid1:_ctl{index}:TimeControl_Durata:hdnCrono",  "Start"},
-                {$"DataGrid1:_ctl{index}:CheckControl_TipoGenerazione:TextBox1", TipoGenerazione != null ? ((int)TipoGenerazione).ToString() : ""},
+                {$"DataGrid1:_ctl{index}:CheckControl_TipoGenerazione:TextBox1", emptyLine ? "" : ((int)TipoGenerazione).ToString()},
                 {$"DataGrid1:_ctl{index}:CheckControl_TipoGenerazione:TextBox_NomeTabella",  "TabTipoGenerazione"},
                 {$"DataGrid1:_ctl{index}:CheckControl_TipoGenerazione:TextBox_Errore", ""},
                 {$"DataGrid1:_ctl{index}:CheckControl_TipoGenerazione:TextBox_Dimensioni",  "82#140"},
@@ -256,6 +273,15 @@ namespace DCP_Tool
                 {$"DataGrid1:_ctl{index}:CheckControl_Proprieta:TextBox_Dimensioni",  "82#140"},
                 {$"DataGrid1:_ctl{index}:TextBox_DataProduz", ""},
             };
+        }
+    }
+
+    public class PaperDCPValueAttribute : Attribute
+    {
+        public string Value;
+        public PaperDCPValueAttribute(string value)
+        {
+            Value = value;
         }
     }
 
@@ -300,7 +326,11 @@ namespace DCP_Tool
 
     public enum TipoGenerazione
     {
-        OperaSuDisco = 9
+        // C
+        [PaperDCPValue("C")]
+        OperaSuDisco = 9,
+        [PaperDCPValue("")]
+        DalVivo = 1
     }
 
     public static class Extensions

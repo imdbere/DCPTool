@@ -19,13 +19,12 @@ namespace DCP_Tool
 
         public async Task<SonofindTitleInfo> QueryTitle(string titleCode)
         {
-            // SAS025302
             var url = $"https://www.sonofind.com/search/html/ajax/axExtData.php?cdkurz={titleCode}&ext=1&ac=track&sprache=it&country=IX";
             var res = await Client.GetAsync(url);
             var resString = await res.Content.ReadAsStringAsync();
             var titleInfo = JsonConvert.DeserializeObject<SonofindCDInfo>(resString);
 
-            return titleInfo.tracks[0];
+            return titleInfo.tracks?[0];
         }
     }
 

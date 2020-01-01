@@ -29,8 +29,9 @@ namespace DCP_Tool
     public partial class MainWindow : Window
     {
         List<DCP> DCPs = new List<DCP>();
+        DCPInterface DCPInterface;
 
-        public MainWindow()
+        public MainWindow(string file)
         {
             InitializeComponent();
             
@@ -42,6 +43,26 @@ namespace DCP_Tool
                     ((DataGridTextColumn)e.Column).Binding = new Binding(e.PropertyName) { StringFormat = "d" };
                 }
             };
+
+            dataGridLine.AutoGeneratingColumn += (sender, e) =>
+            {
+                if (e.PropertyType == typeof(TimeSpan))
+                {
+                    //((DataGridTextColumn)e.Column).Binding = new Binding(e.PropertyName) { StringFormat = "mm\\:ss" };
+                }
+            };
+
+            DCPInterface = new DCPInterface(Settings.Default.Username, Settings.Default.Password);
+
+            if (file != null)
+            {
+                LoadDCPFile(File.OpenRead(file));
+            }
+
+            if (string.IsNullOrEmpty(Settings.Default.Username) || string.IsNullOrEmpty(Settings.Default.Password))
+            {
+                ShowLogin();
+            }
         }
 
         async Task<DCPLine> ReadDCPLineFromFile(string filename)
@@ -58,11 +79,11 @@ namespace DCP_Tool
             var line = new DCPLine()
             {
                 AutoriString = tags.FirstComposer,
-                Marca = "Sonoton",
-                Esecutori = sonofindRes.artists, //tags.Performers.Aggregate((s1, s2) => s1 + ", " + s2),
-                Titolo = tags.Title.Split(new string[] { "---" }, StringSplitOptions.None)[0].Trim(),
+                Marca = sonofindRes != null ? "Sonoton" : "",
+                Esecutori = sonofindRes?.artists ?? tags.Performers.Aggregate((s1, s2) => s1 + ", " + s2),
+                Titolo = sonofindRes?.title ?? tags.Title,
                 Durata = tagFile.Properties.Duration,
-                SiglaNum = tags.Album.Split('-')[0],
+                SiglaNum = sonofindRes != null ? tags.Album.Split('-')[0] : tags.Album,
                 TipoGenerazione = TipoGenerazione.OperaSuDisco,
                 Ruolo = Ruolo.SF,
                 Gensiae = GenereSIAE.ML
@@ -73,33 +94,17 @@ namespace DCP_Tool
 
         async void OpenFiles(string[] files)
         {
-            var dcpLists = new List<DCPLine>();
-
-            foreach(var file in files)
-            {
-                dcpLists.Add(await ReadDCPLineFromFile(file));
-            }
+            progressBar.IsIndeterminate = true;
+            var dcpList = await Task.WhenAll(files.Select(f => ReadDCPLineFromFile(f)));
 
             if (dataGridDCP.SelectedItem is DCP dcp)
             {
-                dcp.Lines.AddRange(dcpLists);
+                dcp.Lines.AddRange(dcpList);
                 dataGridLine.Items.Refresh();
             }
 
-        }
-
-        private void Image_Drop(object sender, DragEventArgs e)
-        {
-
-        }
-
-        private void Rectangle_Drop(object sender, DragEventArgs e)
-        {
-
-        }
-
-        private void dataGridDCP_CurrentCellChanged(object sender, EventArgs e)
-        {
+            progressBar.Value = 100;
+            progressBar.IsIndeterminate = false;
 
         }
 
@@ -147,20 +152,29 @@ namespace DCP_Tool
             if (dialog.ShowDialog() ?? false)
             {
                 var fileStream = dialog.OpenFile();
-
-                var serializer = new DataContractJsonSerializer(typeof(DCP));
-                var loadedDCPs = serializer.ReadObject(fileStream) as DCP;
-                //DCPs.Clear();
-                DCPs.Add(loadedDCPs);
-                dataGridDCP.Items.Refresh();
+                LoadDCPFile(fileStream);
             }
+        }
+
+        void LoadDCPFile(Stream fileStream)
+        {
+            var serializer = new DataContractJsonSerializer(typeof(DCP));
+            var loadedDCPs = serializer.ReadObject(fileStream) as DCP;
+            //DCPs.Clear();
+            DCPs.Add(loadedDCPs);
+            dataGridDCP.Items.Refresh();
         }
 
         private void dataGridDCP_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (dataGridDCP.SelectedItem is DCP dcp)
             {
+                buttonPlus.IsEnabled = true;
                 dataGridLine.ItemsSource = dcp.Lines;
+            }
+            else
+            {
+                buttonPlus.IsEnabled = false;
             }
         }
 
@@ -185,11 +199,14 @@ namespace DCP_Tool
             if (ProcessDCP() is DCP dcp)
             {
                 progressBar.IsIndeterminate = true;
-                var dcpInterface = new DCPInterface(Settings.Default.Username, Settings.Default.Password);
+                
                 try
                 {
-                    await dcpInterface.LoginAndUpload(dcp);
+                    var resUrl = await DCPInterface.UploadDCP(dcp);
                     progressBar.Value = 100;
+
+                    var webWindow = new BrowserWindow(resUrl);
+                    webWindow.Show();
                 }
                 catch (Exception ex)
                 {
@@ -214,6 +231,55 @@ namespace DCP_Tool
                 Process.Start(fileName);
             }
 
+        }
+
+        private async void menuItemOpenBrowser_Click(object sender, RoutedEventArgs e)
+        {
+            await DCPInterface.Login();
+
+            var w = new BrowserWindow("https://www.intranetssl.rai.it/,DanaInfo=.addrCwjx2q8sK3nwOy-+RicercaDCP.aspx");
+            w.Show();
+        }
+
+        async Task ShowLogin()
+        {
+            var loginWindow = new LoginWindow();
+            if (loginWindow.ShowDialog() ?? false)
+            {
+                progressBar.IsIndeterminate = true;
+                var loginRes = await DCPInterface.Login(loginWindow.User, loginWindow.Password);
+                progressBar.IsIndeterminate = false;
+                progressBar.Value = 100;
+                if (loginRes)
+                {
+                    Settings.Default.Username = loginWindow.User;
+                    Settings.Default.Password = loginWindow.Password;
+                    Settings.Default.Save();
+
+                    MessageBox.Show("Successfully logged in");
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show("Could not log in (username or password wrong ?)");
+                }
+            }         
+        }
+
+        private async void menuItemSettings_Click(object sender, RoutedEventArgs e)
+        {
+            await ShowLogin();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            var fileDialog = new OpenFileDialog();
+            fileDialog.Multiselect = true;
+
+            if (fileDialog.ShowDialog() ?? false)
+            {
+                OpenFiles(fileDialog.FileNames);
+            }
         }
     }
 }

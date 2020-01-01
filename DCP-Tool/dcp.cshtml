@@ -7,23 +7,20 @@
     <title>DCP-Viewer</title>
     <style lang="css">
 
-
-
-
-.main {
+        .main {
             display: grid;
             grid-auto-columns: 1fr;
             grid-template-rows: auto auto;
-            grid-template-columns: 28px 231px 20px 100px 97px 32px 17px 100px;
+            grid-template-columns: 28px 240px 20px 105px 102px 32px 20px 100px;
             padding-top: 85px;
-            padding-left: 30px;
+            padding-left: 35px;
         }
 
 		.bg {
 /* 			background-image: url('dcp.png');
 			background-size: cover; */
 			position: relative;
-			width: 700px;
+			width: 735px;
 			height: 1000px;
 		}
 		.bg img {
@@ -41,7 +38,7 @@
 
         .header {
             padding-top: 42px;
-            padding-left: 25px;
+            padding-left: 35px;
         }
 
         .headerline div {
@@ -49,15 +46,26 @@
         }
 
         .headerline {
-            margin-bottom: 9px;
+            margin-bottom: 8px;
+        }
+    
+        #societa {
+            margin-left: 30px;
+            width: 200px;
+        }
+
+        #struttura {
+            margin-left: 30px;
+            width: 180px;
         }
 
         #date {
-            margin-left: 460px;
+            margin-left: 20px;
+            width: 80px;;
         }
 
         #numero {
-            margin-left: 15px;
+            margin-left: 20px;
         }
 
         #titoloProg {
@@ -75,7 +83,7 @@
         }
 
         #puntata {
-            margin-left: 45px;
+            margin-left: 70px;
         }
 
         #titoloOrig {
@@ -122,6 +130,8 @@
         <img src="dcp.png" alt="">
         <div class="header">
             <div class="headerline" id="line0">
+                <div id="societa">@Model.Societa</div>
+                <div id="struttura">@Model.GetPaperDCPValue(Model.Sede)</div>
                 <div id="date">@Model.DataTrasmissione.ToShortDateString()</div>
                 <div id="numero">1</div>
             </div>
@@ -142,7 +152,7 @@
             </div>
             <div class="headerline" id="line5">
                 <div id="uorg">@Model.Uorg</div>
-                <div id="df">316.75.02</div>
+                <div id="df">@Model.DF</div>
                 <div id="matr">@Model.Matricola</div>
             </div>
             <div class="headerline" id="line6">
@@ -151,7 +161,7 @@
         </div>
         <div class="main">
             @{int i = 1;}
-            @foreach (var line in Model.Lines)
+            @foreach (DCP_Tool.DCPLine line in Model.Lines)
             {
                 <div class="column">@i</div>
                 <div class="column">@line.Titolo</div>
@@ -159,7 +169,7 @@
                 <div class="column">@line.AutoriString</div>
                 <div class="column">@line.Esecutori</div>
                 <div class="column">@line.Durata.ToString(@"mm\:ss")</div>
-                <div class="column">C</div>
+                <div class="column">@Model.GetPaperDCPValue(line.TipoGenerazione)</div>
                 <div class="column">@line.SiglaNum</div>
 
                 i++;

@@ -22,5 +22,13 @@ namespace DCP_Tool
             new FrameworkPropertyMetadata(
                 XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
         }
+
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            var openFile = e.Args.Length > 0 ? e.Args[0] : null;
+
+            var mainWindow = new MainWindow(openFile);
+            mainWindow.Show();
+        }
     }
 }

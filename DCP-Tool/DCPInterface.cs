@@ -7,14 +7,20 @@ using System.Globalization;
 using System.Linq;
 using HtmlAgilityPack;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace DCP_Tool
 {
     public class DCPInterface
     {
-        HttpClient Client = new HttpClient();
+        HttpClient Client;
+        CookieContainer Cookies = new CookieContainer();
+
         String User;
         String Password;
+
+        bool LoggedIn = false;
 
         public DCPInterface(string user, string password)
         {
@@ -22,10 +28,18 @@ namespace DCP_Tool
             Password = password;
 
             WebRequest.DefaultWebProxy.Credentials = CredentialCache.DefaultNetworkCredentials;
+            Client = new HttpClient(new HttpClientHandler()
+            {
+                CookieContainer = Cookies,
+                UseCookies = true
+            });;
         }
 
-        public async Task Login(string user, string pass) 
+        public async Task<bool> Login(string user=null, string pass=null) 
         {
+            if (user == null) user = User;
+            if (pass == null) pass = Password;
+
             var par = new Dictionary<string, string>() {
                 {"tz_offset", "60"},
                 {"username", user},
@@ -38,6 +52,11 @@ namespace DCP_Tool
             var res = await Client.PostAsync(loginUrl, new FormUrlEncodedContent(par));
             var s = await res.Content.ReadAsStringAsync();
             //File.WriteAllText("loginRes.html", s);
+            if (s.Contains("Invalid username or password"))
+            {
+                Console.WriteLine("Wrong Username or Password");
+                return false;
+            }
 
             if (s.Contains("You have reached the maximum number of open user sessions"))
             {
@@ -56,10 +75,17 @@ namespace DCP_Tool
 
             }
             Console.WriteLine("Logged in");
+            SetInternetExplorerCookies();
+
+            LoggedIn = true;
+            return true;
         }
 
-        public async Task UploadDCP(DCP dcp)
+        public async Task<string> UploadDCP(DCP dcp)
         {
+            if (!LoggedIn)
+                await Login();
+
             var createDCPUrl = "https://www.intranetssl.rai.it/,DanaInfo=.addrCwjx2q8sK3nwOy-+DettaglioDCP.aspx";
             var res = await Client.GetAsync(createDCPUrl);
             var s = await res.Content.ReadAsStringAsync();
@@ -83,14 +109,13 @@ namespace DCP_Tool
             }
 
             File.WriteAllText("uploadRes.html", uploadString);
+            var appendUrl = uploadRes.RequestMessage.RequestUri + $"&ordinamento=&pagina=0";
 
-            //var codiceDCP = 1;
             if (dcp.Lines.Count > 4)
             {
                 viewState = GetInputValue(uploadString, "__VIEWSTATE");
                 viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
                 
-                var appendUrl = uploadRes.RequestMessage.RequestUri + $"&ordinamento=&pagina=0";
                 int numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
 
                 for (int i=1; i< numForms; i++)
@@ -101,7 +126,11 @@ namespace DCP_Tool
 
                     dict = dict.Concat(newLines).ToDictionary(e => e.Key, e=> e.Value);
 
-                    var appendRes = await Client.PostAsync(appendUrl, new FormUrlEncodedContent(dict));
+                    // This is necessary because FormUrlEncodedContent doesn't work for very long POST Data
+                    var encodedItems = dict.Select(i => WebUtility.UrlEncode(i.Key) + "=" + WebUtility.UrlEncode(i.Value));
+                    var encodedContent = new StringContent(String.Join("&", encodedItems), null, "application/x-www-form-urlencoded");
+
+                    var appendRes = await Client.PostAsync(appendUrl, /*new FormUrlEncodedContent(dict)*/encodedContent);
                     var appendString = await appendRes.Content.ReadAsStringAsync();
                     viewState = GetInputValue(appendString, "__VIEWSTATE");
                     viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
@@ -109,13 +138,7 @@ namespace DCP_Tool
                 }
             }
 
-        }
-
-        public async Task LoginAndUpload(DCP dcp)
-        {
-            await Login(User, Password);
-            await UploadDCP(dcp);
-            //await Logout(dcp);
+            return appendUrl;
         }
 
         public async Task Logout()
@@ -125,8 +148,30 @@ namespace DCP_Tool
             Console.WriteLine("Logged Out");
         }
 
+        public void SetInternetExplorerCookies()
+        {
+            var baseUrl = "https://www.intranetssl.rai.it/";
+            var cookies = Cookies.GetCookies(new Uri(baseUrl));
+
+            foreach (var cookie in cookies)
+            {
+                var split = cookie.ToString().Split('=');
+                var name = split[0];
+                var value = split[1];
+
+                InternetSetCookie(baseUrl, name, value);
+            }
+
+        }
+
+        [DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern bool InternetSetCookie(string lpszUrl, string lpszCookieName, string lpszCookieData);
+
         public async Task SearchDCP(string reteTransmissione, DateTime startDate, DateTime endDate) 
         {
+            if (!LoggedIn)
+                await Login();
+
             var url = "https://www.intranetssl.rai.it/,DanaInfo=.addrCwjx2q8sK3nwOy-+RicercaTuttiDCP.aspx";
             var res = await Client.GetAsync(url);
             var s = await res.Content.ReadAsStringAsync();
