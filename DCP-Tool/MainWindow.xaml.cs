@@ -1,25 +1,17 @@
 ﻿using DCP_Tool.Properties;
 using Microsoft.Win32;
+using RazorEngine;
+using RazorEngine.Templating; // For extension methods.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Json;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-
-using RazorEngine;
-using RazorEngine.Templating; // For extension methods.
-using System.Diagnostics;
 
 namespace DCP_Tool
 {
@@ -140,7 +132,7 @@ namespace DCP_Tool
                 {
                     MessageBox.Show("Please select a DCP first");
                 }
-               
+
             }
         }
 
@@ -201,7 +193,7 @@ namespace DCP_Tool
             if (ProcessDCP() is DCP dcp)
             {
                 progressBar.IsIndeterminate = true;
-                
+
                 try
                 {
                     var resUrl = await DCPInterface.UploadDCP(dcp);
@@ -217,7 +209,7 @@ namespace DCP_Tool
                 }
 
                 progressBar.IsIndeterminate = false;
-                
+
             }
         }
 
@@ -276,7 +268,7 @@ namespace DCP_Tool
                 progressBar.Value = 100;
 
                 MessageBox.Show("Successfully logged in");
-            }         
+            }
         }
 
         private async void menuItemSettings_Click(object sender, RoutedEventArgs e)

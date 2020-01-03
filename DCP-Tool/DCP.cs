@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 
 namespace DCP_Tool
@@ -135,10 +134,10 @@ namespace DCP_Tool
 
             var linesToTake = Lines.Skip(offset).Take(count);
             int i = offset;
-            foreach(var line in linesToTake)
+            foreach (var line in linesToTake)
             {
                 var lineDict = line.ToFormData(i++);
-                foreach(var kv in lineDict)
+                foreach (var kv in lineDict)
                 {
                     dict.Add(kv.Key, kv.Value);
                 }
@@ -225,7 +224,7 @@ namespace DCP_Tool
         private string NomeString
         {
             get => Autori == null ? "1#%#" :
-                $"{ Autori.Length }#" + 
+                $"{ Autori.Length }#" +
                 Autori
                     .Select(a => $"{a.Cognome.Replace(' ', '+')}%{a.Nome.Replace(' ', '+')}#")
                     .Aggregate((s1, s2) => s1 + s2);
@@ -290,7 +289,7 @@ namespace DCP_Tool
         public String Nome;
         public String Cognome;
 
-        public Autore (string nome, string cognome)
+        public Autore(string nome, string cognome)
         {
             Nome = nome;
             Cognome = cognome;
@@ -311,7 +310,7 @@ namespace DCP_Tool
             return Nome + " " + Cognome;
         }
     }
-    
+
     public enum GenereSIAE
     {
         ML

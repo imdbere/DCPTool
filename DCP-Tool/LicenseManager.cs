@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -26,7 +24,7 @@ namespace DCP_Tool
         {
             var client = new HttpClient();
             string challange = GetRandomBytes(64);
-            
+
             var url = $"{ServerUrl}/license?username={username}&challange={WebUtility.UrlEncode(challange)}";
 
             var res = await client.GetAsync(url);

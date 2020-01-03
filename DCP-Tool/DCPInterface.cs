@@ -1,14 +1,13 @@
-﻿using System;
-using System.Net.Http;
+﻿using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using System.Globalization;
+using System.IO;
 using System.Linq;
-using HtmlAgilityPack;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace DCP_Tool
 {
@@ -35,10 +34,10 @@ namespace DCP_Tool
             {
                 CookieContainer = Cookies,
                 UseCookies = true
-            });;
+            }); ;
         }
 
-        public async Task<bool> Login(string user=null, string pass=null) 
+        public async Task<bool> Login(string user = null, string pass = null)
         {
             if (user == null) user = User;
             if (pass == null) pass = Password;
@@ -118,16 +117,16 @@ namespace DCP_Tool
             {
                 viewState = GetInputValue(uploadString, "__VIEWSTATE");
                 viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
-                
+
                 int numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
 
-                for (int i=1; i < numForms; i++)
+                for (int i = 1; i < numForms; i++)
                 {
                     var newLines = dcp.GetLineFormData(i * 4, 4);
                     dict["__VIEWSTATE"] = viewState;
                     dict["__VIEWSTATEGENERATOR"] = viewStateGenerator;
 
-                    dict = dict.Concat(newLines).ToDictionary(e => e.Key, e=> e.Value);
+                    dict = dict.Concat(newLines).ToDictionary(e => e.Key, e => e.Value);
 
                     // This is necessary because FormUrlEncodedContent doesn't work for very long POST Data
                     var encodedItems = dict.Select(i => WebUtility.UrlEncode(i.Key) + "=" + WebUtility.UrlEncode(i.Value));
@@ -170,7 +169,7 @@ namespace DCP_Tool
         [DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool InternetSetCookie(string lpszUrl, string lpszCookieName, string lpszCookieData);
 
-        public async Task SearchDCP(string reteTransmissione, DateTime startDate, DateTime endDate) 
+        public async Task SearchDCP(string reteTransmissione, DateTime startDate, DateTime endDate)
         {
             if (!LoggedIn)
                 await Login();
