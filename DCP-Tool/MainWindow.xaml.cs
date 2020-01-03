@@ -34,7 +34,8 @@ namespace DCP_Tool
         public MainWindow(string file)
         {
             InitializeComponent();
-            
+
+            this.Title = "DCP Tool " + System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
             dataGridDCP.ItemsSource = DCPs;
             dataGridDCP.AutoGeneratingColumn += (sender, e) =>
             {
@@ -146,6 +147,7 @@ namespace DCP_Tool
         private void menuItemOpen_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new OpenFileDialog();
+            dialog.Filter = "DCPs | *.dcp";
             //dialog.Multiselect = true;
             //dialog.Filter = "*.mp3";
 
@@ -180,8 +182,8 @@ namespace DCP_Tool
 
         DCP ProcessDCP()
         {
-            dataGridLine.CommitEdit();
-            dataGridDCP.CommitEdit();
+            dataGridLine.CommitEdit(DataGridEditingUnit.Row, true);
+            dataGridDCP.CommitEdit(DataGridEditingUnit.Row, true);
 
             if (dataGridDCP.SelectedItem is DCP dcp)
             {
@@ -248,21 +250,32 @@ namespace DCP_Tool
             {
                 progressBar.IsIndeterminate = true;
                 var loginRes = await DCPInterface.Login(loginWindow.User, loginWindow.Password);
-                progressBar.IsIndeterminate = false;
-                progressBar.Value = 100;
-                if (loginRes)
-                {
-                    Settings.Default.Username = loginWindow.User;
-                    Settings.Default.Password = loginWindow.Password;
-                    Settings.Default.Save();
-
-                    MessageBox.Show("Successfully logged in");
-                    return;
-                }
-                else
+                if (!loginRes)
                 {
                     MessageBox.Show("Could not log in (username or password wrong ?)");
+                    progressBar.IsIndeterminate = false;
+                    progressBar.Value = 0;
+                    return;
                 }
+
+                var licenseManager = new LicenseManager("http://vserver.pennpro.it:5000", "Ultrageheimespasswortafdesniadraufkimmsch");
+                var authorized = await licenseManager.VerifyLicense(loginWindow.User);
+                if (!authorized)
+                {
+                    MessageBox.Show("No License for user " + loginWindow.User + " found");
+                    progressBar.IsIndeterminate = false;
+                    progressBar.Value = 0;
+                    return;
+                }
+
+                Settings.Default.Username = loginWindow.User;
+                Settings.Default.Password = loginWindow.Password;
+                Settings.Default.Save();
+
+                progressBar.IsIndeterminate = false;
+                progressBar.Value = 100;
+
+                MessageBox.Show("Successfully logged in");
             }         
         }
 
@@ -274,6 +287,7 @@ namespace DCP_Tool
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             var fileDialog = new OpenFileDialog();
+            fileDialog.Filter = "Music|*.mp3;*.wav";
             fileDialog.Multiselect = true;
 
             if (fileDialog.ShowDialog() ?? false)

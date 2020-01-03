@@ -20,6 +20,9 @@ namespace DCP_Tool
         String User;
         String Password;
 
+        // Not sure if this is a constant or account-dependent....
+        String DanaInfo = "addrCwjx2q8sK3nwOy";
+
         bool LoggedIn = false;
 
         public DCPInterface(string user, string password)
@@ -86,7 +89,7 @@ namespace DCP_Tool
             if (!LoggedIn)
                 await Login();
 
-            var createDCPUrl = "https://www.intranetssl.rai.it/,DanaInfo=.addrCwjx2q8sK3nwOy-+DettaglioDCP.aspx";
+            var createDCPUrl = $"https://www.intranetssl.rai.it/,DanaInfo=.{DanaInfo}-+DettaglioDCP.aspx";
             var res = await Client.GetAsync(createDCPUrl);
             var s = await res.Content.ReadAsStringAsync();
             var viewState = GetInputValue(s, "__VIEWSTATE");
@@ -118,7 +121,7 @@ namespace DCP_Tool
                 
                 int numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
 
-                for (int i=1; i< numForms; i++)
+                for (int i=1; i < numForms; i++)
                 {
                     var newLines = dcp.GetLineFormData(i * 4, 4);
                     dict["__VIEWSTATE"] = viewState;
@@ -172,7 +175,7 @@ namespace DCP_Tool
             if (!LoggedIn)
                 await Login();
 
-            var url = "https://www.intranetssl.rai.it/,DanaInfo=.addrCwjx2q8sK3nwOy-+RicercaTuttiDCP.aspx";
+            var url = $"https://www.intranetssl.rai.it/,DanaInfo=.{DanaInfo}-+RicercaTuttiDCP.aspx";
             var res = await Client.GetAsync(url);
             var s = await res.Content.ReadAsStringAsync();
             //File.WriteAllText("searchPage.html", s);

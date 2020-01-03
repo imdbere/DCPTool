@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DCP_Tool"
         mc:Ignorable="d"
-        Title="Login" Height="193.174" Width="288.033">
+        Title="Login" Icon="dcp_logo.png" Height="193.174" Width="288.033" ResizeMode="NoResize" ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
     <Grid>
         <TextBox x:Name="textboxUser" Height="22" Margin="0,49,10,0" TextWrapping="Wrap" VerticalAlignment="Top" HorizontalAlignment="Right" Width="137"/>
         <PasswordBox x:Name="textboxPassword" Margin="0,0,10,59" VerticalAlignment="Bottom" Height="22" HorizontalAlignment="Right" Width="137"/>
