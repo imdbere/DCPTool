@@ -134,7 +134,7 @@
                 <div id="societa">@Model.Societa</div>
                 <div id="struttura">@Model.GetPaperDCPValue(Model.Sede)</div>
                 <div id="date">@Model.DataTrasmissione.ToShortDateString()</div>
-                <div id="numero">1</div>
+                <div id="numero"></div>
             </div>
             <div class="headerline" id="line1">
                 <div id="titoloProg">@Model.TitoloProgramma</div>
@@ -171,7 +171,7 @@
                 <div class="column">@line.Esecutori</div>
                 <div class="column">@line.Durata.ToString(@"mm\:ss")</div>
                 <div class="column">@Model.GetPaperDCPValue(line.TipoGenerazione)</div>
-                <div class="column">@line.SiglaNum</div>
+                <div class="column">@line.Marca @line.SiglaNum</div>
 
                 i++;
             }

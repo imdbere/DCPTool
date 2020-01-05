@@ -6,9 +6,19 @@ namespace DCP_Tool
 {
     public class DCP
     {
-        public string Societa { get; set; }
         //public string CodiceDCP;
         public DateTime DataTrasmissione { get; set; } = DateTime.Now;
+        public int Puntata { get; set; }
+
+        private DateTime? _DataRegistrazione = null;
+        public DateTime DataRegistrazione
+        {
+            get => _DataRegistrazione ?? DataTrasmissione - TimeSpan.FromDays(5);
+            set => _DataRegistrazione = value;
+        }
+
+        public TimeSpan Durata { get; set; }
+        public Sede Sede { get; set; }
 
         public string TitoloProgramma { get; set; }
         public string TitoloSerie { get; set; }
@@ -19,15 +29,14 @@ namespace DCP_Tool
             set => _TitoloItaliano = value;
         }
         public string TitoloOriginale { get; set; }
-        public ReteTrasmissione ReteTrasmissione { get; set; }
-        public Sede Sede { get; set; }
-        //public string Struttura { get; set; }
         public string Sottotitolo { get; set; }
+
+        public ReteTrasmissione ReteTrasmissione { get; set; }
+        public string Societa { get; set; }
 
         public int Uorg { get; set; }
         public int Matricola { get; set; }
         public int Serie { get; set; }
-        public int Puntata { get; set; }
 
         public string NumeroContratto { get; set; }
         public DateTime DataContratto { get; set; }
@@ -35,16 +44,8 @@ namespace DCP_Tool
 
         public string Regista { get; set; }
 
-        private DateTime? _DataRegistrazione = null;
-        public DateTime DataRegistrazione
-        {
-            get => _DataRegistrazione ?? DataTrasmissione - TimeSpan.FromDays(5);
-            set => _DataRegistrazione = value;
-        }
-
         // Not exactly a timespan but there is no 'Time' class in C#
         public TimeSpan OraInizio { get; set; }
-        public TimeSpan Durata { get; set; }
 
         private TimeSpan OraFine
         {
@@ -182,11 +183,11 @@ namespace DCP_Tool
     }
     public enum Sede
     {
-        [PaperDCPValue("PRGOG. L. TED.   BZ/16")]
+        [PaperDCPValue("PROG. L. TED.   BZ/16")]
         Bolzano_DE = 16,
-        [PaperDCPValue("PRGOG. L. IT.   BZ/14")]
+        [PaperDCPValue("PROG. L. IT.   BZ/14")]
         Bolzano_IT = 14,
-        [PaperDCPValue("PRGOG. L. LAD.   BZ/15")]
+        [PaperDCPValue("PROG. L. LAD.   BZ/15")]
         Bolzano_LAD = 15
     }
 

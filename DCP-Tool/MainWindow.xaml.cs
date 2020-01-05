@@ -64,7 +64,7 @@ namespace DCP_Tool
 
             var tagFile = TagLib.File.Create(new TagLib.StreamFileAbstraction(filename, fileStream, fileStream));
             var tags = tagFile.GetTag(TagLib.TagTypes.Id3v2);
-            var sonofindInterface = new SonofindInterface();
+            using var sonofindInterface = new SonofindInterface();
 
             var cdTitle = (new FileInfo(filename)).Name.Split('_')[0];
             var sonofindRes = await sonofindInterface.QueryTitle(cdTitle);

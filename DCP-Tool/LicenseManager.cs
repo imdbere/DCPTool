@@ -22,7 +22,7 @@ namespace DCP_Tool
 
         public async Task<bool> VerifyLicense(string username)
         {
-            var client = new HttpClient();
+            using var client = new HttpClient();
             string challange = GetRandomBytes(64);
 
             var url = $"{ServerUrl}/license?username={username}&challange={WebUtility.UrlEncode(challange)}";

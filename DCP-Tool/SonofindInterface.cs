@@ -1,10 +1,11 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace DCP_Tool
 {
-    public class SonofindInterface
+    public class SonofindInterface : IDisposable
     {
         public HttpClient Client;
         public SonofindInterface()
@@ -12,6 +13,10 @@ namespace DCP_Tool
             Client = new HttpClient();
         }
 
+        public void Dispose()
+        {
+            ((IDisposable)Client).Dispose();
+        }
 
         public async Task<SonofindTitleInfo> QueryTitle(string titleCode)
         {

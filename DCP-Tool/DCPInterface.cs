@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DCP_Tool
 {
-    public class DCPInterface
+    public class DCPInterface : IDisposable
     {
         HttpClient Client;
         CookieContainer Cookies = new CookieContainer();
@@ -326,6 +326,11 @@ namespace DCP_Tool
         string GetInputValue(string page, string inputName)
         {
             return StringBetween(page, $"<input type=\"hidden\" name=\"{inputName}\" value=\"", "\"");
+        }
+
+        public void Dispose()
+        {
+            ((IDisposable)Client).Dispose();
         }
     }
 }
