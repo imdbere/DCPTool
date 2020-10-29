@@ -250,7 +250,7 @@ namespace DCP_Tool
                     return;
                 }
 
-                var licenseManager = new LicenseManager("http://vserver.pennpro.it:5000", "Ultrageheimespasswortafdesniadraufkimmsch");
+                /*var licenseManager = new LicenseManager("http://vserver.pennpro.it:5000", "Ultrageheimespasswortafdesniadraufkimmsch");
                 var authorized = await licenseManager.VerifyLicense(loginWindow.User);
                 if (!authorized)
                 {
@@ -258,7 +258,7 @@ namespace DCP_Tool
                     progressBar.IsIndeterminate = false;
                     progressBar.Value = 0;
                     return;
-                }
+                }*/
 
                 Settings.Default.Username = loginWindow.User;
                 Settings.Default.Password = loginWindow.Password;

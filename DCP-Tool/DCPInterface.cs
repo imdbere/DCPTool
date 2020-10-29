@@ -39,6 +39,8 @@ namespace DCP_Tool
 
         public async Task<bool> Login(string user = null, string pass = null)
         {
+            if (LoggedIn) return true;
+
             if (user == null) user = User;
             if (pass == null) pass = Password;
 
@@ -53,7 +55,7 @@ namespace DCP_Tool
 
             var res = await Client.PostAsync(loginUrl, new FormUrlEncodedContent(par));
             var s = await res.Content.ReadAsStringAsync();
-            //File.WriteAllText("loginRes.html", s);
+            File.WriteAllText("loginRes.html", s);
             if (s.Contains("Invalid username or password"))
             {
                 Console.WriteLine("Wrong Username or Password");
@@ -73,7 +75,7 @@ namespace DCP_Tool
 
                 var res1 = await Client.PostAsync(loginUrl, new FormUrlEncodedContent(par1));
                 var s1 = await res1.Content.ReadAsStringAsync();
-                //File.WriteAllText("loginRes1.html", s1);
+                File.WriteAllText("loginRes1.html", s1);
 
             }
             Console.WriteLine("Logged in");
