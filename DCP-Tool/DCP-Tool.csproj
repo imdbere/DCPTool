@@ -116,7 +116,6 @@
     <Compile Include="Helpers\DCPInterface.cs" />
     <Compile Include="Helpers\DCPInterfaceExtensions.cs" />
     <Compile Include="Helpers\DocumentWriter.cs" />
-    <Compile Include="Helpers\LicenseManager.cs" />
     <Compile Include="Helpers\SonofindInterface.cs" />
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
@@ -172,9 +171,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="dcp.cshtml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="dcp.docx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
