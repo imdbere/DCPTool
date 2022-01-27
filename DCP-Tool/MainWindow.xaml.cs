@@ -58,7 +58,7 @@ namespace DCP_Tool
             }
         }
 
-        async Task<DCPLine> ReadDCPLineFromFile(string filename)
+        private async Task<DCPLine> ReadDCPLineFromFile(string filename)
         {
             var fileStream = File.OpenRead(filename);
 
@@ -85,7 +85,7 @@ namespace DCP_Tool
             return line;
         }
 
-        async void OpenFiles(string[] files)
+        private async void OpenFiles(string[] files)
         {
             progressBar.IsIndeterminate = true;
             var dcpList = await Task.WhenAll(files.Select(f => ReadDCPLineFromFile(f)));
@@ -140,8 +140,6 @@ namespace DCP_Tool
         {
             var dialog = new OpenFileDialog();
             dialog.Filter = "DCPs | *.dcp";
-            //dialog.Multiselect = true;
-            //dialog.Filter = "*.mp3";
 
             if (dialog.ShowDialog() ?? false)
             {
@@ -150,11 +148,11 @@ namespace DCP_Tool
             }
         }
 
-        void LoadDCPFile(Stream fileStream)
+        private void LoadDCPFile(Stream fileStream)
         {
             var serializer = new DataContractJsonSerializer(typeof(DCP));
             var loadedDCPs = serializer.ReadObject(fileStream) as DCP;
-            //DCPs.Clear();
+
             DCPs.Add(loadedDCPs);
             dataGridDCP.Items.Refresh();
         }
@@ -172,7 +170,7 @@ namespace DCP_Tool
             }
         }
 
-        DCP ProcessDCP()
+        private DCP ProcessDCP()
         {
             dataGridLine.CommitEdit(DataGridEditingUnit.Row, true);
             dataGridDCP.CommitEdit(DataGridEditingUnit.Row, true);
@@ -181,16 +179,15 @@ namespace DCP_Tool
             {
                 return dcp;
             }
-            else
-            {
-                MessageBox.Show("Please select a DCP first");
-                return null;
-            }
+            
+            MessageBox.Show("Please select a DCP first");
+            return null;
         }
 
         private async void menuItemUpload_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessDCP() is DCP dcp)
+            var dcp = ProcessDCP();
+            if (dcp != null)
             {
                 progressBar.IsIndeterminate = true;
 
@@ -209,20 +206,29 @@ namespace DCP_Tool
                 }
 
                 progressBar.IsIndeterminate = false;
-
             }
         }
 
         private void menuItemExport_Click(object sender, RoutedEventArgs e)
         {
-            if (ProcessDCP() is DCP dcp)
+            var dcp = ProcessDCP();
+            if (dcp != null)
             {
-                var template = File.ReadAllText("dcp.cshtml");
-                var res = Engine.Razor.RunCompile(template, "key", typeof(DCP), dcp);
+                var dialog = new SaveFileDialog();
+                var defaultFileName = "dcp_" + dcp.DataTrasmissione.ToString("dd-MM-yyyy") + ".docx";
+                
+                dialog.Filter = "Word | *.docx";
+                dialog.DefaultExt = "docx";
+                dialog.FileName = defaultFileName;
 
-                var fileName = "dcp_" + dcp.DataTrasmissione.ToString("dd-MM-yyyy") + ".html";
-                File.WriteAllText(fileName, res);
-                Process.Start(fileName);
+                if (dialog.ShowDialog() ?? false)
+                {
+                    var fileName = dialog.FileName;
+                    var documentWriter = new DocumentWriter();
+                    
+                    documentWriter.GenerateDocument(dcp, fileName);
+                    Process.Start(fileName);
+                }
             }
 
         }
@@ -235,7 +241,7 @@ namespace DCP_Tool
             w.Show();
         }
 
-        async Task ShowLogin()
+        private async Task ShowLogin()
         {
             var loginWindow = new LoginWindow();
             if (loginWindow.ShowDialog() ?? false)
@@ -249,16 +255,6 @@ namespace DCP_Tool
                     progressBar.Value = 0;
                     return;
                 }
-
-                /*var licenseManager = new LicenseManager("http://vserver.pennpro.it:5000", "Ultrageheimespasswortafdesniadraufkimmsch");
-                var authorized = await licenseManager.VerifyLicense(loginWindow.User);
-                if (!authorized)
-                {
-                    MessageBox.Show("No License for user " + loginWindow.User + " found");
-                    progressBar.IsIndeterminate = false;
-                    progressBar.Value = 0;
-                    return;
-                }*/
 
                 Settings.Default.Username = loginWindow.User;
                 Settings.Default.Password = loginWindow.Password;

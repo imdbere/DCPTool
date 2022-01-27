@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DCP-Tool", "DCP-Tool\DCP-Tool.csproj", "{3AC80D3C-7D49-47BF-84AE-78DC0A01C525}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DCP-Tool-Desktop", "DCP-Tool-Desktop\DCP-Tool-Desktop.csproj", "{24A62634-304A-4A39-9102-83480713B660}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{3AC80D3C-7D49-47BF-84AE-78DC0A01C525}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3AC80D3C-7D49-47BF-84AE-78DC0A01C525}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3AC80D3C-7D49-47BF-84AE-78DC0A01C525}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24A62634-304A-4A39-9102-83480713B660}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24A62634-304A-4A39-9102-83480713B660}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24A62634-304A-4A39-9102-83480713B660}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24A62634-304A-4A39-9102-83480713B660}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

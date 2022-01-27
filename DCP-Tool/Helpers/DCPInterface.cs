@@ -34,7 +34,7 @@ namespace DCP_Tool
             {
                 CookieContainer = Cookies,
                 UseCookies = true
-            }); ;
+            });
         }
 
         public async Task<bool> Login(string user = null, string pass = null)
@@ -76,8 +76,8 @@ namespace DCP_Tool
                 var res1 = await Client.PostAsync(loginUrl, new FormUrlEncodedContent(par1));
                 var s1 = await res1.Content.ReadAsStringAsync();
                 File.WriteAllText("loginRes1.html", s1);
-
             }
+            
             Console.WriteLine("Logged in");
             SetInternetExplorerCookies();
 
@@ -325,7 +325,7 @@ namespace DCP_Tool
             return "";
         }
 
-        string GetInputValue(string page, string inputName)
+        private string GetInputValue(string page, string inputName)
         {
             return StringBetween(page, $"<input type=\"hidden\" name=\"{inputName}\" value=\"", "\"");
         }
