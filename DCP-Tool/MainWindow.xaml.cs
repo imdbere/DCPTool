@@ -1,7 +1,5 @@
 ﻿using DCP_Tool.Properties;
 using Microsoft.Win32;
-using RazorEngine;
-using RazorEngine.Templating; // For extension methods.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +10,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using DCP_Tool.Helpers;
+using DCP_Tool.Models;
 
 namespace DCP_Tool
 {
@@ -20,15 +20,15 @@ namespace DCP_Tool
     /// </summary>
     public partial class MainWindow : Window
     {
-        List<DCP> DCPs = new List<DCP>();
-        DCPInterface DCPInterface;
+        private readonly List<Dcp> _dcPs = new List<Dcp>();
+        private readonly DcpInterface _dcpInterface;
 
         public MainWindow(string file)
         {
             InitializeComponent();
 
             this.Title = "DCP Tool " + System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
-            dataGridDCP.ItemsSource = DCPs;
+            dataGridDCP.ItemsSource = _dcPs;
             dataGridDCP.AutoGeneratingColumn += (sender, e) =>
             {
                 if (e.PropertyType == typeof(DateTime))
@@ -45,11 +45,11 @@ namespace DCP_Tool
                 }
             };
 
-            DCPInterface = new DCPInterface(Settings.Default.Username, Settings.Default.Password);
+            _dcpInterface = new DcpInterface(Settings.Default.Username, Settings.Default.Password);
 
             if (file != null)
             {
-                LoadDCPFile(File.OpenRead(file));
+                LoadDcpFile(File.OpenRead(file));
             }
 
             if (string.IsNullOrEmpty(Settings.Default.Username) || string.IsNullOrEmpty(Settings.Default.Password))
@@ -58,7 +58,7 @@ namespace DCP_Tool
             }
         }
 
-        private async Task<DCPLine> ReadDCPLineFromFile(string filename)
+        private async Task<DcpLine> ReadDcpLineFromFile(string filename)
         {
             var fileStream = File.OpenRead(filename);
 
@@ -69,17 +69,17 @@ namespace DCP_Tool
             var cdTitle = (new FileInfo(filename)).Name.Split('_')[0];
             var sonofindRes = await sonofindInterface.QueryTitle(cdTitle);
 
-            var line = new DCPLine()
+            var line = new DcpLine()
             {
                 AutoriString = tags.FirstComposer,
                 Marca = sonofindRes != null ? "Sonoton" : "",
-                Esecutori = sonofindRes?.artists ?? tags.Performers.Aggregate((s1, s2) => s1 + ", " + s2),
-                Titolo = sonofindRes?.title ?? tags.Title,
+                Esecutori = sonofindRes?.Artists ?? tags.Performers.Aggregate((s1, s2) => s1 + ", " + s2),
+                Titolo = sonofindRes?.Title ?? tags.Title,
                 Durata = tagFile.Properties.Duration,
                 SiglaNum = sonofindRes != null ? tags.Album.Split('-')[0] : tags.Album,
                 TipoGenerazione = TipoGenerazione.OperaSuDisco,
-                Ruolo = Ruolo.SF,
-                Gensiae = GenereSIAE.ML
+                Ruolo = Ruolo.Sf,
+                Gensiae = GenereSiae.Ml
             };
 
             return line;
@@ -88,9 +88,9 @@ namespace DCP_Tool
         private async void OpenFiles(string[] files)
         {
             progressBar.IsIndeterminate = true;
-            var dcpList = await Task.WhenAll(files.Select(f => ReadDCPLineFromFile(f)));
+            var dcpList = await Task.WhenAll(files.Select(f => ReadDcpLineFromFile(f)));
 
-            if (dataGridDCP.SelectedItem is DCP dcp)
+            if (dataGridDCP.SelectedItem is Dcp dcp)
             {
                 dcp.Lines.AddRange(dcpList);
                 dataGridLine.Items.Refresh();
@@ -121,10 +121,10 @@ namespace DCP_Tool
             {
                 using var fileStream = dialog.OpenFile();
 
-                var serializer = new DataContractJsonSerializer(typeof(DCP));
+                var serializer = new DataContractJsonSerializer(typeof(Dcp));
                 dataGridLine.CommitEdit();
                 dataGridDCP.CommitEdit();
-                if (dataGridDCP.SelectedItem is DCP dcp)
+                if (dataGridDCP.SelectedItem is Dcp dcp)
                 {
                     serializer.WriteObject(fileStream, dcp);
                 }
@@ -144,22 +144,22 @@ namespace DCP_Tool
             if (dialog.ShowDialog() ?? false)
             {
                 var fileStream = dialog.OpenFile();
-                LoadDCPFile(fileStream);
+                LoadDcpFile(fileStream);
             }
         }
 
-        private void LoadDCPFile(Stream fileStream)
+        private void LoadDcpFile(Stream fileStream)
         {
-            var serializer = new DataContractJsonSerializer(typeof(DCP));
-            var loadedDCPs = serializer.ReadObject(fileStream) as DCP;
+            var serializer = new DataContractJsonSerializer(typeof(Dcp));
+            var loadedDcPs = serializer.ReadObject(fileStream) as Dcp;
 
-            DCPs.Add(loadedDCPs);
+            _dcPs.Add(loadedDcPs);
             dataGridDCP.Items.Refresh();
         }
 
         private void dataGridDCP_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (dataGridDCP.SelectedItem is DCP dcp)
+            if (dataGridDCP.SelectedItem is Dcp dcp)
             {
                 buttonPlus.IsEnabled = true;
                 dataGridLine.ItemsSource = dcp.Lines;
@@ -170,12 +170,12 @@ namespace DCP_Tool
             }
         }
 
-        private DCP ProcessDCP()
+        private Dcp ProcessDcp()
         {
             dataGridLine.CommitEdit(DataGridEditingUnit.Row, true);
             dataGridDCP.CommitEdit(DataGridEditingUnit.Row, true);
 
-            if (dataGridDCP.SelectedItem is DCP dcp)
+            if (dataGridDCP.SelectedItem is Dcp dcp)
             {
                 return dcp;
             }
@@ -186,14 +186,14 @@ namespace DCP_Tool
 
         private async void menuItemUpload_Click(object sender, RoutedEventArgs e)
         {
-            var dcp = ProcessDCP();
+            var dcp = ProcessDcp();
             if (dcp != null)
             {
                 progressBar.IsIndeterminate = true;
 
                 try
                 {
-                    var resUrl = await DCPInterface.UploadDCP(dcp);
+                    var resUrl = await _dcpInterface.UploadDcp(dcp);
                     progressBar.Value = 100;
 
                     var webWindow = new BrowserWindow(resUrl);
@@ -211,7 +211,7 @@ namespace DCP_Tool
 
         private void menuItemExport_Click(object sender, RoutedEventArgs e)
         {
-            var dcp = ProcessDCP();
+            var dcp = ProcessDcp();
             if (dcp != null)
             {
                 var dialog = new SaveFileDialog();
@@ -235,9 +235,9 @@ namespace DCP_Tool
 
         private async void menuItemOpenBrowser_Click(object sender, RoutedEventArgs e)
         {
-            await DCPInterface.Login();
+            await _dcpInterface.Login();
 
-            var w = new BrowserWindow("https://www.intranetssl.rai.it/,DanaInfo=.addrCwjx2q8sK3nwOy-+RicercaDCP.aspx");
+            var w = new BrowserWindow($"https://www.intranetssl.rai.it/,DanaInfo=.{DcpInterface.DanaInfo}+RicercaDCP.aspx");
             w.Show();
         }
 
@@ -247,7 +247,7 @@ namespace DCP_Tool
             if (loginWindow.ShowDialog() ?? false)
             {
                 progressBar.IsIndeterminate = true;
-                var loginRes = await DCPInterface.Login(loginWindow.User, loginWindow.Password);
+                var loginRes = await _dcpInterface.Login(loginWindow.User, loginWindow.Password);
                 if (!loginRes)
                 {
                     MessageBox.Show("Could not log in (username or password wrong ?)");

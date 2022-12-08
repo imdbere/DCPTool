@@ -1,17 +1,18 @@
 ﻿using System.IO;
 using System.Linq;
+using DCP_Tool.Models;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace DCP_Tool
+namespace DCP_Tool.Helpers
 {
     public class DocumentWriter
     {
         private const string FileName = "dcp.docx";
-        private int currentLineNr = 0;
+        private int _currentLineNr;
         
-        public void GenerateDocument(DCP dcp, string outputFile)
+        public void GenerateDocument(Dcp dcp, string outputFile)
         {
             if (File.Exists(outputFile))
             {
@@ -35,10 +36,10 @@ namespace DCP_Tool
             //doc.SaveAs("test.docx");
         }
 
-        private void FillHeader(OpenXmlElement table, DCP dcp)
+        private void FillHeader(OpenXmlElement table, Dcp dcp)
         {
             ReplaceText(table, 3, 1, "Penn Pro");
-            ReplaceText(table, 3, 2, dcp.GetPaperDCPValue(dcp.Sede));
+            ReplaceText(table, 3, 2, dcp.GetPaperDcpValue(dcp.Sede));
             ReplaceText(table, 3, 3, dcp.DataTrasmissione.ToShortDateString());
 
             ReplaceText(table, 5, 2, dcp.TitoloItaliano);
@@ -48,7 +49,6 @@ namespace DCP_Tool
             ReplaceText(table, 7, 2, dcp.TitoloOriginale);
 
             ReplaceText(table, 9, 2, dcp.Sottotitolo);
-            //ReplaceText(table, 9, 4, "");
             ReplaceText(table, 9, 6, dcp.Durata.ToString(@"mm\:ss"));
 
             ReplaceText(table, 11, 2, dcp.NumeroContratto);
@@ -59,23 +59,23 @@ namespace DCP_Tool
             ReplaceText(table, 13, 6, dcp.Puntata.ToString());
         }
 
-        private void AddLine(OpenXmlElement table, DCPLine line)
+        private void AddLine(OpenXmlElement table, DcpLine line)
         {
-            if (currentLineNr >= 10)
+            if (_currentLineNr >= 10)
             {
                 return;
             }
             
-            ReplaceText(table, currentLineNr + 29, 2, line.Gensiae.ToString());
-            ReplaceText(table, currentLineNr + 29, 3, line.Ruolo.ToString());
-            ReplaceText(table, currentLineNr + 29, 4, line.Titolo);
-            ReplaceText(table, currentLineNr + 29, 5, line.AutoriString);
-            ReplaceText(table, currentLineNr + 29, 6, line.Esecutori);
-            ReplaceText(table, currentLineNr + 29, 7, line.Durata.ToString(@"mm\:ss"));
-            ReplaceText(table, currentLineNr + 29, 8, line.Marca + " " + line.SiglaNum);
-            ReplaceText(table, currentLineNr + 29, 9, line.Marca);
+            ReplaceText(table, _currentLineNr + 29, 2, line.Gensiae.ToString());
+            ReplaceText(table, _currentLineNr + 29, 3, line.Ruolo.ToString());
+            ReplaceText(table, _currentLineNr + 29, 4, line.Titolo);
+            ReplaceText(table, _currentLineNr + 29, 5, line.AutoriString);
+            ReplaceText(table, _currentLineNr + 29, 6, line.Esecutori);
+            ReplaceText(table, _currentLineNr + 29, 7, line.Durata.ToString(@"mm\:ss"));
+            ReplaceText(table, _currentLineNr + 29, 8, line.Marca + " " + line.SiglaNum);
+            ReplaceText(table, _currentLineNr + 29, 9, line.Marca);
 
-            currentLineNr++;
+            _currentLineNr++;
         }
 
         private void ReplaceText(OpenXmlElement table, int row, int column, string text)

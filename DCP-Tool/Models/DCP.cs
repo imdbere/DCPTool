@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DCP_Tool
+namespace DCP_Tool.Models
 {
-    public class DCP
+    public class Dcp
     {
         public DateTime DataTrasmissione { get; set; } = DateTime.Now;
         public int Puntata { get; set; }
 
-        private DateTime? _DataRegistrazione = null;
+        private DateTime? _dataRegistrazione;
         public DateTime DataRegistrazione
         {
-            get => _DataRegistrazione ?? DataTrasmissione - TimeSpan.FromDays(5);
-            set => _DataRegistrazione = value;
+            get => _dataRegistrazione ?? DataTrasmissione - TimeSpan.FromDays(5);
+            set => _dataRegistrazione = value;
         }
 
         public TimeSpan Durata { get; set; }
@@ -21,11 +21,11 @@ namespace DCP_Tool
 
         public string TitoloProgramma { get; set; }
         public string TitoloSerie { get; set; }
-        private string _TitoloItaliano = null;
+        private string _titoloItaliano;
         public string TitoloItaliano
         {
-            get => _TitoloItaliano ?? TitoloProgramma + " - " + TitoloSerie;
-            set => _TitoloItaliano = value;
+            get => _titoloItaliano ?? TitoloProgramma + " - " + TitoloSerie;
+            set => _titoloItaliano = value;
         }
         public string TitoloOriginale { get; set; }
         public string Sottotitolo { get; set; }
@@ -39,7 +39,7 @@ namespace DCP_Tool
 
         public string NumeroContratto { get; set; }
         public DateTime DataContratto { get; set; }
-        public string DF { get; set; }
+        public string Df { get; set; }
 
         public string Regista { get; set; }
 
@@ -51,13 +51,13 @@ namespace DCP_Tool
             get => OraInizio + Durata;
         }
 
-        public List<DCPLine> Lines = new List<DCPLine>();
-        public string GetPaperDCPValue(object obj)
+        public List<DcpLine> Lines = new List<DcpLine>();
+        public string GetPaperDcpValue(object obj)
         {
-            var attributes = obj.GetType().GetMember(obj.ToString())[0].GetCustomAttributes(typeof(PaperDCPValueAttribute), false);
+            var attributes = obj.GetType().GetMember(obj.ToString())[0].GetCustomAttributes(typeof(PaperDcpValueAttribute), false);
             if (attributes.Length > 0)
             {
-                var att = (PaperDCPValueAttribute)attributes[0];
+                var att = (PaperDcpValueAttribute)attributes[0];
                 return att.Value;
             }
             return obj.ToString();
@@ -65,7 +65,7 @@ namespace DCP_Tool
 
     }
 
-    public class DCPLine
+    public class DcpLine
     {
         public string Titolo { get; set; } = "";
 
@@ -85,7 +85,7 @@ namespace DCP_Tool
 
         public TimeSpan Durata { get; set; }
 
-        public GenereSIAE Gensiae { get; set; }
+        public GenereSiae Gensiae { get; set; }
         public Ruolo Ruolo { get; set; }
 
         // All caps
@@ -97,10 +97,10 @@ namespace DCP_Tool
         public TipoGenerazione TipoGenerazione { get; set; }
     }
 
-    public class PaperDCPValueAttribute : Attribute
+    public class PaperDcpValueAttribute : Attribute
     {
         public string Value;
-        public PaperDCPValueAttribute(string value)
+        public PaperDcpValueAttribute(string value)
         {
             Value = value;
         }
@@ -108,8 +108,8 @@ namespace DCP_Tool
 
     public struct Autore
     {
-        public String Nome;
-        public String Cognome;
+        public string Nome;
+        public string Cognome;
 
         public Autore(string nome, string cognome)
         {

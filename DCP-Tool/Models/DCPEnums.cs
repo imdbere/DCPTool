@@ -1,42 +1,42 @@
-﻿namespace DCP_Tool
+﻿namespace DCP_Tool.Models
 {
-    public enum GenereSIAE
+    public enum GenereSiae
     {
-        ML
+        Ml
     }
 
     public enum Ruolo
     {
-        PP,
-        SF,
-        SI
+        Pp,
+        Sf,
+        Si
     }
 
     public enum TipoGenerazione
     {
-        [PaperDCPValue("C")]
+        [PaperDcpValue("C")]
         OperaSuDisco = 9,
-        [PaperDCPValue("")]
+        [PaperDcpValue("")]
         DalVivo = 1
     }
     public enum ReteTrasmissione
     {
-        TV1,
-        TV2,
-        TV3,
-        TV4
+        Tv1,
+        Tv2,
+        Tv3,
+        Tv4
     }
 
     public enum Sede
     {
-        [PaperDCPValue("PROG. L. TED.   BZ/16")]
-        Bolzano_DE = 16,
+        [PaperDcpValue("PROG. L. TED.   BZ/16")]
+        BolzanoDe = 16,
 
-        [PaperDCPValue("PROG. L. IT.   BZ/14")]
-        Bolzano_IT = 14,
+        [PaperDcpValue("PROG. L. IT.   BZ/14")]
+        BolzanoIt = 14,
 
-        [PaperDCPValue("PROG. L. LAD.   BZ/15")]
-        Bolzano_LAD = 15
+        [PaperDcpValue("PROG. L. LAD.   BZ/15")]
+        BolzanoLad = 15
     }
 
 }
