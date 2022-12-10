@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -22,6 +23,10 @@ namespace DCP_Tool.Helpers
 
         // Not sure if this is a constant or account-dependent....
         public static string DanaInfo => "addrqiyFpv21lzr7O7r0S2C";
+        public static string BaseUrl => "https://www.intranetssl.rai.it";
+        public static string CreateDcpUrl = $"{BaseUrl}/,DanaInfo=.{DanaInfo}+DettaglioDCP.aspx";
+        public static string LoginUrl = $"{BaseUrl}/dana-na/auth/url_56/login.cgi";
+        public static string LogoutUrl = $"{BaseUrl}/dana-na/auth/logout.cgi?delivery=psal";
 
         private bool _loggedIn;
 
@@ -34,200 +39,146 @@ namespace DCP_Tool.Helpers
             _client = new HttpClient(new HttpClientHandler()
             {
                 CookieContainer = _cookies,
-                UseCookies = true
+                UseCookies = true,
+                //AllowAutoRedirect = false
             });
         }
 
-        public async Task<bool> Login(string user = null, string pass = null)
+        public async Task Login(string user = null, string pass = null)
         {
-            if (_loggedIn) return true;
+            if (_loggedIn) return;
+            
+            await ExecuteLogin(user ?? _user, pass ?? _password);
+            Console.WriteLine("Logged in");
+            ApplyInternetExplorerCookies();
 
-            user ??= _user;
-            pass ??= _password;
+            _loggedIn = true;
+        }
 
-            var par = new Dictionary<string, string>() {
-                {"tz_offset", "60"},
-                {"username", user},
-                {"password", pass},
-                {"realm", "ADonly"},
-                {"btnSubmit", "Entra"},
-            };
-            var loginUrl = "https://www.intranetssl.rai.it/dana-na/auth/url_56/login.cgi";
+        private async Task ExecuteLogin(string user, string pass)
+        {
+            var dict = DcpInterfaceExtensions.GetLoginForm(user, pass);
+            var (resString, _) = await SendPost(LoginUrl, dict, null);
 
-            var res = await _client.PostAsync(loginUrl, new FormUrlEncodedContent(par));
-            var s = await res.Content.ReadAsStringAsync();
-            File.WriteAllText("loginRes.html", s);
-            if (s.Contains("Invalid username or password"))
+            File.WriteAllText("loginRes.html", resString);
+            if (resString.Contains("Invalid username or password"))
             {
-                Console.WriteLine("Wrong Username or Password");
-                return false;
+                throw new Exception("Wrong Username or Password");
             }
 
-            if (s.Contains("You have reached the maximum number of open user sessions"))
+            if (resString.Contains("You have reached the maximum number of open user sessions"))
             {
-                var formDataStr = StringBetween(s, "<input id=\"DSIDFormDataStr\" type=\"hidden\" name=\"FormDataStr\" value=\"", "\">");
-                var postfixSid = StringBetween(s, "name=\"postfixSID\" value=\"", "\"");
+                var html = ParseHtml(resString);
+                var formDataStr = GetInputValueById(html, "DSIDFormDataStr");
+                var postfixSid = GetInputValueById(html , "postfixSID_1");
+                
+                //var formDataStr = StringBetween(resString, "<input id=\"DSIDFormDataStr\" type=\"hidden\" name=\"FormDataStr\" value=\"", "\">");
+                //var postfixSid = StringBetween(s, "name=\"postfixSID\" value=\"", "\"");
 
-                var par1 = new Dictionary<string, string>() {
+                dict = new Dictionary<string, string>() {
                     {"postfixSID", postfixSid},
                     {"btnContinue", "Close Selected Sessions and Log in"},
                     {"FormDataStr", formDataStr}
                 };
 
-                var res1 = await _client.PostAsync(loginUrl, new FormUrlEncodedContent(par1));
-                var s1 = await res1.Content.ReadAsStringAsync();
-                File.WriteAllText("loginRes1.html", s1);
+                (resString, _) = await SendPost(LoginUrl, dict, null);
+                File.WriteAllText("loginRes1.html", resString);
             }
-            
-            Console.WriteLine("Logged in");
-            SetInternetExplorerCookies();
-
-            _loggedIn = true;
-            return true;
         }
 
         public async Task<string> UploadDcp(Dcp dcp)
         {
-            if (!_loggedIn)
-                await Login();
-
-            var createDcpUrl = $"https://www.intranetssl.rai.it/,DanaInfo=.{DanaInfo}-+DettaglioDCP.aspx";
-            var res = await _client.GetAsync(createDcpUrl);
-            var s = await res.Content.ReadAsStringAsync();
-            var viewState = GetInputValue(s, "__VIEWSTATE");
-            var viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
-
-            var basicDcpData = dcp.GetBasicFormData();
-            basicDcpData.Add("__VIEWSTATE", viewState);
-            basicDcpData.Add("__VIEWSTATEGENERATOR", viewStateGenerator);
-            basicDcpData.Add("__EVENTTARGET", "");
-            basicDcpData.Add("__EVENTARGUMENT", "");
-
-            var firstFourLines = dcp.GetLineFormData(0, 4);
-            var dict = basicDcpData.Concat(firstFourLines).ToDictionary(e => e.Key, e => e.Value);
-
-            var uploadRes = await _client.PostAsync(createDcpUrl, new FormUrlEncodedContent(dict));
-            var uploadString = await uploadRes.Content.ReadAsStringAsync();
-            if (uploadString.Contains("DCP - Errore"))
+            await EnsureLoggedIn();
+            var createRes = await SendGet(CreateDcpUrl);
+            
+            var content = dcp.GetBasicFormData();
+            var url = CreateDcpUrl;
+            var lastRes = createRes;
+            
+            // We have to upload the DCP four lines at a time
+            int numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
+            for (int i = 0; i < numForms; i++)
             {
-                throw new Exception("Error in DCP, Upload Failed");
+                var newLines = dcp.GetLineFormData(i * 4, 4);
+                content = content.Concat(newLines).ToDictionary(e => e.Key, e => e.Value);
+                    
+                var (appendString, resUrl) = await SendPost(url, content, lastRes);
+
+                var html = ParseHtml(appendString);
+                var error = html.GetElementbyId("MessageBarControl1_Table1")?.InnerText?.Trim();
+
+                File.WriteAllText("uploadRes.html", appendString);
+                if (error != null)
+                {
+                    Tools.OpenFile("uploadRes.html");
+                    throw new Exception("Error in DCP Upload: " + error);
+                }
+
+                lastRes = appendString;
+                url = resUrl.ToString();
             }
 
-            File.WriteAllText("uploadRes.html", uploadString);
-            var appendUrl = uploadRes.RequestMessage.RequestUri + $"&ordinamento=&pagina=0";
+            return url;
+        }
 
-            if (dcp.Lines.Count > 4)
+        private async Task EnsureLoggedIn()
+        {
+            if (!_loggedIn)
+                await Login();
+        }
+
+        public async Task<(string Html, Uri RequestUri)> SendPost(string url, Dictionary<string, string> content, string previousHtml = null)
+        {
+            if (previousHtml != null)
             {
-                viewState = GetInputValue(uploadString, "__VIEWSTATE");
-                viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
+                var htmlDoc = ParseHtml(previousHtml);
 
-                int numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
-
-                for (int i = 1; i < numForms; i++)
+                var inputsToCopy = new[] {"__VIEWSTATE", "__VIEWSTATEGENERATOR", "__EVENTVALIDATION"};
+                foreach (var inputName in inputsToCopy)
                 {
-                    var newLines = dcp.GetLineFormData(i * 4, 4);
-                    dict["__VIEWSTATE"] = viewState;
-                    dict["__VIEWSTATEGENERATOR"] = viewStateGenerator;
-
-                    dict = dict.Concat(newLines).ToDictionary(e => e.Key, e => e.Value);
-
-                    // This is necessary because FormUrlEncodedContent doesn't work for very long POST Data
-                    var encodedItems = dict.Select(i => WebUtility.UrlEncode(i.Key) + "=" + WebUtility.UrlEncode(i.Value));
-                    var encodedContent = new StringContent(string.Join("&", encodedItems), null, "application/x-www-form-urlencoded");
-
-                    var appendRes = await _client.PostAsync(appendUrl, /*new FormUrlEncodedContent(dict)*/encodedContent);
-                    var appendString = await appendRes.Content.ReadAsStringAsync();
-                    viewState = GetInputValue(appendString, "__VIEWSTATE");
-                    viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
-                    File.WriteAllText("appendRes.html", uploadString);
+                    var value = htmlDoc.GetElementbyId(inputName).Attributes["value"].Value;
+                    if (value != null)
+                        content[inputName] = value;
                 }
             }
 
-            return appendUrl;
+            // This is necessary because FormUrlEncodedContent doesn't work for very long POST Data
+            var encodedItems = content.Select(i => WebUtility.UrlEncode(i.Key) + "=" + WebUtility.UrlEncode(i.Value));
+            var encodedContent = new StringContent(string.Join("&", encodedItems), null, "application/x-www-form-urlencoded");
+            
+            var res = await _client.PostAsync(url, encodedContent);
+            var resString = await res.Content.ReadAsStringAsync();
+
+            return (resString, res.RequestMessage.RequestUri);
+        }
+
+        private async Task<string> SendGet(string url)
+        {
+            var res = await _client.GetAsync(url);
+            return await res.Content.ReadAsStringAsync();
+        }
+
+        private static HtmlDocument ParseHtml(string htmlString)
+        {
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(htmlString);
+            return htmlDoc;
+        }
+        
+        private static string GetInputValueById(HtmlDocument html, string id)
+        {
+            return html.GetElementbyId(id).Attributes["value"].Value;
         }
 
         public async Task Logout()
         {
-            var res = await _client.GetAsync("https://www.intranetssl.rai.it/dana-na/auth/logout.cgi?delivery=psal");
-            var resString = await res.Content.ReadAsStringAsync();
+            await SendGet(LogoutUrl);
             Console.WriteLine("Logged Out");
         }
 
-        public void SetInternetExplorerCookies()
+        public void ApplyInternetExplorerCookies()
         {
-            var baseUrl = "https://www.intranetssl.rai.it/";
-            var cookies = _cookies.GetCookies(new Uri(baseUrl));
-
-            foreach (var cookie in cookies)
-            {
-                var split = cookie.ToString().Split('=');
-                var name = split[0];
-                var value = split[1];
-
-                InternetSetCookie(baseUrl, name, value);
-            }
-
-        }
-
-        [DllImport("wininet.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern bool InternetSetCookie(string lpszUrl, string lpszCookieName, string lpszCookieData);
-
-        public async Task SearchDcp(string reteTransmissione, DateTime startDate, DateTime endDate)
-        {
-            if (!_loggedIn)
-                await Login();
-
-            var url = $"https://www.intranetssl.rai.it/,DanaInfo=.{DanaInfo}-+RicercaTuttiDCP.aspx";
-            var res = await _client.GetAsync(url);
-            var s = await res.Content.ReadAsStringAsync();
-            //File.WriteAllText("searchPage.html", s);
-
-            var viewState = GetInputValue(s, "__VIEWSTATE");
-            var viewStateGenerator = GetInputValue(s, "__VIEWSTATEGENERATOR");
-
-            var par = DcpInterfaceExtensions.GetSearchFormData(viewState, viewStateGenerator, reteTransmissione, startDate, endDate);
-            var res1 = await _client.PostAsync(url, new FormUrlEncodedContent(par));
-            var s1 = await res1.Content.ReadAsStringAsync();
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(s1);
-            var dataTable = htmlDoc.GetElementbyId("DataGrid1");
-            if (dataTable == null)
-            {
-                Console.WriteLine("No Results or error in request");
-                return;
-            }
-
-            var titles = dataTable
-                .Descendants("tr")
-                .Skip(2)
-                .Take(15)
-                .Select(row => row
-                    .Elements("td")
-                    .ElementAt(3).InnerText);
-
-            foreach (var title in titles)
-                Console.WriteLine("Title: " + title);
-
-            File.WriteAllText("searchRes.html", s1);
-        }
-
-        private string StringBetween(string input, string s1, string s2)
-        {
-            if (input.Contains(s1) && input.Contains(s2))
-            {
-                int pFrom = input.IndexOf(s1) + s1.Length;
-                string sub1 = input.Substring(pFrom);
-                int pTo = sub1.IndexOf(s2);
-
-                return sub1.Substring(0, pTo);
-            }
-
-            return "";
-        }
-
-        private string GetInputValue(string page, string inputName)
-        {
-            return StringBetween(page, $"<input type=\"hidden\" name=\"{inputName}\" value=\"", "\"");
+            Tools.SetInternetExplorerCookies(BaseUrl, _cookies);
         }
 
         public void Dispose()

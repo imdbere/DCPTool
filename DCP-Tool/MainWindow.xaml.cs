@@ -78,8 +78,8 @@ namespace DCP_Tool
                 Durata = tagFile.Properties.Duration,
                 SiglaNum = sonofindRes != null ? tags.Album.Split('-')[0] : tags.Album,
                 TipoGenerazione = TipoGenerazione.OperaSuDisco,
-                Ruolo = Ruolo.Sf,
-                Gensiae = GenereSiae.Ml
+                Ruolo = Ruolo.SF,
+                Gensiae = GenereSiae.ML
             };
 
             return line;
@@ -227,7 +227,7 @@ namespace DCP_Tool
                     var documentWriter = new DocumentWriter();
                     
                     documentWriter.GenerateDocument(dcp, fileName);
-                    Process.Start(fileName);
+                    Tools.OpenFile(fileName);
                 }
             }
 
@@ -247,15 +247,18 @@ namespace DCP_Tool
             if (loginWindow.ShowDialog() ?? false)
             {
                 progressBar.IsIndeterminate = true;
-                var loginRes = await _dcpInterface.Login(loginWindow.User, loginWindow.Password);
-                if (!loginRes)
+                try
+                {
+                    await _dcpInterface.Login(loginWindow.User, loginWindow.Password);
+                }
+                catch (Exception ex)
                 {
                     MessageBox.Show("Could not log in (username or password wrong ?)");
                     progressBar.IsIndeterminate = false;
                     progressBar.Value = 0;
                     return;
                 }
-
+                
                 Settings.Default.Username = loginWindow.User;
                 Settings.Default.Password = loginWindow.Password;
                 Settings.Default.Save();

@@ -98,7 +98,7 @@ namespace DCP_Tool.Helpers
                 { "TimeControl_OraFine:Hidden_ReadOnly", "true#false" },
                 { "APControl_UMSP:UorgTxt", dcp.Uorg != 0 ? dcp.Uorg.ToString() : "" },
                 { "APControl_UMSP:MatricolaTxt", dcp.Matricola != 0 ? dcp.Matricola.ToString() : "" },
-                { "APControl_UMSP:SerieTxt", dcp.Serie != 0 ? dcp.Serie.ToString() : "" },
+                { "APControl_UMSP:SerieTxt", dcp.Serie.ToString("000") },
                 { "APControl_UMSP:PuntataTxt", dcp.Puntata != 0 ? dcp.Puntata.ToString() : "" },
                 { "Textbox_Committente", "BZ/" + ((int)dcp.Sede).ToString() },
                 { "CheckControl_Struttura:TextBox1", dcp.ReteTrasmissione.ToString() },
@@ -126,13 +126,11 @@ namespace DCP_Tool.Helpers
             };
         }
 
-        public static Dictionary<string, string> GetSearchFormData(string viewState, string viewStateGenerator, string reteTransmissione, DateTime startDate, DateTime endDate)
+        public static Dictionary<string, string> GetSearchFormData(string reteTransmissione, DateTime startDate, DateTime endDate)
         {
             return new Dictionary<string, string>() {
                 {"__EVENTTARGET", ""},
                 {"__EVENTARGUMENT", ""},
-                {"__VIEWSTATE", viewState},
-                {"__VIEWSTATEGENERATOR", viewStateGenerator},
                 {"CheckControl_Stato:TextBox1", ""},
                 {"CheckControl_Stato:TextBox_NomeTabella", "TabStati"},
                 {"CheckControl_Stato:TextBox_Errore", ""},
@@ -228,6 +226,17 @@ namespace DCP_Tool.Helpers
                 {"Textbox_NoteOpera", ""},
                 {"ImageButton_Ricerca2.x", "20"},
                 {"ImageButton_Ricerca2.y", "20"}
+            };
+        }
+
+        public static Dictionary<string, string> GetLoginForm(string user, string password)
+        {
+            return new Dictionary<string, string>() {
+                {"tz_offset", "60"},
+                {"username", user},
+                {"password", password},
+                {"realm", "ADonly"},
+                {"btnSubmit", "Entra"},
             };
         }
 
