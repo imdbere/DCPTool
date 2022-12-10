@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using DCP_Tool.Models;
-using HtmlAgilityPack;
 
 namespace DCP_Tool.Helpers
 {
-    public class DcpInterface : IDisposable
+    public partial class DcpInterface : IDisposable
     {
         private readonly HttpClient _client;
         private readonly CookieContainer _cookies = new();
@@ -71,9 +67,6 @@ namespace DCP_Tool.Helpers
                 var html = ParseHtml(resString);
                 var formDataStr = GetInputValueById(html, "DSIDFormDataStr");
                 var postfixSid = GetInputValueById(html , "postfixSID_1");
-                
-                //var formDataStr = StringBetween(resString, "<input id=\"DSIDFormDataStr\" type=\"hidden\" name=\"FormDataStr\" value=\"", "\">");
-                //var postfixSid = StringBetween(s, "name=\"postfixSID\" value=\"", "\"");
 
                 dict = new Dictionary<string, string>() {
                     {"postfixSID", postfixSid},
@@ -84,6 +77,12 @@ namespace DCP_Tool.Helpers
                 (resString, _) = await SendPost(LoginUrl, dict, null);
                 File.WriteAllText("loginRes1.html", resString);
             }
+        }
+        
+        private async Task EnsureLoggedIn()
+        {
+            if (!_loggedIn)
+                await Login();
         }
 
         public async Task<string> UploadDcp(Dcp dcp)
@@ -96,38 +95,36 @@ namespace DCP_Tool.Helpers
             var lastRes = createRes;
             
             // We have to upload the DCP four lines at a time
-            int numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
-            for (int i = 0; i < numForms; i++)
+            var numForms = (int)Math.Ceiling(dcp.Lines.Count / 4f);
+            for (var i = 0; i < numForms; i++)
             {
                 var newLines = dcp.GetLineFormData(i * 4, 4);
                 content = content.Concat(newLines).ToDictionary(e => e.Key, e => e.Value);
                     
-                var (appendString, resUrl) = await SendPost(url, content, lastRes);
+                var (appendRes, resUrl) = await SendPost(url, content, lastRes);
+                EnsureNoUploadError(appendRes);
 
-                var html = ParseHtml(appendString);
-                var error = html.GetElementbyId("MessageBarControl1_Table1")?.InnerText?.Trim();
-
-                File.WriteAllText("uploadRes.html", appendString);
-                if (error != null)
-                {
-                    Tools.OpenFile("uploadRes.html");
-                    throw new Exception("Error in DCP Upload: " + error);
-                }
-
-                lastRes = appendString;
+                lastRes = appendRes;
                 url = resUrl.ToString();
             }
 
             return url;
         }
 
-        private async Task EnsureLoggedIn()
+        private static void EnsureNoUploadError(string appendString)
         {
-            if (!_loggedIn)
-                await Login();
+            var html = ParseHtml(appendString);
+            var error = html.GetElementbyId("MessageBarControl1_Table1")?.InnerText?.Trim();
+
+            File.WriteAllText("uploadRes.html", appendString);
+            if (error != null)
+            {
+                Tools.OpenFile("uploadRes.html");
+                throw new Exception("Error in DCP Upload: " + error);
+            }
         }
 
-        public async Task<(string Html, Uri RequestUri)> SendPost(string url, Dictionary<string, string> content, string previousHtml = null)
+        private async Task<(string Html, Uri RequestUri)> SendPost(string url, Dictionary<string, string> content, string previousHtml = null)
         {
             if (previousHtml != null)
             {
@@ -158,27 +155,10 @@ namespace DCP_Tool.Helpers
             return await res.Content.ReadAsStringAsync();
         }
 
-        private static HtmlDocument ParseHtml(string htmlString)
-        {
-            var htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(htmlString);
-            return htmlDoc;
-        }
-        
-        private static string GetInputValueById(HtmlDocument html, string id)
-        {
-            return html.GetElementbyId(id).Attributes["value"].Value;
-        }
-
         public async Task Logout()
         {
             await SendGet(LogoutUrl);
             Console.WriteLine("Logged Out");
-        }
-
-        public void ApplyInternetExplorerCookies()
-        {
-            Tools.SetInternetExplorerCookies(BaseUrl, _cookies);
         }
 
         public void Dispose()

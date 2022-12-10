@@ -276,8 +276,8 @@ namespace DCP_Tool.Helpers
 
             return dict;
         }
-        
-        public static string ToDcpString(this DateTime date)
+
+        private static string ToDcpString(this DateTime date)
         {
             return date.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
         }
