@@ -66,16 +66,32 @@ namespace DCP_Tool
             using var sonofindInterface = new SonofindInterface();
 
             var cdTitle = (new FileInfo(filename)).Name.Split('_')[0];
-            var sonofindRes = await sonofindInterface.QueryTitle(cdTitle);
+            //var sonofindRes = await sonofindInterface.QueryTitle(cdTitle);
 
             var line = new DcpLine()
             {
-                AutoriString = tags.FirstComposer,
-                Marca = sonofindRes != null ? "Sonoton" : "",
-                Esecutori = sonofindRes?.Artists ?? tags.Performers.Aggregate((s1, s2) => s1 + ", " + s2),
-                Titolo = sonofindRes?.Title ?? tags.Title,
+                Autori = tags.Composers.SelectMany(p => p.Split("|")).Select(c =>
+                {
+                    if (c.Contains(","))
+                    {
+                        var split = c.Split(",");
+                        return new Autore(split[1].Trim(), split[0].Trim());
+                    }
+                    else if (c.Contains(" "))
+                    {
+                        var split = c.Split(" ");
+                        return new Autore(split[0].Trim(), split[1].Trim());
+                    }
+                    else
+                    {
+                        return new Autore(c, "");
+                    }
+                }).ToArray(),
+                Marca = "Sonoton",
+                Esecutori = tags.Performers.SelectMany(p => p.Split("|")).Aggregate((s1, s2) => s1 + ", " + s2),
+                Titolo = tags.Title.Contains("---") ? tags.Title.Split("---")[0] : tags.Title,
                 Durata = tagFile.Properties.Duration,
-                SiglaNum = sonofindRes != null ? tags.Album.Split('-')[0] : tags.Album,
+                SiglaNum = tags.Album.Split('-')[0],
                 TipoGenerazione = TipoGenerazione.OperaSuDisco,
                 Ruolo = Ruolo.SF,
                 Gensiae = GenereSiae.ML
