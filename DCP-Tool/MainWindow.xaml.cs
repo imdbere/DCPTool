@@ -59,39 +59,35 @@ namespace DCP_Tool
 
         private async Task<DcpLine> ReadDcpLineFromFile(string filename)
         {
-            var fileStream = File.OpenRead(filename);
+            using var fileStream = File.OpenRead(filename);
 
             var tagFile = TagLib.File.Create(new TagLib.StreamFileAbstraction(filename, fileStream, fileStream));
-            var tags = tagFile.GetTag(TagLib.TagTypes.Id3v2);
+            // Files without an ID3v2 tag (e.g. wav) fall back to whatever tags TagLib found
+            var tags = tagFile.GetTag(TagLib.TagTypes.Id3v2) ?? tagFile.Tag;
             using var sonofindInterface = new SonofindInterface();
 
             var cdTitle = (new FileInfo(filename)).Name.Split('_')[0];
             //var sonofindRes = await sonofindInterface.QueryTitle(cdTitle);
 
+            // Missing tags are left blank so they can be filled in manually
+            var autori = SplitTagValues(tags?.Composers).Select(ParseAutore).ToArray();
+            var esecutori = SplitTagValues(tags?.Performers).ToArray();
+            if (esecutori.Length == 0)
+            {
+                esecutori = autori.Select(a => a.ToString().Trim()).ToArray();
+            }
+
+            var title = tags?.Title ?? "";
+
             var line = new DcpLine()
             {
-                Autori = tags.Composers.SelectMany(p => p.Split("|")).Select(c =>
-                {
-                    if (c.Contains(","))
-                    {
-                        var split = c.Split(",");
-                        return new Autore(split[1].Trim(), split[0].Trim());
-                    }
-                    else if (c.Contains(" "))
-                    {
-                        var split = c.Split(" ");
-                        return new Autore(split[0].Trim(), split[1].Trim());
-                    }
-                    else
-                    {
-                        return new Autore(c, "");
-                    }
-                }).ToArray(),
+                // null instead of an empty array, AutoriString can't handle empty arrays
+                Autori = autori.Length > 0 ? autori : null,
                 Marca = "Sonoton",
-                Esecutori = tags.Performers.SelectMany(p => p.Split("|")).Aggregate((s1, s2) => s1 + ", " + s2),
-                Titolo = tags.Title.Contains("---") ? tags.Title.Split("---")[0] : tags.Title,
-                Durata = tagFile.Properties.Duration,
-                SiglaNum = tags.Album.Split('-')[0],
+                Esecutori = string.Join(", ", esecutori),
+                Titolo = title.Contains("---") ? title.Split("---")[0] : title,
+                Durata = tagFile.Properties?.Duration ?? TimeSpan.Zero,
+                SiglaNum = (tags?.Album ?? "").Split('-')[0],
                 TipoGenerazione = TipoGenerazione.OperaSuDisco,
                 Ruolo = Ruolo.SF,
                 Gensiae = GenereSiae.ML
@@ -100,10 +96,50 @@ namespace DCP_Tool
             return line;
         }
 
+        private static IEnumerable<string> SplitTagValues(string[] values)
+        {
+            return (values ?? Array.Empty<string>())
+                .Where(v => v != null)
+                .SelectMany(v => v.Split("|"))
+                .Select(v => v.Trim())
+                .Where(v => v.Length > 0);
+        }
+
+        private static Autore ParseAutore(string c)
+        {
+            if (c.Contains(","))
+            {
+                var split = c.Split(",");
+                return new Autore(split[1].Trim(), split[0].Trim());
+            }
+            else if (c.Contains(" "))
+            {
+                var split = c.Split(" ");
+                return new Autore(split[0].Trim(), split[1].Trim());
+            }
+            else
+            {
+                return new Autore(c, "");
+            }
+        }
+
         private async void OpenFiles(string[] files)
         {
             progressBar.IsIndeterminate = true;
-            var dcpList = await Task.WhenAll(files.Select(f => ReadDcpLineFromFile(f)));
+
+            var dcpList = new List<DcpLine>();
+            var errors = new List<string>();
+            foreach (var file in files)
+            {
+                try
+                {
+                    dcpList.Add(await ReadDcpLineFromFile(file));
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"{Path.GetFileName(file)}: {ex.Message}");
+                }
+            }
 
             if (dataGridDCP.SelectedItem is Dcp dcp)
             {
@@ -114,6 +150,10 @@ namespace DCP_Tool
             progressBar.Value = 100;
             progressBar.IsIndeterminate = false;
 
+            if (errors.Count > 0)
+            {
+                MessageBox.Show("Could not read the following files:\n\n" + string.Join("\n", errors));
+            }
         }
 
         private void dataGridLine_Drop(object sender, DragEventArgs e)
