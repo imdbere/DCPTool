@@ -7,7 +7,11 @@
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyTitle>DCP-Tool</AssemblyTitle>
+    <Product>DCP-Tool</Product>
+    <Copyright>Copyright ©  2019</Copyright>
+    <!-- Local default; CI overrides it with the git tag via -p:Version -->
+    <Version>0.8.0</Version>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>icon.ico</ApplicationIcon>
