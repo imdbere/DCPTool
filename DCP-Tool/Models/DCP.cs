@@ -91,10 +91,19 @@ namespace DCP_Tool.Models
         // All caps
         public string Marca { get; set; } = "";
 
+        // Publisher. Empty for Sonoton, from the cue sheet for Artlist
+        public string Edizione { get; set; } = "";
+
         public string SiglaNum { get; set; } = "";
         public string Esecutori { get; set; } = "";
 
         public TipoGenerazione TipoGenerazione { get; set; }
+
+        // A method, not a property, so the DataGrid doesn't show it as a column
+        public bool HasAutori()
+        {
+            return Autori != null && Autori.Any(a => !string.IsNullOrWhiteSpace(a.ToString()));
+        }
     }
 
     public class PaperDcpValueAttribute : Attribute
@@ -117,14 +126,12 @@ namespace DCP_Tool.Models
             Cognome = cognome;
         }
 
-        public Autore(string nome)
+        // "First [Middle] Last": the last word is the Cognome, everything before it the Nome
+        public Autore(string fullName)
         {
-            var s = nome.Split(' ');
-            Nome = s[0];
-            if (s.Length > 1)
-                Cognome = s[1];
-            else
-                Cognome = "";
+            var s = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            Nome = string.Join(" ", s.Take(Math.Max(s.Length - 1, 1)));
+            Cognome = s.Length > 1 ? s[s.Length - 1] : "";
         }
 
         public override string ToString()

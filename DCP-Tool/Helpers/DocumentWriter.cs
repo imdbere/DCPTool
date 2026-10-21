@@ -73,7 +73,8 @@ namespace DCP_Tool.Helpers
             ReplaceText(table, _currentLineNr + 29, 6, line.Esecutori);
             ReplaceText(table, _currentLineNr + 29, 7, line.Durata.ToString(@"mm\:ss"));
             ReplaceText(table, _currentLineNr + 29, 8, line.Marca + " " + line.SiglaNum);
-            ReplaceText(table, _currentLineNr + 29, 9, line.Marca);
+            // Sonoton lines have no Edizione, their label stands in for it
+            ReplaceText(table, _currentLineNr + 29, 9, string.IsNullOrEmpty(line.Edizione) ? line.Marca : line.Edizione);
 
             _currentLineNr++;
         }
