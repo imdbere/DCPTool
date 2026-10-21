@@ -2,10 +2,12 @@ name: Build
 
 on:
   push:
-    branches: [master]
+    branches: [master, 'feature/**']
     tags: ['v*']
   pull_request:
     branches: [master]
+  # Removes a feature branch's pre-release when the branch is deleted
+  delete:
   workflow_dispatch:
 
 permissions:
@@ -13,7 +15,12 @@ permissions:
 
 jobs:
   build:
+    if: github.event_name != 'delete'
     runs-on: windows-latest
+    # A newer push to the same feature branch replaces the build still running
+    concurrency:
+      group: build-${{ github.ref }}
+      cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/feature/') }}
 
     steps:
       - uses: actions/checkout@v4
@@ -50,3 +57,32 @@ jobs:
           files: publish/DCP-Tool-win-x64.zip
           body: Requires the [.NET 6 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/6.0).
           generate_release_notes: true
+
+      # Each feature branch has one pre-release (tag build-<branch>) that always holds its latest build.
+      # Deleting and recreating it moves the tag to the new commit.
+      - name: Update feature branch pre-release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="build-${GITHUB_REF_NAME//\//-}"
+          gh release delete "$tag" --yes --cleanup-tag || true
+          gh release create "$tag" publish/DCP-Tool-win-x64.zip \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Test build: $GITHUB_REF_NAME" \
+            --notes "Latest build of the \`$GITHUB_REF_NAME\` branch (commit ${GITHUB_SHA::7}). For testing only, not a release. Requires the [.NET 6 Desktop Runtime (x64)](https://dotnet.microsoft.com/download/dotnet/6.0)."
+
+  # Runs from the workflow file on the default branch, so it only works once this file is on master
+  remove-feature-prerelease:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'feature/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.ref }}
+        run: gh release delete "build-${BRANCH//\//-}" --yes --cleanup-tag || true

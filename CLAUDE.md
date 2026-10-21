@@ -20,7 +20,7 @@ dotnet run --project DCP-Tool
 dotnet publish DCP-Tool -p:PublishProfile=FolderProfile
 ```
 
-CI (`.github/workflows/build.yml`) publishes a framework-dependent `win-x64` folder (users install the .NET 6 Desktop Runtime) on every push/PR to `master` and uploads it as a workflow artifact. Pushing a `v*` tag also attaches a zip of it to a GitHub Release. The app version comes from `<Version>` in the csproj, which CI overrides from the tag (`-p:Version`), so don't put version attributes back into `AssemblyInfo.cs`.
+CI (`.github/workflows/build.yml`) publishes a framework-dependent `win-x64` folder (users install the .NET 6 Desktop Runtime) on every push to `master` or `feature/**` and every PR to `master`, and uploads it as a workflow artifact. Pushing a `v*` tag also attaches a zip of it to a GitHub Release. Each push to a `feature/**` branch replaces that branch's pre-release (tag `build-<branch>`, `/` → `-`) with the new zip. Deleting the branch deletes its pre-release, but only once the workflow is on `master`, because `delete` events run the default branch's workflow. The app version comes from `<Version>` in the csproj, which CI overrides from the tag (`-p:Version`), so don't put version attributes back into `AssemblyInfo.cs`.
 
 There are no tests and no lint setup. The app accepts an optional `.dcp` file path as its first command-line argument and opens it on startup (`App.xaml.cs`).
 
