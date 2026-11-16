@@ -106,6 +106,6 @@ Padding lines have empty Genere SIAE, Tipo generazione, Marca and Edizione. Thei
 Limits:
 
 - **Only 10 lines.** Line 11 and later are silently left out.
-- The template itself contains customer data: the supplier's representative ("Georg Penn") and the RAI programme manager ("Brigitte Margesin"), plus sample values in the cells the writer overwrites.
+- The template itself contains customer data: the supplier's representative ("Georg Penn") and the RAI programme manager ("Philipp Nössing"), plus sample values in the cells the writer overwrites.
 - Any edit to the template that adds or removes a row or cell shifts the indices and breaks the export.
 - Dates use `ToShortDateString()`, i.e. the Windows user's date format.

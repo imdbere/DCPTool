@@ -30,7 +30,7 @@ Fixed together with the Artlist import:
 | What | Where |
 |---|---|
 | Supplier name "Penn Pro" | `DocumentWriter.FillHeader` |
-| "Georg Penn" (legal representative), "Brigitte Margesin" (RAI programme manager) | inside `dcp.docx` |
+| "Georg Penn" (legal representative), "Philipp Nössing" (RAI programme manager) | inside `dcp.docx` |
 | Only the three Bolzano sedi (`BZ/14`, `/15`, `/16`), `Textbox_Committente = "BZ/" + sede` | `Sede` enum, `GetBasicFormData` |
 | `Marca = "Sonoton"`, Sonoton title/album conventions | `DcpLineImporter.CreateSonotonLine` |
 | Genere SIAE `ML`, Ruolo `SF`, Tipo generazione `9` for every line | `DcpLineImporter` |
