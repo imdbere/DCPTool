@@ -37,7 +37,7 @@ jobs:
       VERSION: ${{ github.ref_name }}
       # Public repository that only holds installers and update packages (see doc/releasing.md).
       # Keep in sync with RepoUrl in src/DcpTool.App/Services/UpdateService.cs.
-      REPO_URL: https://github.com/imdbere/DCPTool-releases
+      REPO_URL: https://github.com/TheDiffi/DCPTool-releases
       RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
     steps:
       - uses: actions/checkout@v4
