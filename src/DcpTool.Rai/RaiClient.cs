@@ -280,7 +280,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
         return new UploadResult(Record(true), verified, warnings);
     }
 
-    private static string? ReadFormError(string html)
+    internal static string? ReadFormError(string html)
     {
         var text = Parse(html).GetElementbyId("MessageBarControl1_Table1")?.InnerText;
         text = text is null ? null : Regex.Replace(HtmlEntity.DeEntitize(text), @"\s+", " ").Trim();

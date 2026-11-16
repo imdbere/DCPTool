@@ -91,9 +91,9 @@ public class LegacyParityTests
             var line = Assert.Single(result.NewLines, l => l.Titolo == old.Titolo);
             Assert.Equal(old.Autori.Select(a => a.ToString()), line.Autori.Select(a => a.ToString()));
             Assert.Equal(old.Esecutori, line.Esecutori);
-            Assert.Equal(old.Marca, line.Marca);
+            Assert.Equal("Artlist", line.Marca); // RAI wants ARTLIST, v1 sent the cue sheet label
             Assert.Equal(old.SiglaNum, line.SiglaNum);
-            Assert.Equal(old.Edizione, line.Edizione);
+            Assert.Equal("", line.Edizione); // v1 sent the publisher, which RAI rejects
             Assert.Equal(old.Durata.TotalMilliseconds, line.Durata.TotalMilliseconds, tolerance: DurationToleranceMs);
             Assert.Equal("artlist", line.Origin!.SourceId);
         }
@@ -114,7 +114,7 @@ public class LegacyParityTests
         {
             Assert.Equal(oldResult.Lines[i].Titolo, result.NewLines[i].Titolo);
             Assert.Equal(oldResult.Lines[i].Esecutori, result.NewLines[i].Esecutori);
-            Assert.Equal(oldResult.Lines[i].Marca, result.NewLines[i].Marca);
+            Assert.Equal("Artlist", result.NewLines[i].Marca);
             Assert.Empty(result.NewLines[i].Autori);
             Assert.True(result.NewLines[i].Origin!.Incomplete);
         }

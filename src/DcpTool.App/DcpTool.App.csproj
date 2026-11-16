@@ -4,6 +4,7 @@
     <AssemblyName>DcpTool</AssemblyName>
     <RootNamespace>DcpTool.App</RootNamespace>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <!-- The generator needs a newer Roslyn than older SDKs ship; InitializeComponent is written by hand -->

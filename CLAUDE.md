@@ -56,7 +56,7 @@ Credentials are stored in user-scoped `Properties/Settings` (`Username`/`Passwor
 The rewrite lives next to v1: `DcpTool.sln`, `src/` and `tests/`. v1 (`DCP-Tool/`, `DCP-Tool.sln`) stays until v2 has replaced it, and `tests/DcpTool.Legacy` compiles the v1 sources so v2 is tested against v1's behaviour.
 
 ```bash
-dotnet test DcpTool.sln
+dotnet test --solution DcpTool.sln
 ```
 
 ```bash

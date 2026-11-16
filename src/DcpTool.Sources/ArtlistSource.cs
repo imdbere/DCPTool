@@ -95,9 +95,12 @@ public sealed class ArtlistSource : MusicSourceBase
         {
             line.Esecutori = cue.Performers;
         }
-        line.Marca = cue.Label ?? "Artlist";
+        // RAI knows the label as ARTLIST, not by the cue sheet's "Artlist Original"
+        line.Marca = "Artlist";
         line.SiglaNum = cue.AlbumUpc ?? cue.SongId ?? "";
-        line.Edizione = cue.PublisherName ?? "";
+        // RAI checks Edizione against its own publisher list and rejects Artlist's publishers
+        // ("L'edizione dell'opera n non è valida", seen on 2026-11-16), so it stays empty.
+        line.Edizione = "";
 
         var origin = line.Origin ?? new LineOrigin { SourceId = Id };
         line.Origin = origin with

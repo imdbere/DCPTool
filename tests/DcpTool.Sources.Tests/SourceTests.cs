@@ -107,9 +107,9 @@ public class ArtlistSourceTests
         Assert.Null(created.Warning);
         Assert.Equal("UP UNTIL SUNRISE", line.Titolo);
         Assert.Equal([new Autore("Youval", "Ziso")], line.Autori);
-        Assert.Equal("Artlist Original", line.Marca);
+        Assert.Equal("Artlist", line.Marca);
         Assert.Equal("194492126796", line.SiglaNum);
-        Assert.Equal("Artlist Records", line.Edizione);
+        Assert.Equal("", line.Edizione);
         Assert.Equal(TimeSpan.FromSeconds(200), line.Durata);
         Assert.False(line.Origin!.Incomplete);
         Assert.Equal("cue.xlsx", line.Origin.SidecarFile);
@@ -140,7 +140,7 @@ public class ArtlistSourceTests
         Assert.Same(empty, match.Line);
         Assert.Equal([new Autore("Youval", "Ziso")], empty.Autori);
         Assert.False(empty.Origin!.Incomplete);
-        Assert.Equal("Artlist Records", empty.Edizione);
+        Assert.Equal("", empty.Edizione);
         Assert.Equal([new Autore("A", "B")], done.Autori);
         Assert.Empty(other.Autori);
     }
