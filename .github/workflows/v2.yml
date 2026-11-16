@@ -35,7 +35,10 @@ jobs:
     runs-on: windows-latest
     env:
       VERSION: ${{ github.ref_name }}
-      REPO_URL: https://github.com/${{ github.repository }}
+      # Public repository that only holds installers and update packages (see doc/releasing.md).
+      # Keep in sync with RepoUrl in src/DcpTool.App/Services/UpdateService.cs.
+      REPO_URL: https://github.com/imdbere/DCPTool-releases
+      RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -55,7 +58,7 @@ jobs:
       # The previous release is needed to build the small delta update
       - name: Download previous release
         continue-on-error: true
-        run: vpk download github --repoUrl ${{ env.REPO_URL }} --token ${{ github.token }}
+        run: vpk download github --repoUrl ${{ env.REPO_URL }} --token ${{ env.RELEASES_TOKEN }}
 
       # Unsigned for now: add --signParams / --azureTrustedSignFile here once a certificate exists
       - name: Pack
@@ -65,4 +68,4 @@ jobs:
         shell: pwsh
         run: |
           $pre = if ($env:APP_VERSION -match '-') { '--pre' } else { '' }
-          vpk upload github --repoUrl $env:REPO_URL --token ${{ github.token }} --publish --releaseName "DCP Tool $env:APP_VERSION" --tag $env:VERSION $pre
+          vpk upload github --repoUrl $env:REPO_URL --token ${{ env.RELEASES_TOKEN }} --publish --releaseName "DCP Tool $env:APP_VERSION" --tag $env:VERSION $pre

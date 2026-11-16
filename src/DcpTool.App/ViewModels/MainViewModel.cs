@@ -31,6 +31,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly Dialogs _dialogs;
     private readonly DispatcherTimer _recoveryTimer = new() { Interval = TimeSpan.FromSeconds(1.5) };
     private readonly List<ImportMessage> _importMessages = [];
+
+    // What the last upload reported. Shown in the issues list until the next upload.
+    private readonly List<IssueItem> _uploadMessages = [];
     private bool _loading;
     private CancellationTokenSource? _operation;
     private Dcp _dcp = new();
@@ -137,6 +140,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             Renumber();
             _importMessages.Clear();
+            _uploadMessages.Clear();
             SelectedLine = null;
             FilePath = path;
             IsDirty = dirty;
@@ -214,6 +218,11 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var i in found)
         {
             Issues.Add(new IssueItem(i.IsError ? "Error" : "Warning", i.IsError ? Brushes.Crimson : Brushes.DarkOrange, i.Message, i.LineId));
+        }
+
+        foreach (var item in _uploadMessages)
+        {
+            Issues.Add(item);
         }
 
         foreach (var m in _importMessages)
@@ -678,9 +687,13 @@ public sealed partial class MainViewModel : ObservableObject
 
         var issues = Validate(ValidationPurpose.Upload);
         var errors = issues.Where(i => i.IsError).ToList();
+        _uploadMessages.Clear();
         if (errors.Count > 0)
         {
-            await _dialogs.ShowText("Cannot upload yet", "Fix these problems first:\n\n" + string.Join("\n", errors.Select(e => "- " + e.Message)));
+            // No dialog: the problems are in the list below the grid, each one selects its line
+            Revalidate();
+            ProgressText = $"Not uploaded: {errors.Count} problem(s) to fix first, see the list below.";
+            SelectedIssue = Issues.FirstOrDefault(i => i.Kind == "Error");
             return;
         }
 
@@ -706,20 +719,21 @@ public sealed partial class MainViewModel : ObservableObject
             dcp.Upload = result.Record;
             OnChanged();
             WriteRecovery();
-            ProgressText = "Upload finished.";
-
-            var text = $"Uploaded {result.Record.LinesSaved} line(s) to RAI." +
-                       (result.Verified ? " RAI's page lists every title." : " The result page could not be checked.") +
-                       (result.Warnings.Count > 0 ? "\n\nPlease check in RAI's form:\n" + string.Join("\n", result.Warnings.Select(w => "- " + w)) : "");
-            if (await _dialogs.Confirm("Upload finished", text, "Open in browser", "Close"))
+            ProgressText = $"Uploaded {result.Record.LinesSaved} line(s) to RAI." +
+                           (result.Verified ? " RAI's page lists every title." : "");
+            _uploadMessages.Add(new IssueItem("Info", Brushes.SeaGreen, ProgressText, null));
+            foreach (var w in result.Warnings)
             {
-                await OpenBrowserAsync(result.Url);
+                _uploadMessages.Add(new IssueItem("Warning", Brushes.DarkOrange, "Upload: " + w, null));
             }
+
+            Revalidate();
         }
         catch (OperationCanceledException)
         {
-            ProgressText = "Upload cancelled.";
-            await _dialogs.Message("Upload cancelled", "The upload was cancelled. RAI may already have saved part of the DCP.");
+            ProgressText = "Upload cancelled. RAI may already have saved part of the DCP.";
+            _uploadMessages.Add(new IssueItem("Warning", Brushes.DarkOrange, ProgressText, null));
+            Revalidate();
         }
         catch (RaiException ex)
         {
@@ -735,21 +749,38 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task HandleRaiFailureAsync(RaiException ex, Dcp dcp)
     {
-        ProgressText = "Upload failed.";
-        var text = ex.Message + (ex.PortalMessage is null ? "" : "\n\nRAI says: " + ex.PortalMessage);
+        // No dialog: everything goes into the issues list, RAI's messages attached to the lines they name
         if (ex.PartialUpload is { } partial)
         {
             dcp.Upload = partial;
             OnChanged();
             WriteRecovery();
-            text = $"THE UPLOAD IS INCOMPLETE. RAI saved {partial.LinesSaved} of {dcp.Lines.Count} lines and that partial DCP exists at RAI. " +
-                   "Do not simply upload again (it would create a second DCP): open RAI's DCP search and complete or delete the partial one.\n\n" + text;
+            _uploadMessages.Add(new IssueItem("Error", Brushes.Crimson,
+                $"The upload is incomplete: RAI saved {partial.LinesSaved} of {dcp.Lines.Count} lines, and that partial DCP exists at RAI. " +
+                "Complete or delete it in RAI's DCP search before uploading again, or a second DCP is created.", null));
         }
 
-        if (await _dialogs.Confirm("Upload failed", text + "\n\nSave diagnostics for the developers?", "Save diagnostics", "Close"))
+        if (ex.PortalMessages.Count == 0)
         {
-            await SaveDiagnostics();
+            _uploadMessages.Add(new IssueItem("Error", Brushes.Crimson, "Upload: " + ex.Message, null));
         }
+
+        foreach (var message in ex.PortalMessages)
+        {
+            // RAI numbers the lines ("opera 6") like the grid does
+            var match = System.Text.RegularExpressions.Regex.Match(message, @"opera\s+(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var line = match.Success && int.TryParse(match.Groups[1].Value, out var n) && n >= 1 && n <= dcp.Lines.Count ? dcp.Lines[n - 1] : null;
+            var title = line is null || string.IsNullOrWhiteSpace(line.Titolo) ? "" : $" ({line.Titolo.Trim()})";
+            _uploadMessages.Add(new IssueItem("Error", Brushes.Crimson, $"RAI: {message}{title}", line?.Id));
+        }
+
+        Revalidate();
+        var failed = _uploadMessages.Count(i => i.LineId is not null);
+        ProgressText = failed > 0
+            ? $"Upload failed: RAI rejected {failed} line(s), see the list below."
+            : "Upload failed, see the list below. RAI > Save diagnostics collects the details for the developers.";
+        SelectedIssue = Issues.FirstOrDefault(i => i.Kind == "Error" && i.LineId is not null) ?? SelectedIssue;
+        await Task.CompletedTask;
     }
 
     [RelayCommand]

@@ -43,6 +43,9 @@ public sealed class RaiException(RaiErrorKind kind, string message, Exception? i
     /// <summary>The error text RAI's page showed, if any.</summary>
     public string? PortalMessage { get; init; }
 
+    /// <summary>The single messages of RAI's page, e.g. one per rejected line ("L'edizione dell'opera 6 non è valida").</summary>
+    public IReadOnlyList<string> PortalMessages { get; init; } = [];
+
     /// <summary>
     /// Set when an upload failed after RAI had already saved part of the DCP. That partial DCP exists at
     /// RAI, and uploading again would create a second one.

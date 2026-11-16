@@ -19,5 +19,8 @@ public class RealPageTests
         var error = RaiClient.ReadFormError(Page("form-edizione-rejected.html"));
         Assert.NotNull(error);
         Assert.Contains("L'edizione dell'opera 6 non", error);
+        var single = RaiClient.ReadFormErrors(Page("form-edizione-rejected.html"));
+        Assert.Equal(3, single.Count);
+        Assert.StartsWith("L'edizione dell'opera 8", single[2]);
     }
 }

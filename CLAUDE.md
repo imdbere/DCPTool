@@ -71,4 +71,4 @@ Targets `net10.0`. On a machine with only an older SDK set the environment varia
 - `DcpTool.Export`: `DocxExporter`, fills the embedded template by label text.
 - `DcpTool.App`: Avalonia 12 UI (MVVM), Velopack updates. Not yet exercised by hand.
 
-Releases: pushing a tag `v2.x.y` runs `.github/workflows/v2.yml`, which packs with Velopack and publishes a GitHub release that installed apps pick up. v1 releases use `v0.*` / `v1.*` tags.
+Releases: pushing a tag `v2.x.y` runs `.github/workflows/v2.yml`, which packs with Velopack and publishes to the public releases-only repository that installed apps update from. Setup and procedure: `doc/releasing.md`. v1 releases use `v0.*` / `v1.*` tags.

@@ -256,7 +256,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
                 var error = ReadFormError(res.Body);
                 if (error is not null)
                 {
-                    throw new RaiException(RaiErrorKind.FormRejected, "RAI rejected the DCP: " + error) { PortalMessage = error };
+                    throw new RaiException(RaiErrorKind.FormRejected, "RAI rejected the DCP: " + error) { PortalMessage = error, PortalMessages = ReadFormErrors(res.Body) };
                 }
 
                 last = res;
@@ -270,6 +270,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
                     $"{e.Message} RAI has already saved {saved} of {total} lines of this DCP; check it in RAI before uploading again, or a second DCP is created.", e.InnerException)
                 {
                     PortalMessage = e.PortalMessage,
+                    PortalMessages = e.PortalMessages,
                     PartialUpload = Record(false),
                 };
             }
@@ -282,9 +283,34 @@ public sealed class RaiClient : IRaiClient, IDisposable
 
     internal static string? ReadFormError(string html)
     {
-        var text = Parse(html).GetElementbyId("MessageBarControl1_Table1")?.InnerText;
-        text = text is null ? null : Regex.Replace(HtmlEntity.DeEntitize(text), @"\s+", " ").Trim();
-        return string.IsNullOrEmpty(text) ? null : text;
+        var messages = ReadFormErrors(html);
+        return messages.Count == 0 ? null : string.Join(" ", messages);
+    }
+
+    /// <summary>The single messages of RAI's message bar.</summary>
+    internal static IReadOnlyList<string> ReadFormErrors(string html)
+    {
+        var table = Parse(html).GetElementbyId("MessageBarControl1_Table1");
+        if (table is null)
+        {
+            return [];
+        }
+
+        static string Clean(string s) => Regex.Replace(HtmlEntity.DeEntitize(s), @"\s+", " ").Trim();
+        var cells = (table.SelectNodes(".//td") ?? Enumerable.Empty<HtmlNode>())
+            .Where(td => td.SelectNodes(".//td") is null)
+            // Several messages share a cell, separated by <br>
+            .SelectMany(td => Regex.Split(td.InnerHtml, @"<br\s*/?>", RegexOptions.IgnoreCase))
+            .Select(part => Clean(Regex.Replace(part, "<[^>]+>", " ")))
+            .Where(t => t.Length > 0)
+            .ToList();
+        if (cells.Count > 0)
+        {
+            return cells;
+        }
+
+        var all = Clean(table.InnerText);
+        return all.Length == 0 ? [] : [all];
     }
 
     /// <summary>Copies the ASP.NET state fields of the previous page into the next POST. Without __VIEWSTATE the form wouldn't accept it.</summary>

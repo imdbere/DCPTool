@@ -14,7 +14,10 @@ public enum UpdateCheckOutcome
 /// <summary>Velopack updates from the GitHub releases. Never throws: every failure is an outcome.</summary>
 public sealed class UpdateService(bool includePrereleases)
 {
-    private const string RepoUrl = "https://github.com/imdbere/DCPTool";
+    // A public repository that holds only the installers and update packages. The source repository is
+    // private, and an app can't read a private repository's releases without shipping a token.
+    // Keep in sync with RELEASES_REPO in .github/workflows/v2.yml. See doc/releasing.md.
+    private const string RepoUrl = "https://github.com/imdbere/DCPTool-releases";
     private UpdateManager? _manager;
     private UpdateInfo? _ready;
 
