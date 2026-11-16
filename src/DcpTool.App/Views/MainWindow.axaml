@@ -65,8 +65,8 @@
 
     <!-- Issues -->
     <Border DockPanel.Dock="Bottom" Height="150" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-      <DockPanel Margin="8,4">
-        <TextBlock DockPanel.Dock="Top" Classes="group" Text="{Binding IssueSummary, StringFormat='Issues: {0}'}" />
+      <TabControl Margin="8,0" Padding="0">
+        <TabItem Header="{Binding IssueSummary, StringFormat='Issues: {0}'}" FontSize="13">
         <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:IssueItem">
@@ -77,7 +77,11 @@
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-      </DockPanel>
+        </TabItem>
+        <TabItem Header="Log" FontSize="13">
+          <ListBox ItemsSource="{Binding Activity}" FontFamily="Consolas,Menlo,monospace" FontSize="12" />
+        </TabItem>
+      </TabControl>
     </Border>
 
     <Grid RowDefinitions="Auto,Auto,*" Margin="8" IsEnabled="{Binding !IsBusy}">

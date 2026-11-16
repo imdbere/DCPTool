@@ -106,6 +106,41 @@ public sealed partial class MainViewModel : ObservableObject
     public IReadOnlyList<string> ImportPatterns => _importService.FilePatterns;
     public bool CanImportPath(string path) => _importService.CanImport(path);
 
+    /// <summary>What the app did, newest last. Also written to a daily file in the log folder.</summary>
+    public ObservableCollection<string> Activity { get; } = [];
+
+    /// <summary>Folder of the activity log files. Set once at start.</summary>
+    public string? ActivityLogFolder { get; set; }
+
+    // Every status text is an event worth keeping: import results, login, each upload step, failures
+    partial void OnProgressTextChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        var entry = $"{DateTime.Now:HH:mm:ss}  {value}";
+        Activity.Add(entry);
+        while (Activity.Count > 500)
+        {
+            Activity.RemoveAt(0);
+        }
+
+        if (ActivityLogFolder is { } folder)
+        {
+            try
+            {
+                Directory.CreateDirectory(folder);
+                File.AppendAllText(Path.Combine(folder, $"activity-{DateTime.Now:yyyyMMdd}.log"), entry + Environment.NewLine);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // The log is a convenience and must never get in the way of the work
+            }
+        }
+    }
+
     partial void OnFilePathChanged(string? value) => OnFileStateChanged();
     partial void OnIsDirtyChanged(bool value) => OnFileStateChanged();
 

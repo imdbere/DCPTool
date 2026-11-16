@@ -32,6 +32,19 @@ public partial class App : Application
             ICredentialStore credentials = OperatingSystem.IsWindows()
                 ? new DpapiCredentialStore(paths)
                 : new MemoryCredentialStore();
+
+            // First start after DCP Tool 0.x: take over its RAI login. The password moves from v1's
+            // plain-text settings into the protected store; v1's own file is left as it is.
+            if (settings.RaiUsername.Length == 0 && LegacySettings.TryReadLogin() is { } old)
+            {
+                settings.RaiUsername = old.Username;
+                if (old.Password.Length > 0 && credentials.IsPersistent)
+                {
+                    credentials.SavePassword(old.Username, old.Password);
+                }
+
+                settingsStore.Save(settings);
+            }
             _dialogs = new Dialogs();
             _viewModel = new MainViewModel(
                 settings,
@@ -42,7 +55,10 @@ public partial class App : Application
                 new DocxExporter(),
                 credentials,
                 new UpdateService(settings.IncludePrereleases),
-                _dialogs);
+                _dialogs)
+            {
+                ActivityLogFolder = paths.LogFolder,
+            };
 
             AppDomain.CurrentDomain.UnhandledException += (_, e) => OnUnhandled(e.ExceptionObject as Exception, "domain");
             TaskScheduler.UnobservedTaskException += (_, e) =>
