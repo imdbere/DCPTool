@@ -59,6 +59,12 @@ public sealed class AppSettings
 
     public RaiPortalSettings RaiPortal { get; set; } = new();
 
+    /// <summary>
+    /// The folder that holds the user's DCPs as .dcp files (the library). Null until the user has chosen one;
+    /// the app then works with single files only, as before.
+    /// </summary>
+    public string? LibraryFolder { get; set; }
+
     public bool CheckForUpdates { get; set; } = true;
 
     /// <summary>Also offer pre-release versions.</summary>
