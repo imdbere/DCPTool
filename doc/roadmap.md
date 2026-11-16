@@ -101,7 +101,21 @@ agree on it, then build.
   RAI login in one guided screen.
 - **Grid control.** Avalonia's free DataGrid only gets bug fixes. Decide during the concept whether
   the lines become a custom list (cards or rows built from standard controls) instead of a grid.
-- **Language.** Decide the UI language(s): English today, users work in German and Italian.
+- **Language (decided 2026-11-16).** The UI is available in German and Italian, English optional.
+  Code, comments, logs, file formats and diagnostics stay English. RAI field names (Titolo, Autori ...)
+  are not translated in any language, they are the form's own terms. See "Localisation" below.
+
+### Localisation (first step of M3, before the redesign multiplies the strings)
+
+- One resource file per language (`Strings.resx`, `Strings.de.resx`, `Strings.it.resx`) with English as
+  the base and the fallback. Views bind to keys, never to literal text.
+- Messages that come from below the UI (validation, import, RAI client, export, file errors) are
+  identified by a stable code plus arguments, and the app turns them into text. The validator already
+  has codes; import messages and `RaiException` get them. English text stays in the log and diagnostics.
+- Language setting: "System" (default), Deutsch, Italiano, English. Dates, times and numbers follow it.
+- RAI's own messages ("L'edizione dell'opera 6 non è valida") are shown as RAI wrote them.
+- The Word form is an Italian RAI document and stays Italian.
+- Translations need a native check for both languages before release (owner: team).
 
 Done when: a new user creates, fills, uploads and exports a DCP without opening the menu, and the
 design has been reviewed on a real screen.
