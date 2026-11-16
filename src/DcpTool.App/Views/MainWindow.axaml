@@ -41,6 +41,7 @@
         <MenuItem Header="_Log in..." Command="{Binding LogInCommand}" />
         <MenuItem Header="Open DCP _search in browser" Command="{Binding OpenDcpSearchCommand}" />
         <Separator />
+        <MenuItem Header="Open this DCP at _RAI" Command="{Binding OpenRaiDcpCommand}" />
         <MenuItem Header="_Forget the earlier upload..." Command="{Binding ForgetUploadCommand}" />
         <MenuItem Header="Save _diagnostics..." Command="{Binding SaveDiagnosticsCommand}" />
       </MenuItem>
@@ -54,7 +55,11 @@
     <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <Grid ColumnDefinitions="Auto,16,Auto,16,*,Auto,8,Auto">
         <TextBlock Text="{Binding FileText}" VerticalAlignment="Center" />
-        <TextBlock Grid.Column="2" Text="{Binding LoginText}" VerticalAlignment="Center" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="{Binding LoginText}" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding RaiDcpText}" FontWeight="SemiBold" VerticalAlignment="Center" IsVisible="{Binding HasRaiDcp}" />
+          <Button Content="Open at RAI" Command="{Binding OpenRaiDcpCommand}" IsVisible="{Binding HasRaiDcp}" Padding="8,2" />
+        </StackPanel>
         <TextBlock Grid.Column="4" Text="{Binding ProgressText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
         <Button Grid.Column="5" Content="Cancel" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" />
         <Button Grid.Column="7" Content="Update ready - restart" Command="{Binding RestartForUpdateCommand}" IsVisible="{Binding UpdateReady}" />

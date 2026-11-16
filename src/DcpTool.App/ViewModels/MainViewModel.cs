@@ -273,6 +273,8 @@ public sealed partial class MainViewModel : ObservableObject
 
         SelectedLine = selected;
         OnPropertyChanged(nameof(IssueSummary));
+        OnPropertyChanged(nameof(HasRaiDcp));
+        OnPropertyChanged(nameof(RaiDcpText));
     }
 
     // ---------------------------------------------------------------- startup / shutdown
@@ -989,6 +991,43 @@ public sealed partial class MainViewModel : ObservableObject
             IsBusy = false;
             RefreshLogin();
         }
+    }
+
+    /// <summary>True when this DCP was saved at RAI by an upload, completely or in part.</summary>
+    public bool HasRaiDcp => !string.IsNullOrEmpty(_dcp.Upload?.Url);
+
+    /// <summary>RAI's code and state of this DCP for the status bar, e.g. "RAI 1788316-00 (Bozza)".</summary>
+    public string RaiDcpText
+    {
+        get
+        {
+            if (_dcp.Upload is not { } record)
+            {
+                return "";
+            }
+
+            var text = "RAI " + (record.Codice ?? "DCP") + (record.Stato is null ? "" : $" ({record.Stato})");
+            return record.Complete ? text : $"{text}, {record.LinesSaved} of {_dcp.Lines.Count} lines saved";
+        }
+    }
+
+    /// <summary>Opens the page of this DCP at RAI, which is much easier than finding it in RAI's search.</summary>
+    [RelayCommand]
+    private async Task OpenRaiDcp()
+    {
+        if (_dcp.Upload is not { Url.Length: > 0 } record || !Uri.TryCreate(record.Url, UriKind.Absolute, out var uri)
+            || !string.Equals(uri.Host, _rai.PortalUri.Host, StringComparison.OrdinalIgnoreCase))
+        {
+            ProgressText = "This DCP has not been uploaded to RAI yet.";
+            return;
+        }
+
+        if (!_rai.IsLoggedIn && !await EnsureLoginAsync())
+        {
+            return;
+        }
+
+        await OpenBrowserAsync(uri);
     }
 
     [RelayCommand]
