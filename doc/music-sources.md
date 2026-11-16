@@ -27,7 +27,7 @@ Unchanged from before the Artlist work:
 | Autori | composer tag | split at `\|`. `"Cognome, Nome"` if there is a comma, otherwise the last word is the Cognome |
 | Esecutori | artist tag | split at `\|`, joined with `, `. Falls back to the Autori |
 | Marca | — | fixed `Sonoton` |
-| Sigla / numero | album tag | the part before the first `-` (`"SCDV 579 - Dark Worlds"` → `"SCDV 579 "`) |
+| Sigla / numero | album tag | the part before the first `-` (`"SCDV 579 - Dark Worlds"` → `"SCDV 579 "`). Albums without a `-` give the whole album name (`"MSC211 Fun Times"`), which RAI accepts |
 | Edizione | — | empty. The Word export prints the Marca in the Edizione column instead |
 
 The importer used to enrich lines through the Sonofind API (`SonofindInterface`, looked up by the CD code at the start of the file name). That call has been disabled since the tags carry all the data.
@@ -94,7 +94,7 @@ It then matches:
 
 Not used (no field for them in the RAI form): ISRC, ISWC (always empty so far), IPI numbers, PRO affiliations, splits, the writer role. `ArtlistWriter.DcpRole` already maps the role to the paper form's codes (C/A/CA → `A`, AR → `arr`, AD/TR/SR → `E`, other → `Y`) in case the rewrite needs it.
 
-Titles are upper-cased to match the Sonoton data, which arrives in upper case.
+Titles are upper-cased. Sonoton titles come as they are in the tags, which is sometimes upper case (`SCOOBY DOOBY`) and sometimes not (`Playful Adventure`); RAI accepts both.
 
 ### Validation
 
