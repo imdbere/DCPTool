@@ -88,7 +88,7 @@ It then matches:
 | Autori | every *Writers* row, *Full Legal Name* (last word = Cognome) | **empty**, a warning is shown and the upload is refused |
 | Esecutori | *Primary Artist/s* + *Featured Artist/s* | artist tag |
 | Durata | audio file | audio file |
-| Marca | *Label* (`Artlist Original`, uploaded as `ARTLIST ORIGINAL`) | `Artlist` |
+| Marca | always `Artlist` (uploaded as `ARTLIST`, which RAI accepts). The cue sheet's *Label* (`Artlist Original`) is rejected by RAI | `Artlist` |
 | Sigla / numero | *Album UPC*, else the song ID from the file name | empty |
 | Edizione | *Publisher Name* (grid and Word export only, never uploaded: RAI rejected it) | empty |
 
@@ -103,7 +103,7 @@ Upload refuses any DCP where a line has no Autori ("Autori missing on: …"). Th
 ### Not tested yet
 
 - Cue sheets with **several writers** or with **featured artists**. None of the examples has them. The reader handles extra writer rows by design.
-- Which Marca RAI accepts for Artlist. The first real upload (November 2026) rejected both `ARTLIST ORIGINAL` as Marca and `ARTLIST ORIGINAL MUSIC` as Edizione, so Edizione is no longer uploaded. See [rewrite-notes.md](rewrite-notes.md#open-questions-for-rais-dcp-office).
+- ~~Which Marca RAI accepts for Artlist.~~ Answered in November 2026: RAI rejected `ARTLIST ORIGINAL` as Marca and `ARTLIST ORIGINAL MUSIC` as Edizione, and accepts `ARTLIST` as Marca. Edizione is no longer uploaded. See [rewrite-notes.md](rewrite-notes.md#open-questions-for-rais-dcp-office).
 - Artlist **WAV** downloads. Their metadata is unknown. Without tags, matching falls back to the file name.
 
 ### Licensing notes (from the Artlist analysis, October 2026)

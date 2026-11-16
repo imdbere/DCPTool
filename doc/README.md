@@ -34,7 +34,7 @@ The model uses the Italian names of the RAI form fields. Keep them, because they
 | Genere SIAE | SIAE genre. Always `ML` (presumably *musica leggera*) in this tool |
 | Ruolo | How the music is used. The code knows `PP`, `SF`, `SI` (presumably *primo piano*, *sottofondo* = background, *sigla* = theme) and always uses `SF` |
 | Tipo generazione | `9` = recorded work (*opera su disco*), `1` = live |
-| Marca | Label / library (`SONOTON`, `ARTLIST ORIGINAL`) |
+| Marca | Label / library. Must be on RAI's list (`SONOTON`, `ARTLIST`) |
 | Sigla / numero | Catalogue code of the recording (Sonoton CD code `SCDV 579`, Artlist album UPC) |
 | Edizione | Music publisher |
 | Proprietà | Ownership code. Never filled by the tool |

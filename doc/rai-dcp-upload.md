@@ -76,7 +76,7 @@ Each line `n` (0-based, counted over the whole DCP) uses the prefix `DataGrid1:_
 | `AuthorsControl_AutoriOpera:HiddenText` | authors, see below |
 | `TimeControl_Durata:hh/mm/ss` | `Durata` (fractions of a second are dropped) |
 | `CheckControl_TipoGenerazione:TextBox1` | `9` (`TabTipoGenerazione`) |
-| `CheckControlMarca_MarcaOpera:TextBox1` | `Marca`, upper case. RAI checks it against its own list: `SONOTON` is accepted, `ARTLIST ORIGINAL` was rejected ("La marca dell'opera 6 non è valida") |
+| `CheckControlMarca_MarcaOpera:TextBox1` | `Marca`, upper case. RAI checks it against its own list: `SONOTON` and `ARTLIST` are accepted, `ARTLIST ORIGINAL` was rejected ("La marca dell'opera 6 non è valida") |
 | `CheckControlEdizione_EdizioneOpera:TextBox1` | always empty. RAI checks it against its own list of publishers and rejected Artlist's ("L'edizione dell'opera 6 non è valida", November 2026) |
 | `CheckControlEdizione_EdizioneOpera:Edizione_esiste` | always empty. Presumably set by the form's publisher lookup |
 | `TextBox_SiglaNum` | `SiglaNum` |

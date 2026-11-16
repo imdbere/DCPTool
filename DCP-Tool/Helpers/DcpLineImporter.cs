@@ -191,7 +191,8 @@ namespace DCP_Tool.Helpers
             {
                 line.Esecutori = cueSheet.Performers;
             }
-            line.Marca = cueSheet.Label ?? "Artlist";
+            // RAI only accepts Marca values from its own list: "ARTLIST" is on it, the cue sheet's label ("Artlist Original") is not
+            line.Marca = "Artlist";
             line.SiglaNum = cueSheet.AlbumUpc ?? cueSheet.SongId ?? "";
             line.Edizione = cueSheet.PublisherName ?? "";
         }
