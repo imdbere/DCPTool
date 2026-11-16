@@ -104,7 +104,7 @@ public static class DcpValidator
                     record.Complete
                         ? $"This DCP was already uploaded on {record.UploadedAt.LocalDateTime:g}. Uploading again creates a second DCP at RAI."
                         : $"An upload on {record.UploadedAt.LocalDateTime:g} stopped after {record.LinesSaved} of {dcp.Lines.Count} lines. " +
-                          "That partial DCP still exists at RAI. Uploading again creates a second one.",
+                          $"Uploading again continues that DCP{(record.Codice is null ? "" : " (" + record.Codice + ")")} at RAI.",
                     nameof(Dcp.Upload));
             }
         }

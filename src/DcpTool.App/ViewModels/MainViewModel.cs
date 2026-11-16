@@ -662,6 +662,30 @@ public sealed partial class MainViewModel : ObservableObject
             ? "  No problems found."
             : string.Join("\n", issues.Select(i => $"  [{(i.IsError ? "Error" : "Warning")}] {i.Message}"));
 
+    /// <summary>Drops what is known about an earlier upload, so the next upload creates a new DCP at RAI.</summary>
+    [RelayCommand]
+    private async Task ForgetUpload()
+    {
+        if (_dcp.Upload is null)
+        {
+            ProgressText = "This DCP has no earlier upload.";
+            return;
+        }
+
+        var what = _dcp.Upload.Codice is { } codice ? $"DCP {codice}" : "the DCP";
+        if (!await _dialogs.Confirm("Forget the earlier upload",
+                $"The next upload will create a new DCP at RAI. {what} that was saved there earlier is not deleted; delete it in RAI's DCP search if it is not needed.",
+                "Forget", "Cancel"))
+        {
+            return;
+        }
+
+        _dcp.Upload = null;
+        OnChanged();
+        Revalidate();
+        ProgressText = "The earlier upload was forgotten.";
+    }
+
     [RelayCommand]
     private async Task ShowUploadPreview()
     {
@@ -697,7 +721,9 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (issues.FirstOrDefault(i => i.Code == "already-uploaded") is { } again &&
+        // A complete upload would be duplicated, so ask. An incomplete one is continued on its draft at RAI.
+        if (_dcp.Upload is { Complete: true } &&
+            issues.FirstOrDefault(i => i.Code == "already-uploaded") is { } again &&
             !await _dialogs.Confirm("Already uploaded", again.Message + "\n\nUpload anyway?", "Upload again", "Cancel"))
         {
             return;
@@ -719,7 +745,7 @@ public sealed partial class MainViewModel : ObservableObject
             dcp.Upload = result.Record;
             OnChanged();
             WriteRecovery();
-            ProgressText = $"Uploaded {result.Record.LinesSaved} line(s) to RAI." +
+            ProgressText = $"Uploaded {result.Record.LinesSaved} line(s) to RAI{(result.Record.Codice is { } c ? $" as DCP {c}" + (result.Record.Stato is { } st ? $" ({st})" : "") : "")}." +
                            (result.Verified ? " RAI's page lists every title." : "");
             _uploadMessages.Add(new IssueItem("Info", Brushes.SeaGreen, ProgressText, null));
             foreach (var w in result.Warnings)

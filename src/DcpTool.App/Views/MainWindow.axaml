@@ -41,6 +41,7 @@
         <MenuItem Header="_Log in..." Command="{Binding LogInCommand}" />
         <MenuItem Header="Open DCP _search in browser" Command="{Binding OpenDcpSearchCommand}" />
         <Separator />
+        <MenuItem Header="_Forget the earlier upload..." Command="{Binding ForgetUploadCommand}" />
         <MenuItem Header="Save _diagnostics..." Command="{Binding SaveDiagnosticsCommand}" />
       </MenuItem>
       <MenuItem Header="_Help">

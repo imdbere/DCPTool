@@ -67,7 +67,7 @@ public class RaiClientTests
         var posts = portal.FormPosts.ToList();
         Assert.Equal(2, posts.Count);
         Assert.False(portal.ViewStateChainBroken);
-        Assert.EndsWith("ID=7", posts[1].Uri.Query); // second POST goes to the previous answer's address
+        Assert.EndsWith("codice_dcp=7", posts[1].Uri.Query); // second POST goes to the previous answer's address
         Assert.Equal("Song 4", posts[1].Get("DataGrid1:_ctl5:TextBox_TitoloOpera"));
         Assert.Equal("", posts[1].Get("DataGrid1:_ctl9:TextBox_TitoloOpera")); // padding
         Assert.True(result.Verified);
@@ -136,7 +136,72 @@ public class RaiClientTests
         Assert.NotNull(e.PartialUpload);
         Assert.Equal(4, e.PartialUpload!.LinesSaved);
         Assert.False(e.PartialUpload.Complete);
-        Assert.EndsWith("ID=7", e.PartialUpload.Url);
+        Assert.EndsWith("codice_dcp=7", e.PartialUpload.Url);
+    }
+
+    [Fact]
+    public async Task UploadAfterPartialUploadContinuesTheSameDcp()
+    {
+        var portal = new FakePortal { RejectPost = 2 };
+        using var client = NewClient(portal);
+        await client.LoginAsync(Good, Ct);
+        var dcp = MakeDcp(9);
+        var e = await Assert.ThrowsAsync<RaiException>(() => client.UploadAsync(dcp, null, Ct));
+        dcp.Upload = e.PartialUpload;
+        Assert.Equal("7-00", dcp.Upload!.Codice);
+        Assert.Equal("Bozza", dcp.Upload.Stato);
+        var before = portal.Requests.Count;
+
+        // The user corrects a line that was already saved, then uploads again
+        dcp.Lines[1].Titolo = "Song 2 corrected";
+        var result = await client.UploadAsync(dcp, null, Ct);
+
+        var resumed = portal.Requests.Skip(before).ToList();
+        Assert.Equal(HttpMethod.Get, resumed[0].Method);
+        Assert.EndsWith("codice_dcp=7", resumed[0].Uri.Query); // opens the draft, not a new form
+        Assert.All(resumed, r => Assert.Contains("codice_dcp=7", r.Uri.Query));
+        var posts = resumed.Where(r => r.Method == HttpMethod.Post).ToList();
+        Assert.Equal(2, posts.Count); // lines 5-8, then 9
+        Assert.Equal("Song 2 corrected", posts[0].Get("DataGrid1:_ctl3:TextBox_TitoloOpera"));
+        Assert.Equal("Song 8", posts[0].Get("DataGrid1:_ctl9:TextBox_TitoloOpera"));
+        Assert.Equal("Song 9", posts[1].Get("DataGrid1:_ctl10:TextBox_TitoloOpera"));
+        Assert.False(portal.ViewStateChainBroken);
+        Assert.True(result.Record.Complete);
+        Assert.Equal(9, result.Record.LinesSaved);
+        Assert.Equal("7-00", result.Record.Codice);
+        Assert.True(result.Verified);
+    }
+
+    [Fact]
+    public async Task ResumeFailsClearlyWhenTheDraftIsGone()
+    {
+        var portal = new FakePortal { RejectPost = 2 };
+        using var client = NewClient(portal);
+        await client.LoginAsync(Good, Ct);
+        var dcp = MakeDcp(5);
+        dcp.Upload = (await Assert.ThrowsAsync<RaiException>(() => client.UploadAsync(dcp, null, Ct))).PartialUpload;
+        portal.DraftDeleted = true;
+        var posts = portal.FormPosts.Count();
+
+        var e = await Assert.ThrowsAsync<RaiException>(() => client.UploadAsync(dcp, null, Ct));
+
+        Assert.Equal(RaiErrorKind.UnexpectedPage, e.Kind);
+        Assert.Contains("not found", e.Message);
+        Assert.Equal(posts, portal.FormPosts.Count()); // nothing was sent, so no second DCP
+    }
+
+    [Fact]
+    public async Task DraftAddressOnAnotherHostIsNeverUsed()
+    {
+        var portal = new FakePortal();
+        using var client = NewClient(portal);
+        await client.LoginAsync(Good, Ct);
+        var dcp = MakeDcp(2);
+        dcp.Upload = new UploadRecord { Url = "https://evil.example/DettaglioDCP.aspx?codice_dcp=7", LinesSaved = 4, Complete = false };
+
+        await client.UploadAsync(dcp, null, Ct);
+
+        Assert.All(portal.Requests, r => Assert.Equal("www.intranetssl.rai.it", r.Uri.Host));
     }
 
     [Fact]

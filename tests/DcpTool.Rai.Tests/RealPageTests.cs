@@ -14,6 +14,13 @@ public class RealPageTests
     public void PagesWithoutErrorGiveNoError(string name) => Assert.Null(RaiClient.ReadFormError(Page(name)));
 
     [Fact]
+    public void CodeAndStateAreReadFromASavedDcp()
+    {
+        Assert.Equal(("1788111-00", "Bozza"), RaiClient.ReadDcpInfo(Page("form-after-first-save.html")));
+        Assert.Equal((null, "Nuovo"), RaiClient.ReadDcpInfo(Page("form-empty.html"))); // a new form has a state but no code yet
+    }
+
+    [Fact]
     public void DiagnosticsRemovePeoplesNames()
     {
         var page = Page("form-after-first-save.html");

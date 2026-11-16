@@ -231,16 +231,51 @@ public sealed class RaiClient : IRaiClient, IDisposable
         var batchSize = _options.BatchSize;
         var formUri = GetPageUri(RaiPage.DettaglioDcp);
 
-        progress?.Report(new UploadProgress(0, total, "Opening RAI's form"));
+        // An earlier upload that stopped part-way left a draft at RAI. Continue on that draft instead of
+        // creating a second DCP. Every POST carries all lines so far, so corrected lines are saved again too.
+        var draft = DraftToResume(dcp);
+        if (draft is not null)
+        {
+            formUri = draft;
+        }
+
+        progress?.Report(new UploadProgress(0, total, draft is null ? "Opening RAI's form" : "Opening the DCP saved earlier"));
         var last = await GetPageAsync(formUri, cancellationToken);
 
         var form = new FormBody();
         form.SetRange(DcpFormMapper.Header(dcp));
         var url = formUri;
         var saved = 0;
-        UploadRecord Record(bool complete) => new() { UploadedAt = DateTimeOffset.Now, Url = url.ToString(), LinesSaved = saved, Complete = complete };
+        var firstBatch = 0;
+        var (codice, stato) = (dcp.Upload?.Codice, dcp.Upload?.Stato);
+        UploadRecord Record(bool complete) => new()
+        {
+            UploadedAt = DateTimeOffset.Now, Url = url.ToString(), LinesSaved = saved, Complete = complete, Codice = codice, Stato = stato,
+        };
 
-        for (var i = 0; i < batches; i++)
+        if (draft is not null)
+        {
+            var (foundCodice, foundStato) = ReadDcpInfo(last.Body);
+            if (foundCodice is null)
+            {
+                throw new RaiException(RaiErrorKind.UnexpectedPage,
+                    "The DCP that an earlier upload saved was not found at RAI (it may have been deleted there). " +
+                    "Choose \"Forget the earlier upload\" and upload again to create a new one.");
+            }
+
+            (codice, stato) = (foundCodice, foundStato);
+            firstBatch = Math.Min(dcp.Upload!.LinesSaved / batchSize, batches - 1);
+            saved = firstBatch * batchSize;
+            for (var i = 0; i < firstBatch; i++)
+            {
+                form.SetRange(DcpFormMapper.Lines(dcp, i * batchSize, batchSize));
+            }
+
+            url = last.Uri;
+            progress?.Report(new UploadProgress(saved, total, $"Continuing DCP {codice}"));
+        }
+
+        for (var i = firstBatch; i < batches; i++)
         {
             try
             {
@@ -261,6 +296,8 @@ public sealed class RaiClient : IRaiClient, IDisposable
 
                 last = res;
                 url = res.Uri;
+                var info = ReadDcpInfo(res.Body);
+                (codice, stato) = (info.Codice ?? codice, info.Stato ?? stato);
                 saved = Math.Min((i + 1) * batchSize, total);
                 progress?.Report(new UploadProgress(saved, total, $"Saved {saved} of {total} lines"));
             }
@@ -279,6 +316,33 @@ public sealed class RaiClient : IRaiClient, IDisposable
         var warnings = new List<string>();
         var verified = Verify(dcp, last.Body, warnings);
         return new UploadResult(Record(true), verified, warnings);
+    }
+
+    /// <summary>
+    /// The address of the draft an earlier, incomplete upload left behind, or null to start a new DCP.
+    /// Only addresses on the portal itself count: the value comes from a .dcp file, and the form data
+    /// must never be posted anywhere else.
+    /// </summary>
+    private Uri? DraftToResume(Dcp dcp) =>
+        dcp.Upload is { Complete: false, LinesSaved: > 0 } record
+        && Uri.TryCreate(record.Url, UriKind.Absolute, out var uri)
+        && uri.Scheme == PortalUri.Scheme
+        && string.Equals(uri.Host, PortalUri.Host, StringComparison.OrdinalIgnoreCase)
+        && uri.Query.Contains("codice_dcp=", StringComparison.OrdinalIgnoreCase)
+            ? uri
+            : null;
+
+    /// <summary>RAI's code and state of the DCP a page shows ("1788111-00", "Bozza"). Nulls for the empty form.</summary>
+    internal static (string? Codice, string? Stato) ReadDcpInfo(string html)
+    {
+        var doc = Parse(html);
+        static string? Text(HtmlNode? node)
+        {
+            var text = node is null ? "" : HtmlEntity.DeEntitize(node.InnerText).Trim();
+            return text.Length == 0 ? null : text;
+        }
+
+        return (Text(doc.GetElementbyId("Label_CodiceDCP")), Text(doc.GetElementbyId("Label_Stato")));
     }
 
     internal static string? ReadFormError(string html)

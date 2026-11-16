@@ -99,4 +99,10 @@ public sealed class UploadRecord
     public int LinesSaved { get; set; }
 
     public bool Complete { get; set; }
+
+    /// <summary>RAI's code of the DCP as its page shows it, e.g. <c>1788111-00</c>. Null when the page didn't show one.</summary>
+    public string? Codice { get; set; }
+
+    /// <summary>RAI's state of the DCP at upload time, e.g. <c>Bozza</c>.</summary>
+    public string? Stato { get; set; }
 }

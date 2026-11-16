@@ -28,6 +28,9 @@ public sealed class FakePortal : HttpMessageHandler
     /// <summary>Answer form POSTs with a page that has no __VIEWSTATE.</summary>
     public bool OmitViewState { get; set; }
 
+    /// <summary>The saved DCP is gone, as after deleting it in RAI: its address shows the empty form.</summary>
+    public bool DraftDeleted { get; set; }
+
     public List<SentRequest> Requests { get; } = [];
     public bool ViewStateChainBroken { get; private set; }
     public int Logins { get; private set; }
@@ -38,6 +41,7 @@ public sealed class FakePortal : HttpMessageHandler
     private bool _sessionsClosed;
     private readonly List<string> _titles = [];
     private string _resultPage = "";
+    private string _expectedViewState = ViewState(0);
 
     public IEnumerable<SentRequest> FormPosts => Requests.Where(r => r.Method == HttpMethod.Post && r.Uri.AbsolutePath.Contains("DettaglioDCP"));
 
@@ -98,7 +102,7 @@ public sealed class FakePortal : HttpMessageHandler
 
         if (request.Method == HttpMethod.Get)
         {
-            return Html(uri.Query.Contains("ID=7") ? _resultPage : FormPage());
+            return Html(uri.Query.Contains("codice_dcp=7") && !DraftDeleted ? _resultPage : FormPage());
         }
 
         return FormPost(form, Field);
@@ -150,7 +154,7 @@ public sealed class FakePortal : HttpMessageHandler
     private HttpResponseMessage FormPost(List<KeyValuePair<string, string>> form, Func<string, string?> field)
     {
         _posts++;
-        if (field("__VIEWSTATE") != ViewState(_posts - 1))
+        if (field("__VIEWSTATE") != _expectedViewState)
         {
             ViewStateChainBroken = true;
         }
@@ -168,7 +172,10 @@ public sealed class FakePortal : HttpMessageHandler
         {
             sb.Append($"<input type=\"hidden\" id=\"__VIEWSTATE\" value=\"{ViewState(_posts)}\">");
             sb.Append($"<input type=\"hidden\" id=\"__EVENTVALIDATION\" value=\"EV{_posts}\">");
+            _expectedViewState = ViewState(_posts);
         }
+
+        sb.Append("<span id=\"Label_CodiceDCP\">7-00</span><span id=\"Label_Stato\">Bozza</span>");
 
         for (var k = 0; k < _titles.Count; k++)
         {
@@ -177,7 +184,7 @@ public sealed class FakePortal : HttpMessageHandler
 
         sb.Append("</form></html>");
         _resultPage = sb.ToString();
-        return Redirect(new Uri(Requests[^1].Uri, "?ID=7").ToString());
+        return Redirect(new Uri(Requests[^1].Uri, "?codice_dcp=7").ToString());
     }
 
     private static HttpResponseMessage Html(string body) =>
