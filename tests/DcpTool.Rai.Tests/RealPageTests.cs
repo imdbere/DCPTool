@@ -14,6 +14,16 @@ public class RealPageTests
     public void PagesWithoutErrorGiveNoError(string name) => Assert.Null(RaiClient.ReadFormError(Page(name)));
 
     [Fact]
+    public void DiagnosticsRemovePeoplesNames()
+    {
+        var page = Page("form-after-first-save.html");
+        Assert.Contains("Mario Rossi", page);
+        var cleaned = Redactor.People(page);
+        Assert.DoesNotContain("Mario Rossi", cleaned);
+        Assert.DoesNotContain(">Persona 1<", cleaned);
+    }
+
+    [Fact]
     public void RejectedEdizioneIsReadFromTheMessageBar()
     {
         var error = RaiClient.ReadFormError(Page("form-edizione-rejected.html"));

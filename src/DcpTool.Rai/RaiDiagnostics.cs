@@ -92,7 +92,21 @@ internal sealed partial class Redactor
             return ValueAttr().Replace(tag, v => v.Groups[1].Value + v.Groups[2].Value
                 + (sensitive ? Mask : Truncate(v.Groups[3].Value)) + v.Groups[2].Value);
         });
-        return Text(html);
+        return Text(People(html));
+    }
+
+    /// <summary>
+    /// RAI's pages name people: the logged-in user ("Utente: ..."), the compiler, and a drop-down of
+    /// RAI staff with their personnel numbers. None of it is needed to debug the form.
+    /// </summary>
+    internal static string People(string html)
+    {
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, @"(<option[^>]*value="")P\d+(""[^>]*>)[^<]*(</option>)", "$1P000000$2[person]$3");
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, @"(<span[^>]*id=""[^""]*(?:Wellcome|Welcome|Compilatore|Utente)[^""]*""[^>]*>)[^<]*(</span>)", "$1[person]$2",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return html;
     }
 
     private static bool IsSensitive(string name) =>
