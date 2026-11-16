@@ -46,6 +46,8 @@ namespace DCP_Tool.Helpers
                 {$"DataGrid1:_ctl{index}:CheckControlMarca_MarcaOpera:TextBox1", line.Marca.Trim().ToUpper()},
                 {$"DataGrid1:_ctl{index}:CheckControlMarca_MarcaOpera:TextBox_Errore", ""},
                 {$"DataGrid1:_ctl{index}:CheckControlMarca_MarcaOpera:TextBox_Dimensioni",  "70#100"},
+                // RAI checks Edizione against its own list and rejects Artlist's publishers ("L'edizione ... non è valida"),
+                // so it stays empty like it always was for Sonoton. Edizione only goes into the Word export.
                 {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:TextBox1", ""},
                 {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:TextBox_Errore", ""},
                 {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:TextBox_Dimensioni",  "70#110"},
@@ -247,6 +249,13 @@ namespace DCP_Tool.Helpers
             if (dcp.Lines.Any(l => l.Durata == default))
             {
                 throw new Exception("Durata missing on some lines");
+            }
+
+            // Artlist files don't name their composers, so a missing cue sheet would otherwise go unnoticed
+            var linesWithoutAutori = dcp.Lines.Where(l => !l.HasAutori()).Select(l => l.Titolo).ToArray();
+            if (linesWithoutAutori.Length > 0)
+            {
+                throw new Exception("Autori missing on: " + string.Join(", ", linesWithoutAutori));
             }
 
             var linesToTake = dcp.Lines.Skip(offset).Take(count);
