@@ -791,6 +791,9 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             Revalidate();
+
+            // Straight to RAI's page of the DCP, where the user checks it and sends it on
+            await OpenBrowserAsync(result.Url);
         }
         catch (OperationCanceledException)
         {
