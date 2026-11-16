@@ -1,0 +1,68 @@
+name: DCP Tool v2
+
+# Tests on every push and PR. A tag v2.x.y (or later major) builds the installer with Velopack and
+# publishes it as a GitHub release; installed apps pick it up on their next start.
+# A tag with a suffix (v2.1.0-beta.1) becomes a pre-release, which only users who opted in receive.
+
+on:
+  push:
+    branches: [master, 'rewrite/**']
+    tags: ['v[2-9].*']
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test DcpTool.sln -c Release
+
+  release-windows:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+      REPO_URL: https://github.com/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $v = $env:VERSION.TrimStart('v')
+          "APP_VERSION=$v" >> $env:GITHUB_ENV
+          dotnet publish src/DcpTool.App/DcpTool.App.csproj -c Release -r win-x64 --self-contained true -p:Version=$v -o publish
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk --version 1.2.161
+
+      # The previous release is needed to build the small delta update
+      - name: Download previous release
+        continue-on-error: true
+        run: vpk download github --repoUrl ${{ env.REPO_URL }} --token ${{ github.token }}
+
+      # Unsigned for now: add --signParams / --azureTrustedSignFile here once a certificate exists
+      - name: Pack
+        run: vpk pack --packId DcpTool --packTitle "DCP Tool" --packVersion ${{ env.APP_VERSION }} --packDir publish --mainExe DcpTool.exe --icon src/DcpTool.App/icon.ico
+
+      - name: Upload release
+        shell: pwsh
+        run: |
+          $pre = if ($env:APP_VERSION -match '-') { '--pre' } else { '' }
+          vpk upload github --repoUrl $env:REPO_URL --token ${{ github.token }} --publish --releaseName "DCP Tool $env:APP_VERSION" --tag $env:VERSION $pre

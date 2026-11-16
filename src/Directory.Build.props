@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Temporary escape hatch for machines that only have an older SDK: set the environment
+         variable DCPTOOL_TFM=net9.0. CI and releases always build the default. -->
+    <TargetFramework Condition="'$(DCPTOOL_TFM)' != ''">$(DCPTOOL_TFM)</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- Local default; the release workflow overrides it with the git tag via -p:Version -->
+    <Version>2.0.0-dev</Version>
+    <Product>DCP Tool</Product>
+  </PropertyGroup>
+</Project>

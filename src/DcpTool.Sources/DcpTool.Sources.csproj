@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcpTool.Sources</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DcpTool.Core\DcpTool.Core.csproj" />
+    <PackageReference Include="z440.atl.core" />
+    <InternalsVisibleTo Include="DcpTool.Sources.Tests" />
+  </ItemGroup>
+</Project>

@@ -50,3 +50,25 @@ Detailed documentation for the planned rewrite lives in `doc/` (architecture, mu
 `dcp.html` (with `dcp.png`) in the repo root is an HTML mock-up of the old paper DCP form with sample data. It is not the RAI web form and has none of its field names. Those exist only in `DCPInterfaceExtensions.cs`.
 
 Credentials are stored in user-scoped `Properties/Settings` (`Username`/`Password`) and set through `LoginWindow`.
+
+## v2 rewrite (branch `rewrite/v2`, in progress)
+
+The rewrite lives next to v1: `DcpTool.sln`, `src/` and `tests/`. v1 (`DCP-Tool/`, `DCP-Tool.sln`) stays until v2 has replaced it, and `tests/DcpTool.Legacy` compiles the v1 sources so v2 is tested against v1's behaviour.
+
+```bash
+dotnet test DcpTool.sln
+```
+
+```bash
+dotnet run --project src/DcpTool.App
+```
+
+Targets `net10.0`. On a machine with only an older SDK set the environment variable `DCPTOOL_TFM=net9.0`.
+
+- `DcpTool.Core`: model (`Dcp`, `DcpLine`, `Autore`, code tables as strings), `DcpValidator` (the single gate for upload and export), `.dcp` v2 format plus reader for v1 files, `RecoveryStore` (session restore), settings, and the interfaces the other projects implement.
+- `DcpTool.Sources`: `IMusicSource` implementations (`MusicmediaSource`, `ArtlistSource`), tag reading with ATL, `ImportService`. A new library = a new `IMusicSource`.
+- `DcpTool.Rai`: `RaiClient` (login, upload, redacted diagnostics zip), `DcpFormMapper` (must stay byte-identical to v1's form data, enforced by parity tests), `DanaInfoEncoder`. Tests use a fake HTTP handler. Never run tests against the real portal: every upload creates a real DCP at RAI.
+- `DcpTool.Export`: `DocxExporter`, fills the embedded template by label text.
+- `DcpTool.App`: Avalonia 12 UI (MVVM), Velopack updates. Not yet exercised by hand.
+
+Releases: pushing a tag `v2.x.y` runs `.github/workflows/v2.yml`, which packs with Velopack and publishes a GitHub release that installed apps pick up. v1 releases use `v0.*` / `v1.*` tags.

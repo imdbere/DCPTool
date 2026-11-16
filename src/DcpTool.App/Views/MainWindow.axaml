@@ -1,0 +1,220 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:DcpTool.App.ViewModels"
+        x:Class="DcpTool.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding WindowTitle}" Width="1280" Height="820" MinWidth="900" MinHeight="560"
+        Icon="avares://DcpTool/icon.ico"
+        DragDrop.AllowDrop="True">
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+N" Command="{Binding NewDcpCommand}" />
+    <KeyBinding Gesture="Ctrl+O" Command="{Binding OpenCommand}" />
+    <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
+  </Window.KeyBindings>
+
+  <DockPanel>
+    <Menu DockPanel.Dock="Top" IsEnabled="{Binding !IsBusy}">
+      <MenuItem Header="_File">
+        <MenuItem Header="_New" InputGesture="Ctrl+N" Command="{Binding NewDcpCommand}" />
+        <MenuItem Header="New _next episode" Command="{Binding NewNextEpisodeCommand}" />
+        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenCommand}" />
+        <MenuItem x:Name="RecentMenu" Header="Open _recent" />
+        <Separator />
+        <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCommand}" />
+        <MenuItem Header="Save _as..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
+        <Separator />
+        <MenuItem Header="Add _music files..." Command="{Binding AddMusicFilesCommand}" />
+        <Separator />
+        <MenuItem Header="Se_ttings..." Command="{Binding ShowSettingsCommand}" />
+        <Separator />
+        <MenuItem Header="E_xit" Click="Exit_Click" />
+      </MenuItem>
+      <MenuItem Header="_Publish">
+        <MenuItem Header="_Check" Command="{Binding CheckCommand}" />
+        <MenuItem Header="_Upload to RAI..." Command="{Binding UploadCommand}" />
+        <MenuItem Header="_Export Word document..." Command="{Binding ExportCommand}" />
+        <Separator />
+        <MenuItem Header="Show what would be _uploaded" Command="{Binding ShowUploadPreviewCommand}" />
+      </MenuItem>
+      <MenuItem Header="_RAI">
+        <MenuItem Header="_Log in..." Command="{Binding LogInCommand}" />
+        <MenuItem Header="Open DCP _search in browser" Command="{Binding OpenDcpSearchCommand}" />
+        <Separator />
+        <MenuItem Header="Save _diagnostics..." Command="{Binding SaveDiagnosticsCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="Check for _updates" Command="{Binding CheckForUpdatesCommand}" />
+        <MenuItem Header="_About" Command="{Binding AboutCommand}" />
+      </MenuItem>
+    </Menu>
+
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <Grid ColumnDefinitions="Auto,16,Auto,16,*,Auto,8,Auto">
+        <TextBlock Text="{Binding FileText}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="2" Text="{Binding LoginText}" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="4" Text="{Binding ProgressText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        <Button Grid.Column="5" Content="Cancel" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" />
+        <Button Grid.Column="7" Content="Update ready - restart" Command="{Binding RestartForUpdateCommand}" IsVisible="{Binding UpdateReady}" />
+      </Grid>
+    </Border>
+
+    <ProgressBar DockPanel.Dock="Bottom" IsIndeterminate="True" Height="3" IsVisible="{Binding IsBusy}" />
+
+    <!-- Issues -->
+    <Border DockPanel.Dock="Bottom" Height="150" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <DockPanel Margin="8,4">
+        <TextBlock DockPanel.Dock="Top" Classes="group" Text="{Binding IssueSummary, StringFormat='Issues: {0}'}" />
+        <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:IssueItem">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="{Binding Kind}" Foreground="{Binding Brush}" FontWeight="SemiBold" Width="60" />
+                <TextBlock Text="{Binding Message}" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="8" IsEnabled="{Binding !IsBusy}">
+      <!-- Header form -->
+      <Expander Header="Programme" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+        <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16" DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
+          <StackPanel>
+            <TextBlock Classes="group" Text="Programma" />
+            <TextBlock Classes="lbl" Text="Titolo italiano" />
+            <TextBox Text="{Binding TitoloItaliano}" />
+            <TextBlock Classes="lbl" Text="Titolo originale" />
+            <TextBox Text="{Binding TitoloOriginale}" />
+            <TextBlock Classes="lbl" Text="Sottotitolo" />
+            <TextBox Text="{Binding Sottotitolo}" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+              <StackPanel>
+                <TextBlock Classes="lbl" Text="Puntata" />
+                <TextBox Text="{Binding Puntata, UpdateSourceTrigger=LostFocus}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="lbl" Text="Serie" />
+                <TextBox Text="{Binding Serie, UpdateSourceTrigger=LostFocus}" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1">
+            <TextBlock Classes="group" Text="Trasmissione" />
+            <TextBlock Classes="lbl" Text="Data trasmissione" />
+            <DatePicker SelectedDate="{Binding DataTrasmissione}" HorizontalAlignment="Stretch" />
+            <TextBlock Classes="lbl" Text="Data registrazione (empty = 5 days before)" />
+            <DatePicker SelectedDate="{Binding DataRegistrazione}" HorizontalAlignment="Stretch" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+              <StackPanel>
+                <TextBlock Classes="lbl" Text="Ora inizio" />
+                <TextBox Text="{Binding OraInizio, UpdateSourceTrigger=LostFocus}" PlaceholderText="hh:mm:ss" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="lbl" Text="Durata programma" />
+                <TextBox Text="{Binding Durata, UpdateSourceTrigger=LostFocus}" PlaceholderText="hh:mm:ss" />
+              </StackPanel>
+            </Grid>
+            <TextBlock Classes="lbl">
+              <Run Text="Ora fine " /><Run Text="{Binding OraFine}" /><Run Text="   Musica " /><Run Text="{Binding DurataMusica}" />
+            </TextBlock>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2">
+            <TextBlock Classes="group" Text="RAI" />
+            <TextBlock Classes="lbl" Text="Sede" />
+            <ComboBox ItemsSource="{Binding Sedi}" SelectedItem="{Binding SedeEntry}" HorizontalAlignment="Stretch" />
+            <TextBlock Classes="lbl" Text="Rete" />
+            <ComboBox ItemsSource="{Binding Reti}" SelectedItem="{Binding ReteEntry}" HorizontalAlignment="Stretch" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+              <StackPanel>
+                <TextBlock Classes="lbl" Text="Uorg" />
+                <TextBox Text="{Binding Uorg, UpdateSourceTrigger=LostFocus}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="lbl" Text="Matricola" />
+                <TextBox Text="{Binding Matricola, UpdateSourceTrigger=LostFocus}" />
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+
+          <StackPanel Grid.Column="3">
+            <TextBlock Classes="group" Text="Contratto" />
+            <TextBlock Classes="lbl" Text="Numero contratto" />
+            <TextBox Text="{Binding NumeroContratto}" />
+            <TextBlock Classes="lbl" Text="Data contratto" />
+            <DatePicker SelectedDate="{Binding DataContratto}" HorizontalAlignment="Stretch" />
+            <TextBlock Classes="lbl" Text="Responsabile RAI del programma" />
+            <TextBox Text="{Binding ResponsabileRai}" />
+          </StackPanel>
+        </Grid>
+      </Expander>
+
+      <!-- Line toolbar -->
+      <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,8">
+        <Button Content="Add music files..." Command="{Binding AddMusicFilesCommand}" />
+        <Button Content="Add line" Command="{Binding AddLineCommand}" />
+        <Button Content="Duplicate" Command="{Binding DuplicateLineCommand}" />
+        <Button Content="Delete" Command="{Binding DeleteLineCommand}" />
+        <Button Content="Move up" Command="{Binding MoveUpCommand}" />
+        <Button Content="Move down" Command="{Binding MoveDownCommand}" />
+        <TextBlock Text="Drop audio files, cue sheets or folders anywhere on the window." VerticalAlignment="Center" Opacity="0.6" Margin="12,0,0,0" />
+      </StackPanel>
+
+      <!-- Lines -->
+      <DataGrid Grid.Row="2" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}"
+                x:Name="LinesGrid" AutoGenerateColumns="False" CanUserSortColumns="False"
+                CanUserReorderColumns="True" CanUserResizeColumns="True" SelectionMode="Single"
+                GridLinesVisibility="All" IsReadOnly="False">
+        <DataGrid.Columns>
+          <DataGridTemplateColumn Header="!" Width="32">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate x:DataType="vm:LineRow">
+                <TextBlock Text="{Binding IssueMark}" Foreground="{Binding IssueBrush}" HorizontalAlignment="Center"
+                           VerticalAlignment="Center" ToolTip.Tip="{Binding IssueTip}" />
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="#" Binding="{Binding Number}" IsReadOnly="True" Width="44" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="Titolo" Binding="{Binding Titolo}" Width="220" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="240">
+            <DataGridTextColumn.Header>
+              <TextBlock Text="Autori" ToolTip.Tip="Composers and lyricists, never the performers.&#10;Write &quot;Nome Cognome; Nome Cognome&quot; or &quot;Cognome, Nome; Cognome, Nome&quot;." />
+            </DataGridTextColumn.Header>
+          </DataGridTextColumn>
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="Esecutori" Binding="{Binding Esecutori}" Width="160" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="Durata" Binding="{Binding DurataText}" Width="90" />
+          <DataGridTemplateColumn Header="Genere" Width="170">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate x:DataType="vm:LineRow">
+                <ComboBox ItemsSource="{Binding Generi}" SelectedItem="{Binding GenereEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTemplateColumn Header="Ruolo" Width="140">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate x:DataType="vm:LineRow">
+                <ComboBox ItemsSource="{Binding Ruoli}" SelectedItem="{Binding RuoloEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTemplateColumn Header="Tipo gen." Width="150">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate x:DataType="vm:LineRow">
+                <ComboBox ItemsSource="{Binding Tipi}" SelectedItem="{Binding TipoEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="Marca" Binding="{Binding Marca}" Width="120" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="Sigla/num" Binding="{Binding SiglaNum}" Width="120" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="Edizione" Binding="{Binding Edizione}" Width="120" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="Source" Binding="{Binding SourceId, Mode=OneWay}" IsReadOnly="True" Width="90" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </Grid>
+  </DockPanel>
+</Window>

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcpTool.Rai</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DcpTool.Core\DcpTool.Core.csproj" />
+    <PackageReference Include="HtmlAgilityPack" />
+    <InternalsVisibleTo Include="DcpTool.Rai.Tests" />
+  </ItemGroup>
+</Project>

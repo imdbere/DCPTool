@@ -1,0 +1,18 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DcpTool.App.Views.LoginWindow"
+        Title="Log in to RAI" Width="400" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="16" Spacing="8">
+    <TextBlock x:Name="ErrorText" Foreground="Crimson" TextWrapping="Wrap" IsVisible="False"/>
+    <TextBlock Text="User name"/>
+    <TextBox x:Name="UserBox"/>
+    <TextBlock Text="Password"/>
+    <TextBox x:Name="PasswordBox" PasswordChar="&#8226;"/>
+    <CheckBox x:Name="RememberBox" Content="Remember the password on this computer"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+      <Button Content="Log in" IsDefault="True" Click="Ok_Click" MinWidth="80"/>
+      <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" MinWidth="80"/>
+    </StackPanel>
+  </StackPanel>
+</Window>

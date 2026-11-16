@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles the UI-free parts of the v1 app (DCP-Tool/) unchanged, so the v2 code can be
+       tested against the behaviour that has been used in production ("characterisation tests").
+       Delete this project together with DCP-Tool/ once v2 has replaced v1. -->
+  <PropertyGroup>
+    <RootNamespace>DCP_Tool</RootNamespace>
+    <Nullable>disable</Nullable>
+    <WarningsAsErrors></WarningsAsErrors>
+    <NoWarn>$(NoWarn);CS8632;CS0649;NU1701;NU1903</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\DCP-Tool\Models\DCP.cs" Link="Models\DCP.cs" />
+    <Compile Include="..\..\DCP-Tool\Models\DCPEnums.cs" Link="Models\DCPEnums.cs" />
+    <Compile Include="..\..\DCP-Tool\Helpers\DCPInterfaceExtensions.cs" Link="Helpers\DCPInterfaceExtensions.cs" />
+    <Compile Include="..\..\DCP-Tool\Helpers\DcpLineImporter.cs" Link="Helpers\DcpLineImporter.cs" />
+    <Compile Include="..\..\DCP-Tool\Helpers\ArtlistCueSheetReader.cs" Link="Helpers\ArtlistCueSheetReader.cs" />
+    <!-- compile-only private: the v2 code uses TagLibSharp, which has the same TagLib namespace -->
+    <PackageReference Include="TagLib.Portable" PrivateAssets="compile" />
+  </ItemGroup>
+</Project>

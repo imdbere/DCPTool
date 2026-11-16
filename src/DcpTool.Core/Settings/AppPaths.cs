@@ -1,0 +1,30 @@
+namespace DcpTool.Core.Settings;
+
+/// <summary>
+/// Where the app keeps its own files. Everything lives under one per-user folder:
+/// <c>%AppData%\DcpTool</c> on Windows, <c>~/Library/Application Support/DcpTool</c> on macOS.
+/// Never the installation folder (it is replaced on every update) and never the working directory.
+/// </summary>
+public sealed class AppPaths
+{
+    public const string AppFolderName = "DcpTool";
+
+    public AppPaths(string? root = null)
+    {
+        Root = root ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.Create),
+            AppFolderName);
+    }
+
+    public string Root { get; }
+
+    public string SettingsFile => Path.Combine(Root, "settings.json");
+
+    /// <summary>The DCP that was open when the app closed or crashed, see <c>RecoveryStore</c>.</summary>
+    public string RecoveryFolder => Path.Combine(Root, "recovery");
+
+    public string LogFolder => Path.Combine(Root, "logs");
+
+    /// <summary>Protected password file of the Windows credential store.</summary>
+    public string CredentialsFile => Path.Combine(Root, "credentials.bin");
+}

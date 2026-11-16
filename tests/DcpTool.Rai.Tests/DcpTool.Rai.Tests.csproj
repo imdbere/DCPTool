@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>DcpTool.Rai.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DcpTool.Rai\DcpTool.Rai.csproj" />
+    <ProjectReference Include="..\DcpTool.Legacy\DcpTool.Legacy.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

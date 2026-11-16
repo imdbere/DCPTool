@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches: [master, 'feature/**']
-    tags: ['v*']
+    tags: ['v0.*', 'v1.*']
   pull_request:
     branches: [master]
   # Removes a feature branch's pre-release when the branch is deleted

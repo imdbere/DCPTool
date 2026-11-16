@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>DcpTool</AssemblyName>
+    <RootNamespace>DcpTool.App</RootNamespace>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- The generator needs a newer Roslyn than older SDKs ship; InitializeComponent is written by hand -->
+    <AvaloniaNameGeneratorIsEnabled>false</AvaloniaNameGeneratorIsEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="icon.ico" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" />
+    <PackageReference Include="Avalonia.Controls.WebView" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Velopack" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DcpTool.Core\DcpTool.Core.csproj" />
+    <ProjectReference Include="..\DcpTool.Sources\DcpTool.Sources.csproj" />
+    <ProjectReference Include="..\DcpTool.Rai\DcpTool.Rai.csproj" />
+    <ProjectReference Include="..\DcpTool.Export\DcpTool.Export.csproj" />
+  </ItemGroup>
+</Project>

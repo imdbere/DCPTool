@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DcpTool.Export</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DcpTool.Core\DcpTool.Core.csproj" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
+    <InternalsVisibleTo Include="DcpTool.Export.Tests" />
+    <EmbeddedResource Include="Templates\dcp-template.docx" LogicalName="DcpTool.Export.dcp-template.docx" />
+  </ItemGroup>
+</Project>
