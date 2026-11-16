@@ -81,3 +81,80 @@ DcpTool.Tests     fixtures: example audio tags, cue sheets, saved RAI HTML pages
 - An authors editor (list of Nome/Cognome rows) instead of the comma-separated string.
 - Show each line's source (Sonoton / Artlist / manual) and whether a cue sheet was found.
 - Remember the last folder. Optionally look for Artlist cue sheets in the user's Downloads folder.
+
+## Checklist for a cross-platform rewrite
+
+What must not be overlooked when the app moves to a framework that runs on Windows, macOS and Linux. 🔴 = critical (getting it wrong breaks DCPs or loses data), 🟠 = difficult or a lot of work.
+
+### The RAI upload (the riskiest part)
+
+- 🔴 **RAI has no test environment.** Every test upload creates a real DCP. Before rewriting, find out how to delete or cancel a test DCP, or ask RAI's DCP office for a test account.
+- 🔴 **Record what the current tool sends before changing anything.** Log the exact form data of a few real uploads (1, 4, 5 and 9 lines; accented names like "Kobák"; empty fields). The new version must send the same, field for field.
+- 🔴 **The form logic is implicit and fragile.** See [rai-dcp-upload.md](rai-dcp-upload.md):
+  - ASP.NET page state is copied from each response into the next request.
+  - Lines go up 4 at a time, and each request resends all earlier lines.
+  - Short batches are padded with empty lines, whose Ruolo is `PP`.
+  - The line numbering in the field names continues across batches (`_ctl2`, `_ctl3`, …).
+  - Authors are encoded as `N#Cognome%Nome#`, with `+` replacing spaces.
+  - About 60 hidden constants must be sent unchanged.
+
+  Port `DCPInterfaceExtensions.cs` field for field rather than rewriting it.
+- 🔴 **Character encoding of accented names.** Check how RAI stores "Kobák" or "Nössing" today; the server may expect Windows-1252 rather than UTF-8. Test before trusting a different HTTP library.
+- 🟠 **The VPN portal (Pulse Secure / Ivanti) is not under our control.** The login form, the realm `ADonly`, `url_56`, the "maximum sessions" page and the `DanaInfo` URL token can change with an Ivanti update. Check that login also works from macOS and Linux.
+- 🟠 **Session handling is missing.** It needs expiry detection with automatic re-login, clear errors when the page layout changes, and a way to deal with partial uploads (each batch saves on RAI's side).
+- 🔴 **Find out what users do in the browser after the upload.** The tool opens the saved DCP and the user finishes something there by hand. That step isn't documented; watch a real user before redesigning the flow.
+- 🟠 **The embedded browser is Windows-only** (IE engine, cookies copied in through WinINet). Either use a cross-platform web view that can receive the session cookies (check what the chosen framework offers), or use the system browser, which means the user logs in a second time.
+
+### The parts that only work on Windows
+
+- `WebBrowser` (IE engine), WinINet cookie copying and the COM call that silences script errors.
+- Credentials in plain text in `user.config`. Use the macOS Keychain, Windows Credential Manager and libsecret on Linux, through one cross-platform library.
+- The Windows proxy login (`DefaultNetworkCredentials`) behaves differently elsewhere. Test from a company network.
+- Opening files with `Process.Start` + `UseShellExecute` (`open` on macOS, `xdg-open` on Linux).
+- Debug HTML written to the working directory. Use a per-OS log folder.
+- Already portable: TagLib, OpenXml, HtmlAgilityPack and `ArtlistCueSheetReader`. Move them into a core library first and reuse them.
+
+### Data and compatibility
+
+- 🔴 **Existing `.dcp` files must still open.** They use the old Microsoft JSON date format (`\/Date(…)\/`) with timezone offsets, ISO durations (`PT3M56S`) and enums stored as numbers. Authors are stored twice, and on load `AutoriString` wins. Write an importer, test it against real old files, and version the new format.
+- 🔴 **Domain rules hidden as small defaults.** Carry them over deliberately:
+  - Recording date = broadcast date − 5 days.
+  - `TitoloItaliano` = "Programma - Serie".
+  - Serie is sent as 3 digits, and a zero is sent as empty.
+  - `OraFine` = start time + duration.
+  - `Committente` = `BZ/<sede>`.
+  - Marca and Edizione are sent upper case.
+  - The Sonoton title is cut at `---`, and Sigla is the album text before the first `-`.
+  - In names, the last word is the Cognome, and a comma means "Cognome, Nome".
+- 🔴 **Dates and number formats.** RAI expects `dd/MM/yyyy` regardless of the user's settings. The Word export currently uses the system date format. Never depend on the machine's locale for anything sent to RAI.
+- 🟠 **The Word template uses fixed cell positions**, is limited to 10 lines and contains hard-coded names. Find the table by its header text and add rows as needed.
+- Old user settings only hold the username. Users can log in again.
+
+### Audio files and matching
+
+- 🔴 **Durata is the full file length today, but the DCP should list the time actually used in the programme.** Users presumably correct it by hand. Decide whether the rewrite reads the edit timeline (DaVinci Resolve, EDL/AAF/FCPXML). That would be the biggest gain in accuracy and a strong selling point.
+- 🔴 **macOS stores accented file names in decomposed Unicode form (NFD).** Normalise before comparing (the Artlist matcher already does).
+- 🟠 **Linux file systems are case-sensitive.** Compare extensions and the `cue_sheet_*` pattern case-insensitively.
+- 🟠 **Ignore macOS helper files** (`._*.mp3` from network drives or USB sticks, `.DS_Store`), or dropping a folder produces errors.
+- 🟠 **WAV metadata** (RIFF INFO, ID3 chunk, BWF `bext`/iXML): musicmedia and Artlist both offer WAV downloads. Check every field against real WAV files, not only MP3s.
+- Upgrade the tag library: `TagLib.Portable` 1.3.1 is old; TagLibSharp is the maintained successor.
+- 🟠 **Drag and drop differs between operating systems** (Finder hands over file URLs; folders and network drives behave differently). Test on each platform.
+
+### Making it a product
+
+- 🔴 **Ask RAI whether automated use of the intranet form is allowed** before selling, and whether an official import format exists.
+- 🔴 **Make the repo private.** It's currently public, including the builds and these docs.
+- 🟠 **Code signing:**
+  - macOS needs an Apple Developer ID plus notarisation, or Gatekeeper blocks the app.
+  - Windows needs a code-signing certificate, or SmartScreen warns users.
+  - Add both to CI.
+- 🟠 **Updates and licensing:** an auto-update mechanism, licence keys or activation, and per-company settings (supplier, legal representative, RAI contact, default sede/struttura, and all RAI sedi, whose codes are unknown so far).
+- 🟠 **Privacy (GDPR):** the tool stores writer names, credentials and possibly logs. Decide what is kept and where.
+- Music libraries as plug-ins (Sonoton tags and Artlist cue sheets first), plus a manual CSV import as the fallback.
+
+### How to run the rewrite
+
+- **Framework:** Avalonia is closest to WPF and keeps all the C# (importer, cue sheet reader, OpenXml, HTML parsing); target .NET 10 LTS. Electron or Tauri would also mean replacing TagLib, OpenXml and the reader. MAUI doesn't support Linux.
+- **Core library first, with tests:** fixtures from the example cue sheets, tags taken from real files, and saved RAI pages.
+- **Run old and new side by side:** compare the form data and the Word output for the same input files before switching users over.
+- **Fix the [known bugs](#known-bugs) explicitly** rather than porting them.
