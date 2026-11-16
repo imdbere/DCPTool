@@ -68,6 +68,127 @@
 
     <ProgressBar DockPanel.Dock="Bottom" IsIndeterminate="True" Height="3" IsVisible="{Binding IsBusy}" />
 
+    <!-- No library yet: one click to choose it -->
+    <Border DockPanel.Dock="Top" IsVisible="{Binding ShowLibraryBanner}" Padding="10,5" Background="#221E90FF"
+            BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <TextBlock VerticalAlignment="Center"
+                   Text="Keep all your DCPs in one folder: DCP Tool lists them, saves them automatically and starts new episodes from presets." />
+        <Button Content="Choose a library folder" Command="{Binding ChooseLibraryFolderCommand}" Padding="10,2" />
+      </StackPanel>
+    </Border>
+
+    <Grid x:Name="BodyGrid" ColumnDefinitions="Auto,Auto,*">
+
+    <!-- Library panel -->
+    <Border Grid.Column="0" IsVisible="{Binding ShowLibraryPanel}" MinWidth="220"
+            BorderThickness="0,0,1,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <DockPanel Margin="8,6,6,6" IsEnabled="{Binding !IsBusy}">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+          <TextBlock Text="Library" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center"
+                     ToolTip.Tip="{Binding LibraryFolderText}" />
+          <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshLibraryCommand}" Padding="6,1" FontSize="12"
+                  ToolTip.Tip="Read the library folder again" />
+          <Button Grid.Column="2" Content="«" Command="{Binding ToggleLibraryPanelCommand}" Padding="7,1" FontSize="12"
+                  ToolTip.Tip="Hide the library" />
+        </Grid>
+
+        <WrapPanel DockPanel.Dock="Top" Margin="0,6,0,0" ItemSpacing="4" LineSpacing="4">
+          <Button Content="New" Command="{Binding NewDcpCommand}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="A new, empty DCP" />
+          <Button Content="Next episode" Command="{Binding DuplicateNextEpisodeCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="A new DCP for the next episode of the open one: same programme information, Puntata + 1, no lines" />
+          <Button Content="Duplicate" Command="{Binding DuplicateDcpCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="An exact copy of the open DCP, as never uploaded" />
+          <Button Content="Save as preset" Command="{Binding SaveAsPresetCommand}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="Keep the programme information of the open DCP as a preset for new episodes" />
+        </WrapPanel>
+
+        <!-- Name prompt for rename and save as preset -->
+        <Border DockPanel.Dock="Top" IsVisible="{Binding IsPromptOpen}" Margin="0,6,0,0" Padding="6" CornerRadius="4"
+                Background="#221E90FF">
+          <StackPanel Spacing="4">
+            <TextBlock Text="{Binding PromptLabel}" TextWrapping="Wrap" FontSize="12" />
+            <TextBox x:Name="PromptBox" Text="{Binding PromptValue}" />
+            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
+              <Button Content="{Binding PromptAction}" Command="{Binding AcceptPromptCommand}" Padding="8,2" FontSize="12" />
+              <Button Content="Cancel" Command="{Binding CancelPromptCommand}" Padding="8,2" FontSize="12" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <TextBox DockPanel.Dock="Top" Margin="0,6,0,0" Text="{Binding LibrarySearch}" PlaceholderText="Search title, episode, date, RAI code"
+                 x:Name="SearchBox" />
+
+        <TextBlock DockPanel.Dock="Top" Text="{Binding LibraryNotice}" IsVisible="{Binding LibraryNotice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                   TextWrapping="Wrap" Foreground="DarkOrange" Margin="0,4,0,0" FontSize="12" />
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding LibraryFolderText}" Opacity="0.5" FontSize="11" Margin="0,4,0,0"
+                   TextTrimming="PrefixCharacterEllipsis" ToolTip.Tip="{Binding LibraryFolderText}" />
+
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Margin="0,6,0,0">
+          <TextBlock Text="{Binding PresetsHeader}" Classes="group" Opacity="0.8" />
+          <ListBox Grid.Row="1" x:Name="PresetList" ItemsSource="{Binding Presets}" MaxHeight="170" Margin="0,2,0,0"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:LibraryRow">
+                <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowAccent}" BorderThickness="3,0,0,0"
+                        Padding="6,2" Opacity="{Binding RowOpacity}" ToolTip.Tip="{Binding Tip}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" FontWeight="{Binding TitleWeight}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding PresetProgramme}" IsVisible="{Binding HasPresetProgramme}" Opacity="0.6" FontSize="11"
+                               TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Grid.Row="2" Text="{Binding PresetsEmptyText}" IsVisible="{Binding PresetsEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     TextWrapping="Wrap" Opacity="0.6" FontSize="12" Margin="0,2,0,0" />
+
+          <TextBlock Grid.Row="3" Text="{Binding DcpsHeader}" Classes="group" Opacity="0.8" Margin="0,10,0,0" />
+          <TextBlock Grid.Row="4" Text="{Binding DcpsEmptyText}" IsVisible="{Binding DcpsEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     TextWrapping="Wrap" Opacity="0.6" FontSize="12" Margin="0,2,0,0" />
+          <ListBox Grid.Row="5" x:Name="DcpList" ItemsSource="{Binding LibraryDcps}" Margin="0,2,0,0"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:LibraryRow">
+                <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowAccent}" BorderThickness="3,0,0,0"
+                        Padding="6,3" Opacity="{Binding RowOpacity}" ToolTip.Tip="{Binding Tip}">
+                  <StackPanel Spacing="1">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                      <TextBlock Text="{Binding Title}" FontWeight="{Binding TitleWeight}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="1" Text="{Binding DateText}" FontSize="12" Opacity="0.8" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsReadable}">
+                      <TextBlock Text="{Binding EpisodeText}" FontSize="12"
+                                 IsVisible="{Binding EpisodeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      <TextBlock Text="{Binding LinesText}" FontSize="12" Opacity="0.7" />
+                      <TextBlock Text="{Binding UploadText}" Foreground="{Binding UploadBrush}" FontSize="12" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <TextBlock Text="Cannot be read" IsVisible="{Binding !IsReadable}" FontSize="12" FontStyle="Italic" />
+                    <TextBlock Text="{Binding Folder}" IsVisible="{Binding HasFolder}" Opacity="0.5" FontSize="11"
+                               TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </DockPanel>
+    </Border>
+
+    <!-- Library hidden: a slim strip to bring it back -->
+    <Border Grid.Column="0" IsVisible="{Binding ShowLibraryStrip}" BorderThickness="0,0,1,0"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <Button Content="»" Command="{Binding ToggleLibraryPanelCommand}" VerticalAlignment="Top" Margin="2,6"
+              Padding="6,2" ToolTip.Tip="Show the library" />
+    </Border>
+
+    <GridSplitter Grid.Column="1" x:Name="LibrarySplitter" Width="5" ResizeDirection="Columns" Background="Transparent"
+                  IsVisible="{Binding ShowLibraryPanel}" />
+
+    <DockPanel Grid.Column="2">
     <!-- Issues -->
     <Border DockPanel.Dock="Bottom" Height="150" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <TabControl Margin="8,0" Padding="0">
@@ -225,6 +346,8 @@
           <DataGridTextColumn x:DataType="vm:LineRow" Header="Source" Binding="{Binding SourceId, Mode=OneWay}" IsReadOnly="True" Width="90" />
         </DataGrid.Columns>
       </DataGrid>
+    </Grid>
+    </DockPanel>
     </Grid>
   </DockPanel>
 </Window>

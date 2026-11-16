@@ -6,7 +6,15 @@
         Title="Settings" Width="520" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner">
   <StackPanel Margin="16" Spacing="8">
-    <TextBlock Text="Company (printed on the Word document)" FontWeight="SemiBold"/>
+    <TextBlock Text="Library" FontWeight="SemiBold"/>
+    <Grid ColumnDefinitions="170,*,Auto" ColumnSpacing="6">
+      <TextBlock Text="Library folder" VerticalAlignment="Center"/>
+      <TextBox Grid.Column="1" Text="{Binding LibraryFolder}" PlaceholderText="(none: DCPs are single files)"
+               ToolTip.Tip="The folder that holds all your DCPs as .dcp files. DCPs in it are saved automatically."/>
+      <Button Grid.Column="2" Content="Browse..." Click="BrowseLibrary_Click"/>
+    </Grid>
+
+    <TextBlock Text="Company (printed on the Word document)" FontWeight="SemiBold" Margin="0,8,0,0"/>
     <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
       <TextBlock Grid.Row="0" Text="Fornitore del Programma" VerticalAlignment="Center"/>
       <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Fornitore}"/>

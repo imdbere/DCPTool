@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using DcpTool.App.ViewModels;
 using DcpTool.Core.Settings;
 
@@ -26,6 +27,28 @@ public partial class SettingsWindow : Window
     private void Ok_Click(object? sender, RoutedEventArgs e) => Close(true);
 
     private void Cancel_Click(object? sender, RoutedEventArgs e) => Close(false);
+
+    private async void BrowseLibrary_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel vm)
+        {
+            return;
+        }
+
+        var start = string.IsNullOrWhiteSpace(vm.LibraryFolder) || !Directory.Exists(vm.LibraryFolder)
+            ? null
+            : await StorageProvider.TryGetFolderFromPathAsync(vm.LibraryFolder);
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Library folder",
+            AllowMultiple = false,
+            SuggestedStartLocation = start,
+        });
+        if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
+        {
+            vm.LibraryFolder = path;
+        }
+    }
 }
 
 public partial class LoginWindow : Window

@@ -27,6 +27,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _raiUsername;
     [ObservableProperty] private bool _checkForUpdates;
     [ObservableProperty] private bool _includePrereleases;
+    [ObservableProperty] private string _libraryFolder;
 
     public SettingsViewModel(AppSettings s)
     {
@@ -42,6 +43,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _raiUsername = s.RaiUsername;
         _checkForUpdates = s.CheckForUpdates;
         _includePrereleases = s.IncludePrereleases;
+        _libraryFolder = s.LibraryFolder ?? "";
     }
 
     public void Apply(AppSettings s)
@@ -61,6 +63,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         s.RaiUsername = RaiUsername.Trim();
         s.CheckForUpdates = CheckForUpdates;
         s.IncludePrereleases = IncludePrereleases;
+        s.LibraryFolder = string.IsNullOrWhiteSpace(LibraryFolder) ? null : LibraryFolder.Trim();
     }
 }
 

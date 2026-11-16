@@ -59,9 +59,12 @@ public sealed partial class MainViewModel : ObservableObject
         _updates = updates;
         _dialogs = dialogs;
         _header = new DcpHeader(_dcp, OnChanged);
+        _library = CreateLibrary(settings.LibraryFolder);
         _recoveryTimer.Tick += (_, _) =>
         {
             _recoveryTimer.Stop();
+            // A library document goes to its file first, so the snapshot then records it as saved
+            SaveLibraryDocument(leaving: false);
             WriteRecovery();
         };
     }
@@ -87,11 +90,27 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string[] RecentFiles => [.. _settings.RecentFiles];
 
-    public string FileText =>
-        (FilePath is null ? "Untitled" : Path.GetFileName(FilePath)) + (IsDirty ? "  • modified" : "");
+    public string FileText
+    {
+        get
+        {
+            var name = FilePath is null ? "Untitled" : Path.GetFileName(FilePath);
+            if (IsLibraryDocument)
+            {
+                return name + "  • library, saved automatically";
+            }
+
+            if (IsPendingLibraryDocument)
+            {
+                return name + "  • saved to the library once it has a Titolo italiano";
+            }
+
+            return name + (IsDirty ? "  • modified" : "");
+        }
+    }
 
     public string WindowTitle =>
-        $"{(FilePath is null ? "Untitled" : Path.GetFileName(FilePath))}{(IsDirty ? "*" : "")} – DCP Tool";
+        $"{(FilePath is null ? "Untitled" : Path.GetFileName(FilePath))}{(IsDirty && !IsAutoSaved ? "*" : "")} – DCP Tool";
 
     public string IssueSummary
     {
@@ -141,7 +160,12 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    partial void OnFilePathChanged(string? value) => OnFileStateChanged();
+    partial void OnFilePathChanged(string? value)
+    {
+        OnFileStateChanged();
+        UpdateOpenRows();
+    }
+
     partial void OnIsDirtyChanged(bool value) => OnFileStateChanged();
 
     private void OnFileStateChanged()
@@ -163,6 +187,8 @@ public sealed partial class MainViewModel : ObservableObject
     private void LoadDcp(Dcp dcp, string? path, bool dirty)
     {
         _loading = true;
+        _newFileFolder = null;
+        _nameFollowsHeader = false;
         try
         {
             _dcp = dcp;
@@ -281,12 +307,26 @@ public sealed partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync(string[] args)
     {
+        try
+        {
+            await InitializeDocumentAsync(args);
+        }
+        finally
+        {
+            _initialized = true;
+            _ = RefreshLibraryAsync();
+        }
+    }
+
+    private async Task InitializeDocumentAsync(string[] args)
+    {
         var arg = args.FirstOrDefault(a => a.EndsWith(DcpFile.Extension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
         var session = _recovery.TryRead();
         if (arg is not null)
         {
-            // Opening the file would overwrite the snapshot, the only copy of unsaved work from last time
-            var keep = session is { HasUnsavedChanges: true } && !await _dialogs.Confirm(
+            // Opening the file would overwrite the snapshot, the only copy of unsaved work from last time.
+            // A DCP of the library is simply written to its file first.
+            var keep = session is { HasUnsavedChanges: true } && !SaveSessionToLibrary(session) && !await _dialogs.Confirm(
                 "Unsaved changes",
                 $"The DCP from the last session has changes that were never saved to a file. Open \"{Path.GetFileName(arg)}\" and discard those changes?",
                 "Open file",
@@ -299,12 +339,33 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (session is not null)
         {
-            LoadDcp(session.Dcp, session.FilePath, session.HasUnsavedChanges);
+            await RestoreSessionAsync(session);
             return;
         }
 
         LoadDcp(_settings.Company.CreateDcp(), null, false);
         IsDirty = false;
+    }
+
+    private async Task RestoreSessionAsync(RecoveredSession session)
+    {
+        var file = session.FilePath;
+        var fileExists = file is not null && File.Exists(file);
+
+        // Nothing unsaved: the file is the truth, it may have been changed outside the app since
+        if (!session.HasUnsavedChanges && fileExists && await TryOpenAsync(file!, quiet: true))
+        {
+            return;
+        }
+
+        LoadDcp(session.Dcp, file, session.HasUnsavedChanges);
+        if (fileExists)
+        {
+            // A file newer than the snapshot was changed by something else: reported, and our version is kept
+            _lastWriteUtc = session.SavedAt.UtcDateTime;
+            UpdateNameFollowsHeader();
+            CheckExternalChange();
+        }
     }
 
     /// <summary>Check for updates in the background, if enabled. Never blocks, never throws.</summary>
@@ -333,6 +394,7 @@ public sealed partial class MainViewModel : ObservableObject
             CrashLog.Write(ex, "shutdown");
         }
 
+        SaveLibraryDocument(leaving: false);
         WriteRecovery();
         (_rai as IDisposable)?.Dispose();
     }
@@ -347,12 +409,12 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (!await ConfirmDiscardAsync())
+        if (!await LeaveDocumentAsync())
         {
             return;
         }
 
-        LoadDcp(_settings.Company.CreateDcp(), null, false);
+        StartNewDocument(_settings.Company.CreateDcp(), null, dirty: false, _library is null ? "" : "New DCP. It is saved to the library once it has a Titolo italiano.");
     }
 
     [RelayCommand]
@@ -363,13 +425,14 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (!await ConfirmDiscardAsync())
+        var folder = IsLibraryDocument ? Path.GetDirectoryName(FilePath) : null;
+        if (!await LeaveDocumentAsync())
         {
             return;
         }
 
         SyncLines();
-        LoadDcp(_dcp.CreateNextEpisode(), null, true);
+        StartNewDocument(_dcp.CreateNextEpisode(), folder, dirty: true, _library is null ? "" : "Next episode created.");
     }
 
     [RelayCommand]
@@ -380,12 +443,15 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        var path = await _dialogs.PickOpenDcp(_settings.LastDocumentFolder);
-        if (path is not null && await ConfirmDiscardAsync())
+        var path = await _dialogs.PickOpenDcp(_settings.LastDocumentFolder ?? _library?.Folder);
+        if (path is not null && !IsOpenLibraryFile(path) && await LeaveDocumentAsync())
         {
             await TryOpenAsync(path);
         }
     }
+
+    // Opening the open library file again does nothing: there is nothing unsaved to revert
+    private bool IsOpenLibraryFile(string path) => IsLibraryDocument && SamePath(path, FilePath);
 
     [RelayCommand]
     private async Task OpenRecent(string? path)
@@ -395,29 +461,55 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (path is not null && await ConfirmDiscardAsync())
+        if (path is not null && !IsOpenLibraryFile(path) && await LeaveDocumentAsync())
         {
             await TryOpenAsync(path);
         }
     }
 
-    private async Task<bool> TryOpenAsync(string path)
+    /// <param name="quiet">Problems go to the status text instead of a message box (library panel, session restore).</param>
+    private async Task<bool> TryOpenAsync(string path, bool quiet = false)
     {
         try
         {
             var content = DcpFile.Load(path);
-            LoadDcp(content.Dcp, path, content.IsLegacy);
-            RememberFile(path);
+            var inLibrary = _library?.Contains(path) == true;
+
+            // A library file is only rewritten when it is edited, never just because it was opened
+            LoadDcp(content.Dcp, path, content.IsLegacy && !inLibrary && !quiet);
+            _lastWriteUtc = LastWriteUtc(path);
+            UpdateNameFollowsHeader();
+            if (!quiet)
+            {
+                RememberFile(path);
+            }
+
             if (content.IsLegacy)
             {
-                await _dialogs.Message("Older file format", "This file was written by an older version of DCP Tool. It will be saved in the new format the next time you save it.");
+                const string text = "This file was written by an older version of DCP Tool. It will be saved in the new format the next time it is saved.";
+                if (quiet || inLibrary)
+                {
+                    ProgressText = Path.GetFileName(path) + ": " + text;
+                }
+                else
+                {
+                    await _dialogs.Message("Older file format", text);
+                }
             }
 
             return true;
         }
         catch (DcpFileException ex)
         {
-            await _dialogs.Message("Open", ex.Message);
+            if (quiet)
+            {
+                ProgressText = ex.Message;
+            }
+            else
+            {
+                await _dialogs.Message("Open", ex.Message);
+            }
+
             return false;
         }
     }
@@ -426,7 +518,11 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task Save()
     {
         CommitPendingEdits?.Invoke();
-        if (FilePath is null)
+        if (FilePath is null && IsPendingLibraryDocument && !string.IsNullOrWhiteSpace(_dcp.TitoloItaliano))
+        {
+            SaveLibraryDocument(leaving: false);
+        }
+        else if (FilePath is null)
         {
             await SaveAs();
         }
@@ -445,7 +541,7 @@ public sealed partial class MainViewModel : ObservableObject
             name += $" {p}";
         }
 
-        var path = await _dialogs.PickSave("Save DCP", Sanitize(name), DcpFile.Extension, "DCP file", _settings.LastDocumentFolder);
+        var path = await _dialogs.PickSave("Save DCP", Sanitize(name), DcpFile.Extension, "DCP file", _settings.LastDocumentFolder ?? _library?.Folder);
         if (path is not null)
         {
             SaveTo(path);
@@ -459,11 +555,15 @@ public sealed partial class MainViewModel : ObservableObject
         {
             SyncLines();
             DcpFile.Save(path, _dcp);
+            _lastWriteUtc = LastWriteUtc(path);
+            _newFileFolder = null;
             FilePath = path;
             IsDirty = false;
+            UpdateNameFollowsHeader();
             RememberFile(path);
             WriteRecovery();
             ProgressText = "Saved " + Path.GetFileName(path);
+            _ = RefreshLibraryAsync();
         }
         catch (DcpFileException ex)
         {
@@ -500,9 +600,14 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ShowSettings()
     {
+        var libraryBefore = _settings.LibraryFolder;
         if (await _dialogs.ShowSettings(_settings))
         {
             SaveSettings();
+            if (!string.Equals(libraryBefore, _settings.LibraryFolder, StringComparison.Ordinal))
+            {
+                ApplyLibrarySetting();
+            }
         }
     }
 
@@ -766,6 +871,8 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        // What goes to RAI is in the library file first
+        SaveLibraryDocument(leaving: false);
         IsBusy = true;
         var dcp = _dcp;
         try
@@ -781,7 +888,7 @@ public sealed partial class MainViewModel : ObservableObject
             var result = await _rai.UploadAsync(dcp, progress, _operation.Token);
             dcp.Upload = result.Record;
             OnChanged();
-            WriteRecovery();
+            SaveUploadRecord(dcp);
             ProgressText = $"Uploaded {result.Record.LinesSaved} line(s) to RAI{(result.Record.Codice is { } c ? $" as DCP {c}" + (result.Record.Stato is { } st ? $" ({st})" : "") : "")}." +
                            (result.Verified ? " RAI's page lists every title." : "");
             _uploadMessages.Add(new IssueItem("Info", Brushes.SeaGreen, ProgressText, null));
@@ -820,7 +927,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             dcp.Upload = partial;
             OnChanged();
-            WriteRecovery();
+            SaveUploadRecord(dcp);
             _uploadMessages.Add(new IssueItem("Error", Brushes.Crimson,
                 $"The upload is incomplete: RAI saved {partial.LinesSaved} of {dcp.Lines.Count} lines, and that partial DCP exists at RAI. " +
                 "Complete or delete it in RAI's DCP search before uploading again, or a second DCP is created.", null));
@@ -853,6 +960,7 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task Export()
     {
         var issues = Validate(ValidationPurpose.Document);
+        SaveLibraryDocument(leaving: false);
         var errors = issues.Where(i => i.IsError).ToList();
         if (errors.Count > 0)
         {
