@@ -19,7 +19,7 @@ public class MusicmediaSourceTests
         Assert.Equal("A BARREN WORLD A ", line.Titolo);
         Assert.Equal([new Autore("Jeff", "Montgomery"), new Autore("Oliver", "Kobák")], line.Autori);
         Assert.Equal("Jeff Montgomery, Oliver Kobák", line.Esecutori);
-        Assert.Equal("SCDV 579 ", line.SiglaNum);
+        Assert.Equal("SCDV 579", line.SiglaNum);
         Assert.Equal("Sonoton", line.Marca);
         Assert.Equal(TimeSpan.FromSeconds(180), line.Durata);
         Assert.Equal("musicmedia", line.Origin!.SourceId);
@@ -47,11 +47,11 @@ public class MusicmediaSourceTests
     [InlineData("SCD 12", "Sonoton")]
     [InlineData("CNS 5", "Sonoton")]
     [InlineData("MMIT 1", "Musica.it")]
-    [InlineData("cm 7", "Cielo Music")]
+    [InlineData("cm 7", "Sonoton")]
     [InlineData("SCORE 3", "Score")]
     [InlineData("ISCD 9", "Intersound")]
-    [InlineData("ROCK 2", "Rockshop")]
-    [InlineData("SURE 1", "Surefire")]
+    [InlineData("ROCK 2", "Sonoton")]
+    [InlineData("SURE 1", "Sonoton")]
     [InlineData("XYZ 1", "Sonoton")]
     [InlineData("", "Sonoton")]
     public void LabelFromCataloguePrefix(string siglaNum, string label) =>

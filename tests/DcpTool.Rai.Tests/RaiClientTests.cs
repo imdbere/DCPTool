@@ -75,7 +75,8 @@ public class RaiClientTests
         Assert.Equal(5, result.Record.LinesSaved);
         Assert.True(result.Record.Complete);
         Assert.NotEmpty(client.GetSessionCookies());
-        Assert.Equal(5, reports[^1].LinesSaved);
+        // Progress<T> reports on the thread pool, so the last report may arrive a moment after the upload returns
+        Assert.True(SpinWait.SpinUntil(() => reports.ToArray().Any(r => r.LinesSaved == 5), 2000));
     }
 
     [Fact]

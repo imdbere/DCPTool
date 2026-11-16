@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DcpTool.Core.Import;
 using DcpTool.Core.Model;
 
@@ -39,7 +40,7 @@ public sealed class MusicmediaSource : MusicSourceBase
 
         // Missing tags stay blank so they can be filled in by hand.
         var autori = SplitValues(tags.Composers)
-            .Select(Autore.Parse)
+            .SelectMany(ParseComposers)
             .Where(a => !a.IsEmpty)
             .DistinctBy(a => a.FullName, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -51,7 +52,7 @@ public sealed class MusicmediaSource : MusicSourceBase
         }
 
         var title = tags.Title ?? "";
-        var siglaNum = (tags.Album ?? "").Split('-')[0];
+        var siglaNum = CatalogueCode(tags.Album);
 
         var line = new DcpLine
         {
@@ -59,7 +60,7 @@ public sealed class MusicmediaSource : MusicSourceBase
             Autori = autori,
             Esecutori = string.Join(", ", esecutori),
             Durata = file.Duration,
-            Marca = LabelFor(siglaNum),
+            Marca = MarcaFor(siglaNum, tags.Publisher),
             SiglaNum = siglaNum,
             Origin = new LineOrigin
             {
@@ -72,11 +73,74 @@ public sealed class MusicmediaSource : MusicSourceBase
         return new SourceLine(line);
     }
 
-    internal static string LabelFor(string? siglaNum)
+    /// <summary>
+    /// The album tag starts with the catalogue code: "SCDV 579 - Dark Worlds" (old Sonoton),
+    /// "ADZ0149 - HOOKY BEATS", or without a dash "MSC192 Organic &amp; Accentuated".
+    /// </summary>
+    internal static string CatalogueCode(string? album)
+    {
+        album = (album ?? "").Trim();
+
+        // A first word like "MSC268" is the code, whatever follows ("MSC268 Constructions - Facts & Figures")
+        var first = album.Split(' ', 2)[0];
+        if (Regex.IsMatch(first, @"^[A-Za-z]{1,8}\d+$"))
+        {
+            return first;
+        }
+
+        var dash = album.IndexOf('-');
+        return dash > 0 ? album[..dash].Trim() : album;
+    }
+
+    /// <summary>
+    /// One composer value. Sonoton writes one "Cognome, Nome" per value. The partner libraries write a
+    /// comma-separated list of full names, often with the collecting society: "Citokid (GEMA), Tai Jason (GEMA)".
+    /// </summary>
+    internal static IEnumerable<Autore> ParseComposers(string value)
+    {
+        var withoutSociety = Regex.Replace(value, @"\s*\([A-Za-z]{2,10}\)", "");
+        var hadSociety = withoutSociety.Length != value.Length;
+        var parts = withoutSociety.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length <= 1)
+        {
+            return [Autore.FromFullName(withoutSociety)];
+        }
+
+        // "Lekaba, Themba": a one-word surname, then the first name
+        if (parts.Length == 2 && !hadSociety && !parts[0].Contains(' '))
+        {
+            return [new Autore(parts[1], parts[0])];
+        }
+
+        return parts.Select(Autore.FromFullName);
+    }
+
+    /// <summary>
+    /// RAI only accepts labels from its own list, and most of musicmedia's partner labels are not in it.
+    /// So: the catalogue prefix's label or one of the publishers if RAI knows it, otherwise "Sonoton",
+    /// which v1 sent for every musicmedia file and which RAI accepts.
+    /// </summary>
+    internal static string MarcaFor(string? siglaNum, string? publishers)
     {
         var prefix = new string((siglaNum ?? "").TrimStart().TakeWhile(char.IsLetter).ToArray());
-        return Labels.TryGetValue(prefix, out var label) ? label : DefaultLabel;
+        var candidates = new List<string>();
+        if (Labels.TryGetValue(prefix, out var label))
+        {
+            candidates.Add(label);
+        }
+
+        candidates.AddRange((publishers ?? "")
+            .Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(p => CompanySuffix.Replace(p, "").Trim()));
+
+        return candidates.FirstOrDefault(RaiMarche.Contains) ?? DefaultLabel;
     }
+
+    private static readonly Regex CompanySuffix = new(
+        @"\s+(Music\s+)?(GmbH(\s*&\s*Co\.?\s*KG)?|Ltd\.?|S\.?r\.?l\.?|Inc\.?)$",
+        RegexOptions.IgnoreCase);
+
+    internal static string LabelFor(string? siglaNum) => MarcaFor(siglaNum, null);
 
     /// <summary>Values the file stores, each split at <c>|</c> (Sonoton packs several names into one value).</summary>
     internal static IEnumerable<string> SplitValues(IEnumerable<string> values) =>

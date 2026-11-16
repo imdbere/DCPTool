@@ -3,6 +3,7 @@
     <RootNamespace>DcpTool.Core</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Model/marche.json" LogicalName="DcpTool.Core.marche.json" />
     <InternalsVisibleTo Include="DcpTool.Core.Tests" />
   </ItemGroup>
 </Project>

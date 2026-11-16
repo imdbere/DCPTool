@@ -8,21 +8,32 @@ namespace DcpTool.Sources.Tests;
 internal static class TestSupport
 {
     // Starts from this source file too: with --artifacts-path the binaries live outside the repo.
-    public static string SampleDir([System.Runtime.CompilerServices.CallerFilePath] string here = "")
+    public static string SampleDir([System.Runtime.CompilerServices.CallerFilePath] string here = "") =>
+        Samples("Artlist Example", here);
+
+    /// <summary>
+    /// Licensed music can't live in the repository. The samples are looked for in "local/" inside the
+    /// repository and in "TestingEquipment/" next to it; tests that need them are skipped without them.
+    /// </summary>
+    public static string Samples(string name, [System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
         var starts = new[] { AppContext.BaseDirectory, Path.GetDirectoryName(here) ?? "" };
         foreach (var dir in starts.Select(s => new DirectoryInfo(s)).SelectMany(Ancestors))
         {
             if (File.Exists(Path.Combine(dir.FullName, "DcpTool.sln")))
             {
-                var samples = Path.Combine(dir.FullName, "local", "Artlist Example");
-                if (Directory.Exists(samples))
+                var candidates = new[]
+                {
+                    Path.Combine(dir.FullName, "local", name),
+                    Path.Combine(dir.Parent?.FullName ?? dir.FullName, "TestingEquipment", name),
+                };
+                if (candidates.FirstOrDefault(Directory.Exists) is { } samples)
                 {
                     return samples;
                 }
             }
         }
-        Assert.Skip("local/Artlist Example is not available");
+        Assert.Skip($"The sample folder \"{name}\" is not available");
         return "";
     }
 

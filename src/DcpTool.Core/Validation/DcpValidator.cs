@@ -185,6 +185,16 @@ public static class DcpValidator
         {
             Add(IssueSeverity.Warning, "line-marca-missing", "Marca is empty.", nameof(DcpLine.Marca));
         }
+        else if (upload && !RaiMarche.Contains(line.Marca))
+        {
+            Add(IssueSeverity.Warning, "line-marca-unknown", $"Marca \"{line.Marca.Trim()}\" is not in RAI's list of labels. RAI may reject it.", nameof(DcpLine.Marca));
+        }
+
+        if (upload && !string.IsNullOrWhiteSpace(line.Edizione))
+        {
+            // RAI checks Edizione against a publisher list we don't have. It rejected Artlist's publisher on 2026-11-16.
+            Add(IssueSeverity.Warning, "line-edizione-set", "Edizione is filled in. RAI only accepts publishers it knows, leave it empty if in doubt.", nameof(DcpLine.Edizione));
+        }
 
         void CheckCode(string value, IReadOnlyList<CodeEntry> table, string label, string code, string field)
         {
