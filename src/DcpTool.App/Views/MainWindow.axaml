@@ -91,7 +91,7 @@
 
     <Grid RowDefinitions="Auto,Auto,*" Margin="8" IsEnabled="{Binding !IsBusy}">
       <!-- Header form -->
-      <Expander Header="Programme" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+      <Expander Header="Programma" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
         <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16" DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
           <StackPanel>
             <TextBlock Classes="group" Text="Programma" />
