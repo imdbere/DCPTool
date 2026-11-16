@@ -69,6 +69,6 @@ Targets `net10.0`. On a machine with only an older SDK set the environment varia
 - `DcpTool.Sources`: `IMusicSource` implementations (`MusicmediaSource`, `ArtlistSource`), tag reading with ATL, `ImportService`. A new library = a new `IMusicSource`.
 - `DcpTool.Rai`: `RaiClient` (login, upload, redacted diagnostics zip), `DcpFormMapper` (must stay byte-identical to v1's form data, enforced by parity tests), `DanaInfoEncoder`. Tests use a fake HTTP handler. Never run tests against the real portal: every upload creates a real DCP at RAI.
 - `DcpTool.Export`: `DocxExporter`, fills the embedded template by label text.
-- `DcpTool.App`: Avalonia 12 UI (MVVM), Velopack updates. Not yet exercised by hand.
+- `DcpTool.App`: Avalonia 12 UI (MVVM), Velopack updates. No automated UI tests; changes need a manual check.
 
 Releases: pushing a tag `v2.x.y` runs `.github/workflows/v2.yml`, which packs with Velopack and publishes to the public releases-only repository that installed apps update from. Setup and procedure: `doc/releasing.md`. v1 releases use `v0.*` / `v1.*` tags.

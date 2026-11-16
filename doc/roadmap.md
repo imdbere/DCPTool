@@ -50,6 +50,12 @@ Goal: users can install v2 instead of 0.10.0 and lose nothing. G6 (first part), 
 - **Moving over from v1.** Open v1 `.dcp` files (done), take over the RAI user name, and say in the
   release notes what changed (one DCP per window, session restore).
 
+Status 2026-11-16: built and covered by tests: musicmedia rules and RAI's label list, sample tests,
+resume on the draft, RAI code and state, warnings for unknown Marca and filled Edizione, per-line
+rejections in the issue list, names removed from diagnostics, activity log, v1 login take-over.
+Packaging was dry-run locally (63 MB installer). Open: the real checks below and the first release,
+which need the releases repository, its token and a RAI account.
+
 Done when: a real DCP with musicmedia and Artlist music goes to RAI complete and correct from an
 installed v2, a deliberately broken one is reported line by line without a duplicate draft, and an
 update has been delivered through the releases repository.

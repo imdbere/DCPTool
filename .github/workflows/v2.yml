@@ -51,6 +51,8 @@ jobs:
           $v = $env:VERSION.TrimStart('v')
           "APP_VERSION=$v" >> $env:GITHUB_ENV
           dotnet publish src/DcpTool.App/DcpTool.App.csproj -c Release -r win-x64 --self-contained true -p:Version=$v -o publish
+          # Debug symbols of the native graphics libraries: 100 MB nobody needs in the installer
+          Remove-Item publish/lib*.pdb -ErrorAction SilentlyContinue
 
       - name: Install Velopack CLI
         run: dotnet tool install -g vpk --version 1.2.161
