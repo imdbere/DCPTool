@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DCP_Tool.Models;
+using HtmlAgilityPack;
 
 namespace DCP_Tool.Helpers
 {
@@ -114,13 +115,19 @@ namespace DCP_Tool.Helpers
         private static void EnsureNoUploadError(string appendString)
         {
             var html = ParseHtml(appendString);
-            var error = html.GetElementbyId("MessageBarControl1_Table1")?.InnerText?.Trim();
+            // One message per text node, with entities like "&egrave;" decoded
+            var errorTable = html.GetElementbyId("MessageBarControl1_Table1");
+            var error = errorTable == null ? null : string.Join("\n", errorTable
+                .DescendantsAndSelf()
+                .Where(n => n.NodeType == HtmlNodeType.Text)
+                .Select(n => HtmlEntity.DeEntitize(n.InnerText).Trim())
+                .Where(t => t.Length > 0));
 
             File.WriteAllText("uploadRes.html", appendString);
             if (error != null)
             {
                 Tools.OpenFile("uploadRes.html");
-                throw new Exception("Error in DCP Upload: " + error);
+                throw new Exception("Error in DCP Upload:\n" + error);
             }
         }
 

@@ -90,7 +90,7 @@ It then matches:
 | Durata | audio file | audio file |
 | Marca | *Label* (`Artlist Original`, uploaded as `ARTLIST ORIGINAL`) | `Artlist` |
 | Sigla / numero | *Album UPC*, else the song ID from the file name | empty |
-| Edizione | *Publisher Name* | empty |
+| Edizione | *Publisher Name* (grid and Word export only, never uploaded: RAI rejected it) | empty |
 
 Not used (no field for them in the RAI form): ISRC, ISWC (always empty so far), IPI numbers, PRO affiliations, splits, the writer role. `ArtlistWriter.DcpRole` already maps the role to the paper form's codes (C/A/CA → `A`, AR → `arr`, AD/TR/SR → `E`, other → `Y`) in case the rewrite needs it.
 
@@ -103,7 +103,7 @@ Upload refuses any DCP where a line has no Autori ("Autori missing on: …"). Th
 ### Not tested yet
 
 - Cue sheets with **several writers** or with **featured artists**. None of the examples has them. The reader handles extra writer rows by design.
-- How RAI's form reacts to `ARTLIST ORIGINAL` as Marca and a publisher in Edizione (see the open questions in [rewrite-notes.md](rewrite-notes.md#open-questions-for-rais-dcp-office)).
+- Which Marca RAI accepts for Artlist. The first real upload (November 2026) rejected both `ARTLIST ORIGINAL` as Marca and `ARTLIST ORIGINAL MUSIC` as Edizione, so Edizione is no longer uploaded. See [rewrite-notes.md](rewrite-notes.md#open-questions-for-rais-dcp-office).
 - Artlist **WAV** downloads. Their metadata is unknown. Without tags, matching falls back to the file name.
 
 ### Licensing notes (from the Artlist analysis, October 2026)

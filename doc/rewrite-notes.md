@@ -40,7 +40,7 @@ A product needs a **company profile** (supplier name, representative, default se
 
 ## Open questions for RAI's DCP office
 
-1. Is **`ARTLIST ORIGINAL`** accepted as Marca, or does the form check Marca against a list? Same for **Edizione** (`ARTLIST ORIGINAL MUSIC`), whose control has an `Edizione_esiste` ("publisher exists") field. Sonoton lines never sent an Edizione, so this path is untested. If the upload rejects them, clear the Edizione / Marca cells in the line grid and upload again.
+1. **Which Marca should Artlist lines have?** RAI checks Marca and Edizione against its own lists. The first upload (November 2026) rejected `ARTLIST ORIGINAL` as Marca and `ARTLIST ORIGINAL MUSIC` as Edizione. Edizione is now always sent empty, as it always was for Sonoton. For Marca, either find a valid value in the form's Marca lookup, or ask RAI to add Artlist to its list.
 2. Is the **album UPC** acceptable as *Sigla / numero* for Artlist, or should it be the Artlist song ID, or empty?
 3. Which **support code** fits a downloaded file on the paper / Word form? (`C` = CD doesn't really fit.)
 4. Which value should **Proprietà** have for library music? Its allowed values aren't known.
@@ -123,7 +123,7 @@ What must not be overlooked when the app moves to a framework that runs on Windo
   - Serie is sent as 3 digits, and a zero is sent as empty.
   - `OraFine` = start time + duration.
   - `Committente` = `BZ/<sede>`.
-  - Marca and Edizione are sent upper case.
+  - Marca is sent upper case and must be on RAI's list. Edizione is never sent.
   - The Sonoton title is cut at `---`, and Sigla is the album text before the first `-`.
   - In names, the last word is the Cognome, and a comma means "Cognome, Nome".
 - 🔴 **Dates and number formats.** RAI expects `dd/MM/yyyy` regardless of the user's settings. The Word export currently uses the system date format. Never depend on the machine's locale for anything sent to RAI.

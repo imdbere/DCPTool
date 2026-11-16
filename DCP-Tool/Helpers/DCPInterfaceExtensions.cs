@@ -46,7 +46,9 @@ namespace DCP_Tool.Helpers
                 {$"DataGrid1:_ctl{index}:CheckControlMarca_MarcaOpera:TextBox1", line.Marca.Trim().ToUpper()},
                 {$"DataGrid1:_ctl{index}:CheckControlMarca_MarcaOpera:TextBox_Errore", ""},
                 {$"DataGrid1:_ctl{index}:CheckControlMarca_MarcaOpera:TextBox_Dimensioni",  "70#100"},
-                {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:TextBox1", line.Edizione?.Trim().ToUpper() ?? ""},
+                // RAI checks Edizione against its own list and rejects Artlist's publishers ("L'edizione ... non è valida"),
+                // so it stays empty like it always was for Sonoton. Edizione only goes into the Word export.
+                {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:TextBox1", ""},
                 {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:TextBox_Errore", ""},
                 {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:TextBox_Dimensioni",  "70#110"},
                 {$"DataGrid1:_ctl{index}:CheckControlEdizione_EdizioneOpera:Edizione_esiste", ""},
