@@ -12,7 +12,7 @@ Work one milestone at a time; each has a "done when" list that can be checked.
 | # | Goal | Milestone |
 |---|---|---|
 | G1 | Only the master timeline is imported: the app finds the music, the files, the metadata and the time each piece was on air | M4 |
-| G2 | A library of DCPs: browse, find and duplicate old ones. Plain `.dcp` files in a folder the user chooses, like an Obsidian vault | M2 |
+| G2 | DCPs are plain `.dcp` files in a library folder the user chooses, saved automatically. Finding old ones is Explorer's job; the app offers presets, recent DCPs and a button that opens the folder | M2, M3 |
 | G3 | Presets: the programme (Sendung) information is entered once and reused | M2 |
 | G4 | UI overhaul | M3 |
 | G5 | The UI follows the workflow. No trips to the top menu | M3 |
@@ -21,11 +21,14 @@ Work one milestone at a time; each has a "done when" list that can be checked.
 
 ## Workflow the app is built around
 
-1. **Start**: pick a programme preset or duplicate an earlier DCP. The header is filled.
-2. **Music**: drop the master timeline (M4), or audio files and cue sheets (today).
-3. **Review**: the list shows what is missing or doubtful, line by line.
-4. **Publish**: upload to RAI and/or export the Word form.
-5. **Verify**: the app shows what RAI saved and keeps the DCP in the library with its RAI code.
+Decided 2026-11-17 (design brief: https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz):
+
+1. **Open**: start from a preset of the programme or from a recent DCP, in the left drawer. Older DCPs
+   are found with Explorer, through "Open library folder".
+2. **Add**: drop songs or a timeline onto the Add area, pick files with Add, or learn how in the guide (How?).
+3. **Adjust**: edit the table of songs, like today.
+4. **Export or upload**: the export page with RAI (verify, upload, log) and documents (export, edit template).
+   The DCP is saved automatically.
 
 ## M1: Release v2 as a safe replacement for v1
 
@@ -84,6 +87,10 @@ episode in two clicks, and the whole library can be copied to another PC as a fo
 Open questions: one shared library on a network drive for several users (locking, conflicts)?
 Should uploaded DCPs become read-only?
 
+Superseded in part on 2026-11-17: the app gets no library browser (see M3). The library folder,
+automatic saving, file naming, presets, next episode and the v1 backups stay; the browser panel
+(folder tree, search, sorting, move, rename, delete) is replaced by the drawer of the new design.
+
 Status 2026-11-17: built: library folder, side panel with search, presets, next episode, duplicate,
 rename, delete, automatic saving of library files. Covered by tests in Core; the panel itself has not
 been clicked through yet. Localisation (German, Italian, English; 291 texts) is also built, ahead of M3;
@@ -91,31 +98,36 @@ the translations await a native check.
 
 ## M3: UI overhaul around the workflow
 
-Design direction (decided 2026-11-17, after a first proposal came back far too busy): stay as plain as
-today's app. The flow is Open (preset or earlier DCP) → Import (timeline; today the music files) → Adjust
-(a plain editable list) → Finish (send to RAI, export the Word form, saved). Only problems that block
-sending are shown: one mark on the row, repeated once at Finish. No hint panels, no warning lists, no badges.
-Where the bullets below say otherwise, this paragraph wins.
-Design brief (version 2): https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
+Goal: G4 and G5. Design decided on 2026-11-17 from our own sketches, after a first proposal came back far
+too busy. The design brief describes it in full and marks what is still open:
+https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
 
-Goal: G4 and G5. Start with a short design concept (layout, colours, the five workflow steps on screen),
-agree on it, then build.
-
-- **Layout.** Library on the left, the DCP in the middle (header as a compact card, lines below),
-  a status and issue area that is always visible. The primary action of the current step is a button
-  on the page ("Add music", "Upload to RAI", "Export"), not a menu entry. The menu remains as a fallback
-  and for the macOS menu bar.
-- **Lines.** A proper authors editor (Nome / Cognome rows), inline validation marks with the reason,
-  source and cue-sheet state per line, keyboard-friendly editing, undo.
-- **Upload panel.** Login state, progress per block, result per line, link to the draft at RAI, the
-  "already uploaded" guard. No modal dialogs for results.
-- **Empty and first-run states.** First start asks for the library folder, the company profile and the
-  RAI login in one guided screen.
-- **Grid control.** Avalonia's free DataGrid only gets bug fixes. Decide during the concept whether
-  the lines become a custom list (cards or rows built from standard controls) instead of a grid.
+- **Window.** A collapsible left drawer, the main panel with a programme strip on top and the table of
+  songs, and two large areas at the bottom: **Add** (step 2) and **Export or upload** (step 4). The areas
+  never move; the current step's area has a highlighted background, and clicking an area switches step.
+- **Drawer (step 1).** Collapsible lists *Presets* and *Recent*; at the bottom *Open library folder*
+  (opens it in Explorer/Finder) and *Settings*. No library browser in the app.
+- **Add area (step 2).** Drop songs or a timeline; *Add* opens the file dialog; *How?* (the prominent
+  button) opens the guide.
+- **Guide.** Takes over the main panel; the drawer lists the ways to add songs (DaVinci timeline,
+  musicmedia.it, Artlist with cue sheets, other providers), each with steps, conditions and
+  troubleshooting. We write the texts.
+- **Table (step 3).** Works like today; a question mark next to some headers opens the field help.
+  No validation marks in the table.
+- **Export page (step 4).** Sections *RAI* (Verify, Upload, show log; after an upload the DCP number and
+  "Open at RAI") and *Documents* (one export per document, today the music list on Allegato B, each with
+  "Edit template"). No save button: the DCP is saved automatically.
+- **Look.** As plain as today's app: neutral greys, one accent colour for the active step and main
+  buttons. No hint panels, warning lists, badges or colour-coded states.
+- **Open, to be designed:** the programme strip and how it is edited; Recent (continue vs. new episode);
+  creating and editing presets; where validation lives (one contained place); what Verify checks;
+  editing document templates (Word today, PDF considered); opening a DCP found in Explorer.
 - **Language (decided 2026-11-16).** The UI is available in German and Italian, English optional.
   Code, comments, logs, file formats and diagnostics stay English. RAI field names (Titolo, Autori ...)
   are not translated in any language, they are the form's own terms. See "Localisation" below.
+- **Code already prepared:** `DcpWorkflow` (current step and totals), field help popups, the library core
+  (`DcpLibrary`: scan, presets, next episode, naming). The current browser panel, issue list and menu
+  layout will be replaced.
 
 ### Localisation (first step of M3, before the redesign multiplies the strings)
 
@@ -129,8 +141,8 @@ agree on it, then build.
 - The Word form is an Italian RAI document and stays Italian.
 - Translations need a native check for both languages before release (owner: team).
 
-Done when: a new user creates, fills, uploads and exports a DCP without opening the menu, and the
-design has been reviewed on a real screen.
+Done when: a new user starts a DCP from a preset or a recent one, adds songs, uploads and exports
+without opening the menu, and the design has been reviewed on a real screen.
 
 ## M4: Timeline import
 
