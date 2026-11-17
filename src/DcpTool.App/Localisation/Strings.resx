@@ -776,6 +776,9 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   <data name="Prompt_SavePreset" xml:space="preserve">
     <value>Save preset</value>
   </data>
+  <data name="Rai_FormChanged" xml:space="preserve">
+    <value>RAI's DCP form has changed, so DCP Tool stopped before sending anything. An update of DCP Tool is needed: please save the diagnostics (RAI menu) and send them to the developers.</value>
+  </data>
   <data name="Rai_DraftNotFound" xml:space="preserve">
     <value>The DCP that an earlier upload saved was not found at RAI (it may have been deleted there). Choose &quot;{0}&quot; and upload again to create a new one.</value>
   </data>

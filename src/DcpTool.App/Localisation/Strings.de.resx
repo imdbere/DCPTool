@@ -776,6 +776,9 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
   <data name="Prompt_SavePreset" xml:space="preserve">
     <value>Vorlage speichern</value>
   </data>
+  <data name="Rai_FormChanged" xml:space="preserve">
+    <value>Das DCP-Formular von RAI hat sich geändert. DCP Tool hat deshalb nichts gesendet. Es braucht eine neue Version von DCP Tool: Bitte speichern Sie die Diagnose (Menü RAI) und schicken Sie sie an die Entwickler.</value>
+  </data>
   <data name="Rai_DraftNotFound" xml:space="preserve">
     <value>Der DCP, den ein früherer Upload gespeichert hat, wurde bei RAI nicht gefunden (vielleicht wurde er dort gelöscht). Wählen Sie „{0}“ und laden Sie erneut hoch, um einen neuen anzulegen.</value>
   </data>

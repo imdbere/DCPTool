@@ -148,8 +148,32 @@ public sealed class FakePortal : HttpMessageHandler
         return r;
     }
 
-    private static string FormPage() => $"<html><form><input type=\"hidden\" id=\"__VIEWSTATE\" name=\"__VIEWSTATE\" value=\"{ViewState(0)}\">"
-        + "<input type=\"hidden\" id=\"__VIEWSTATEGENERATOR\" value=\"GEN\"><input type=\"hidden\" id=\"__EVENTVALIDATION\" value=\"EV0\"></form></html>";
+    /// <summary>A field the form leaves out, as if RAI had renamed it.</summary>
+    public string? DropField { get; set; }
+
+    // Every field the upload fills in, for up to 40 lines, like RAI's form has them
+    private string Fields()
+    {
+        var sample = new DcpTool.Core.Model.Dcp { Sede = "BZ/16", TitoloItaliano = "x" };
+        for (var i = 0; i < 40; i++)
+        {
+            sample.Lines.Add(new DcpTool.Core.Model.DcpLine { Titolo = "x", Autori = [new("a", "b")], Durata = TimeSpan.FromSeconds(1) });
+        }
+
+        var names = DcpFormMapper.Header(sample).Concat(DcpFormMapper.Lines(sample, 0, 40)).Select(kv => kv.Key)
+            .Select(n => n.EndsWith(".x") || n.EndsWith(".y") ? n[..^2] : n)
+            .Where(n => n != DropField && !n.EndsWith(":TextBox_TitoloOpera"))
+            .Distinct();
+        return string.Concat(names.Select(n => $"<input type=\"hidden\" name=\"{WebUtility.HtmlEncode(n)}\">"));
+    }
+
+    private string FormPage() => $"<html><form><input type=\"hidden\" id=\"__VIEWSTATE\" name=\"__VIEWSTATE\" value=\"{ViewState(0)}\">"
+        + "<input type=\"hidden\" id=\"__VIEWSTATEGENERATOR\" value=\"GEN\"><input type=\"hidden\" id=\"__EVENTVALIDATION\" value=\"EV0\">"
+        + Fields() + TitleInputs([]) + "</form></html>";
+
+    private static string TitleInputs(IReadOnlyList<string> titles) =>
+        string.Concat(Enumerable.Range(0, 40).Select(k =>
+            $"<input name=\"DataGrid1:_ctl{k + 2}:TextBox_TitoloOpera\" value=\"{(k < titles.Count ? WebUtility.HtmlEncode(titles[k]) : "")}\">"));
 
     private HttpResponseMessage FormPost(List<KeyValuePair<string, string>> form, Func<string, string?> field)
     {
@@ -177,10 +201,7 @@ public sealed class FakePortal : HttpMessageHandler
 
         sb.Append("<span id=\"Label_CodiceDCP\">7-00</span><span id=\"Label_Stato\">Bozza</span>");
 
-        for (var k = 0; k < _titles.Count; k++)
-        {
-            sb.Append($"<input name=\"DataGrid1:_ctl{k + 2}:TextBox_TitoloOpera\" value=\"{WebUtility.HtmlEncode(_titles[k])}\">");
-        }
+        sb.Append(Fields()).Append(TitleInputs(_titles));
 
         sb.Append("</form></html>");
         _resultPage = sb.ToString();

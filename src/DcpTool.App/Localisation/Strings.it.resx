@@ -776,6 +776,9 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Prompt_SavePreset" xml:space="preserve">
     <value>Salva modello</value>
   </data>
+  <data name="Rai_FormChanged" xml:space="preserve">
+    <value>Il modulo DCP di RAI è cambiato, quindi DCP Tool non ha inviato nulla. Serve un aggiornamento di DCP Tool: salvare la diagnostica (menu RAI) e inviarla agli sviluppatori.</value>
+  </data>
   <data name="Rai_DraftNotFound" xml:space="preserve">
     <value>Il DCP salvato da un caricamento precedente non è stato trovato su RAI (forse è stato eliminato). Scegliere «{0}» e caricare di nuovo per crearne uno nuovo.</value>
   </data>

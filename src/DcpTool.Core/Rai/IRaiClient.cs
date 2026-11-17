@@ -47,6 +47,9 @@ public sealed class RaiException(RaiErrorKind kind, string message, Exception? i
     /// <summary><see cref="Code"/>: the draft an earlier, incomplete upload left at RAI was not found.</summary>
     public const string DraftNotFound = "draft-not-found";
 
+    /// <summary><see cref="Code"/>: RAI's form lacks fields the upload fills in, so it has changed. Nothing was sent.</summary>
+    public const string FormChanged = "form-changed";
+
     public RaiErrorKind Kind { get; } = kind;
 
     /// <summary>A more specific case of <see cref="Kind"/> (one of the constants above), or null.</summary>

@@ -93,6 +93,7 @@ public static class MessageText
     {
         RaiException.TooManySessions => Loc.Get("Rai_TooManySessions"),
         RaiException.DraftNotFound => Loc.Format("Rai_DraftNotFound", Loc.MenuName("Menu_ForgetUpload")),
+        RaiException.FormChanged => Loc.Get("Rai_FormChanged"),
         _ => ex.Kind switch
         {
             RaiErrorKind.InvalidCredentials => Loc.Get("Rai_InvalidCredentials"),

@@ -206,6 +206,21 @@ public class RaiClientTests
     }
 
     [Fact]
+    public async Task ChangedFormStopsBeforeAnythingIsSent()
+    {
+        var portal = new FakePortal { DropField = "TextBox_TitoloIta" };
+        using var client = NewClient(portal);
+        await client.LoginAsync(Good, Ct);
+
+        var e = await Assert.ThrowsAsync<RaiException>(() => client.UploadAsync(MakeDcp(5), null, Ct));
+
+        Assert.Equal(RaiException.FormChanged, e.Code);
+        Assert.Contains("TextBox_TitoloIta", e.Message);
+        Assert.Empty(portal.FormPosts);
+        Assert.Null(e.PartialUpload);
+    }
+
+    [Fact]
     public async Task FormErrorOnFirstPostIsNotPartial()
     {
         var portal = new FakePortal { RejectPost = 1 };

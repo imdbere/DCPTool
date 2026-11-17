@@ -1,3 +1,4 @@
+using DcpTool.Core.Model;
 using Xunit;
 
 namespace DcpTool.Rai.Tests;
@@ -12,6 +13,31 @@ public class RealPageTests
     [InlineData("form-empty.html")]
     [InlineData("form-after-first-save.html")]
     public void PagesWithoutErrorGiveNoError(string name) => Assert.Null(RaiClient.ReadFormError(Page(name)));
+
+    private static Dcp NineLines()
+    {
+        var dcp = new Dcp { TitoloItaliano = "x", Sede = "BZ/16", Durata = TimeSpan.FromMinutes(25) };
+        for (var i = 0; i < 9; i++)
+        {
+            dcp.Lines.Add(new DcpLine { Titolo = "t", Autori = [new Autore("a", "b")], Durata = TimeSpan.FromSeconds(30), Marca = "Sonoton" });
+        }
+
+        return dcp;
+    }
+
+    [Fact]
+    public void RealFormHasEveryFieldTheUploadFills()
+    {
+        var dcp = NineLines();
+        var firstPost = DcpFormMapper.Header(dcp).Concat(DcpFormMapper.Lines(dcp, 0, 4)).Select(kv => kv.Key);
+        Assert.Empty(RaiClient.MissingFormFields(Page("form-empty.html"), firstPost));
+
+        // After the first save the form has rows for the next block
+        var secondPost = DcpFormMapper.Lines(dcp, 4, 4).Select(kv => kv.Key);
+        Assert.Empty(RaiClient.MissingFormFields(Page("form-after-first-save.html"), secondPost));
+
+        Assert.Equal(["TextBox_Inventato"], RaiClient.MissingFormFields(Page("form-empty.html"), ["TextBox_Inventato", "__VIEWSTATE"]));
+    }
 
     [Fact]
     public void CodeAndStateAreReadFromASavedDcp()

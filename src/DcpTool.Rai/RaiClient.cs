@@ -276,6 +276,22 @@ public sealed class RaiClient : IRaiClient, IDisposable
             progress?.Report(new UploadProgress(saved, total, $"Continuing DCP {codice}"));
         }
 
+        // Before anything is saved at RAI: the page must have every field the first POST fills in.
+        // A renamed field would otherwise be ignored by RAI without an error, and the DCP saved incomplete.
+        var missing = MissingFormFields(last.Body,
+            DcpFormMapper.Header(dcp).Concat(DcpFormMapper.Lines(dcp, firstBatch * batchSize, batchSize)).Select(kv => kv.Key));
+        if (missing.Count > 0)
+        {
+            throw new RaiException(RaiErrorKind.UnexpectedPage,
+                $"RAI's DCP form has changed: it no longer has the field(s) {string.Join(", ", missing.Take(5))}" +
+                (missing.Count > 5 ? $" and {missing.Count - 5} more" : "") +
+                ". Nothing was sent. DCP Tool needs an update; please send the diagnostics to the developers.")
+            {
+                Code = RaiException.FormChanged,
+                PartialUpload = draft is null ? null : Record(false),
+            };
+        }
+
         for (var i = firstBatch; i < batches; i++)
         {
             try
@@ -333,6 +349,26 @@ public sealed class RaiClient : IRaiClient, IDisposable
         && uri.Query.Contains("codice_dcp=", StringComparison.OrdinalIgnoreCase)
             ? uri
             : null;
+
+    /// <summary>
+    /// The field names in <paramref name="sent"/> that the page has no input, select or textarea for.
+    /// Image buttons are posted as <c>name.x</c> / <c>name.y</c> and count by their name.
+    /// </summary>
+    internal static IReadOnlyList<string> MissingFormFields(string html, IEnumerable<string> sent)
+    {
+        var present = (Parse(html).DocumentNode.SelectNodes("//input[@name] | //select[@name] | //textarea[@name]") ?? Enumerable.Empty<HtmlNode>())
+            .Select(n => n.GetAttributeValue("name", ""))
+            .ToHashSet(StringComparer.Ordinal);
+
+        static string Base(string name) => name.EndsWith(".x", StringComparison.Ordinal) || name.EndsWith(".y", StringComparison.Ordinal)
+            ? name[..^2]
+            : name;
+
+        return sent.Select(Base)
+            .Where(n => !AspNetFields.Contains(n) && !present.Contains(n))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
 
     /// <summary>RAI's code and state of the DCP a page shows ("1788111-00", "Bozza"). Nulls for the empty form.</summary>
     internal static (string? Codice, string? Stato) ReadDcpInfo(string html)
