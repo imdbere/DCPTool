@@ -260,6 +260,9 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
   <data name="Issue_AlreadyUploaded" xml:space="preserve">
     <value>Dieser DCP wurde bereits am {0:g} hochgeladen. Ein erneuter Upload legt bei RAI einen zweiten DCP an.</value>
   </data>
+  <data name="Issue_ChangedSinceUpload" xml:space="preserve">
+    <value>Der DCP wurde nach dem Upload geändert. Bei RAI stehen noch die alten Werte: Bitte im RAI-Formular korrigieren (Bei RAI öffnen).</value>
+  </data>
   <data name="Issue_AlreadyUploadedPartly" xml:space="preserve">
     <value>Ein Upload am {0:g} brach nach {1} von {2} Zeilen ab. Ein erneuter Upload setzt diesen DCP{3} bei RAI fort.</value>
   </data>

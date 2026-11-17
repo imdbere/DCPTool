@@ -260,6 +260,9 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Issue_AlreadyUploaded" xml:space="preserve">
     <value>Questo DCP è già stato caricato il {0:g}. Un nuovo caricamento crea un secondo DCP su RAI.</value>
   </data>
+  <data name="Issue_ChangedSinceUpload" xml:space="preserve">
+    <value>Il DCP è stato modificato dopo il caricamento. RAI ha ancora i valori precedenti: correggerli nel modulo RAI (Apri in RAI).</value>
+  </data>
   <data name="Issue_AlreadyUploadedPartly" xml:space="preserve">
     <value>Un caricamento del {0:g} si è interrotto dopo {1} di {2} righe. Un nuovo caricamento prosegue quel DCP{3} su RAI.</value>
   </data>

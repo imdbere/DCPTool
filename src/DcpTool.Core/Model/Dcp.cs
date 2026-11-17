@@ -105,4 +105,10 @@ public sealed class UploadRecord
 
     /// <summary>RAI's state of the DCP at upload time, e.g. <c>Bozza</c>.</summary>
     public string? Stato { get; set; }
+
+    /// <summary>
+    /// <c>DcpFingerprint</c> of the DCP as it was uploaded, to notice later changes. Null for records written
+    /// before it existed, which then never count as changed.
+    /// </summary>
+    public string? ContentHash { get; set; }
 }

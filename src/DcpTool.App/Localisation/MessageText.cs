@@ -26,6 +26,7 @@ public static class MessageText
             "matricola-missing" => "Issue_MatricolaMissing",
             "already-uploaded" when a.Count == 5 && a[1] is true => "Issue_AlreadyUploaded",
             "already-uploaded" when a.Count == 5 => "Issue_AlreadyUploadedPartly",
+            "changed-since-upload" => "Issue_ChangedSinceUpload",
             "durata-missing" => "Issue_DurataMissing",
             "durata-too-long" => "Issue_DurataTooLong",
             "registrazione-after-trasmissione" => "Issue_RegistrazioneAfterTrasmissione",

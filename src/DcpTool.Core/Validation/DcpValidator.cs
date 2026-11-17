@@ -114,6 +114,15 @@ public static class DcpValidator
                           $"Uploading again continues that DCP{(record.Codice is null ? "" : " (" + record.Codice + ")")} at RAI.",
                     nameof(Dcp.Upload),
                     record.UploadedAt.LocalDateTime, record.Complete, record.LinesSaved, dcp.Lines.Count, record.Codice ?? "");
+
+                if (Workflow.DcpFingerprint.ChangedSinceUpload(dcp))
+                {
+                    issues.Add(new ValidationIssue(
+                        IssueSeverity.Warning,
+                        "changed-since-upload",
+                        "The DCP was changed after the upload. RAI still has the old values: correct them in RAI's form.",
+                        nameof(Dcp.Upload)));
+                }
             }
         }
 

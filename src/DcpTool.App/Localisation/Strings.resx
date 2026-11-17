@@ -260,6 +260,9 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   <data name="Issue_AlreadyUploaded" xml:space="preserve">
     <value>This DCP was already uploaded on {0:g}. Uploading again creates a second DCP at RAI.</value>
   </data>
+  <data name="Issue_ChangedSinceUpload" xml:space="preserve">
+    <value>The DCP was changed after the upload. RAI still has the old values: correct them in RAI's form (Open at RAI).</value>
+  </data>
   <data name="Issue_AlreadyUploadedPartly" xml:space="preserve">
     <value>An upload on {0:g} stopped after {1} of {2} lines. Uploading again continues that DCP{3} at RAI.</value>
   </data>

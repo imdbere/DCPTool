@@ -251,6 +251,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
         UploadRecord Record(bool complete) => new()
         {
             UploadedAt = DateTimeOffset.Now, Url = url.ToString(), LinesSaved = saved, Complete = complete, Codice = codice, Stato = stato,
+            ContentHash = DcpTool.Core.Workflow.DcpFingerprint.Compute(dcp),
         };
 
         if (draft is not null)
