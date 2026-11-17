@@ -91,7 +91,12 @@ the translations await a native check.
 
 ## M3: UI overhaul around the workflow
 
-Design brief for the designer (users, workflow, screens, data, states, constraints, deliverables, our suggestions): https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
+Design direction (decided 2026-11-17, after a first proposal came back far too busy): stay as plain as
+today's app. The flow is Open (preset or earlier DCP) → Import (timeline; today the music files) → Adjust
+(a plain editable list) → Finish (send to RAI, export the Word form, saved). Only problems that block
+sending are shown: one mark on the row, repeated once at Finish. No hint panels, no warning lists, no badges.
+Where the bullets below say otherwise, this paragraph wins.
+Design brief (version 2): https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
 
 Goal: G4 and G5. Start with a short design concept (layout, colours, the five workflow steps on screen),
 agree on it, then build.
