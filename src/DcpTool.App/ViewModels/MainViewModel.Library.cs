@@ -20,8 +20,18 @@ namespace DcpTool.App.ViewModels;
 public sealed partial class MainViewModel
 {
     private DcpLibrary? _library;
-    private IReadOnlyList<LibraryEntry> _entries = [];
+    private LibrarySnapshot _snapshot = LibrarySnapshot.Empty;
     private bool _initialized;
+
+    // Tree items by folder path and rows by file path: reused across scans, so expansion, selection and scroll position stay
+    private readonly Dictionary<string, LibraryFolderItem> _folderItems = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, LibraryRow> _rows = new(StringComparer.OrdinalIgnoreCase);
+
+    // Folders the user opened in the tree, for this session
+    private readonly HashSet<string> _expandedFolders = new(StringComparer.OrdinalIgnoreCase);
+
+    // The open file whose folders were last opened in the tree, so that is done once per file
+    private string? _revealedPath;
     private bool _scanning;
     private bool _scanAgain;
 
@@ -40,7 +50,30 @@ public sealed partial class MainViewModel
     private Action<string>? _promptAccept;
 
     public ObservableCollection<LibraryRow> Presets { get; } = [];
+
+    /// <summary>The search results: matching DCPs of all folders, flat.</summary>
     public ObservableCollection<LibraryRow> LibraryDcps { get; } = [];
+
+    /// <summary>The library's folders and DCPs (presets apart), shown when not searching.</summary>
+    public ObservableCollection<LibraryTreeItem> LibraryTree { get; } = [];
+
+    public IReadOnlyList<LibrarySortOption> LibrarySortOptions => LibrarySortOption.All;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LibraryTargetText))]
+    private LibraryTreeItem? _selectedLibraryItem;
+
+    /// <summary>Folder (below the library, "" = the library itself) new DCPs and new folders go into: the selected folder, or the selected DCP's folder.</summary>
+    public string LibraryTargetFolder => SelectedLibraryItem switch
+    {
+        LibraryFolderItem folder => folder.RelativePath,
+        LibraryRow { IsPreset: false } row => row.Entry.Folder,
+        _ => "",
+    };
+
+    public string LibraryTargetText => Loc.Format("Library_TargetFolder", FolderDisplayName(LibraryTargetFolder));
+
+    public bool IsLibrarySearching => !string.IsNullOrWhiteSpace(LibrarySearch);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowLibraryPanel), nameof(ShowLibraryStrip))]
@@ -72,7 +105,30 @@ public sealed partial class MainViewModel
 
     public bool IsAutoSaved => IsLibraryDocument || IsPendingLibraryDocument;
 
-    partial void OnLibrarySearchChanged(string value) => ApplyLibraryFilter();
+    partial void OnLibrarySearchChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsLibrarySearching));
+        ApplyLibraryFilter();
+    }
+
+    public LibrarySortOption SelectedLibrarySort
+    {
+        get => LibrarySortOption.All.FirstOrDefault(o => o.Sort == LibrarySorting.FromSetting(_settings.LibrarySort)) ?? LibrarySortOption.All[0];
+        set
+        {
+            if (value is null || value.Sort == SelectedLibrarySort.Sort)
+            {
+                return;
+            }
+
+            _settings.LibrarySort = LibrarySorting.ToSetting(value.Sort);
+            SaveSettings();
+            OnPropertyChanged();
+            ApplyLibraryFilter();
+        }
+    }
+
+    private string FolderDisplayName(string relative) => relative.Length == 0 ? Loc.Get("Library_TopLevel") : relative;
 
     // ---------------------------------------------------------------- setting up
 
@@ -97,6 +153,10 @@ public sealed partial class MainViewModel
     private void ApplyLibrarySetting()
     {
         _library = CreateLibrary(_settings.LibraryFolder);
+        _folderItems.Clear();
+        _expandedFolders.Clear();
+        _revealedPath = null;
+        SelectedLibraryItem = null;
         UpdateNameFollowsHeader();
         OnPropertyChanged(nameof(HasLibrary));
         OnPropertyChanged(nameof(ShowLibraryBanner));
@@ -158,19 +218,20 @@ public sealed partial class MainViewModel
                 var library = _library;
                 if (library is null)
                 {
-                    _entries = [];
+                    _snapshot = LibrarySnapshot.Empty;
                     LibraryNotice = "";
                 }
                 else
                 {
-                    var (entries, exists) = await Task.Run(() => (library.Scan(), library.Exists));
+                    // Off the UI thread; only new and changed files are read (DcpLibrary keeps the rest in memory)
+                    var (snapshot, exists) = await Task.Run(() => (library.ScanAll(), library.Exists));
                     if (!ReferenceEquals(library, _library))
                     {
                         _scanAgain = true; // the folder was changed meanwhile
                         continue;
                     }
 
-                    _entries = entries;
+                    _snapshot = snapshot;
                     LibraryNotice = exists ? "" : Loc.Get("Library_FolderMissing");
                 }
 
@@ -190,16 +251,58 @@ public sealed partial class MainViewModel
 
     private void ApplyLibraryFilter()
     {
-        var matching = _entries.Where(e => e.Matches(LibrarySearch)).ToList();
-        var presets = matching.Where(e => e.IsPreset).OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-        var dcps = matching.Where(e => !e.IsPreset).ToList();
-        Sync(Presets, presets);
-        Sync(LibraryDcps, dcps);
+        var entries = _snapshot.Entries;
+        var sort = SelectedLibrarySort.Sort;
+        var searching = IsLibrarySearching;
+        var rows = new Dictionary<string, LibraryRow>(StringComparer.OrdinalIgnoreCase);
+        LibraryRow RowFor(LibraryEntry entry)
+        {
+            if (!rows.TryGetValue(entry.Path, out var row))
+            {
+                if (_rows.TryGetValue(entry.Path, out var old))
+                {
+                    row = old;
+                    row.Update(entry);
+                }
+                else
+                {
+                    row = new LibraryRow(entry);
+                }
+
+                rows[entry.Path] = row;
+            }
+
+            return row;
+        }
+
+        var matching = entries.Where(e => e.Matches(LibrarySearch)).ToList();
+        var presets = matching.Where(e => e.IsPreset).OrderBy(e => e.Name, NaturalComparer.Instance).ToList();
+        var dcps = LibrarySorting.Sort(matching.Where(e => !e.IsPreset), sort).ToList();
+        SyncItems(Presets, presets.Select(RowFor).ToList());
+        SyncItems(LibraryDcps, searching ? dcps.Select(RowFor).ToList() : []);
+
+        // The tree is kept up to date while searching too, so it is as it was when the search is cleared
+        RevealOpenFile();
+        var tree = Core.Library.LibraryTree.Build(_snapshot, sort);
+        var folders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        SyncFolder(LibraryTree, tree, RowFor, folders);
+        foreach (var gone in _folderItems.Keys.Where(k => !folders.Contains(k)).ToList())
+        {
+            _folderItems.Remove(gone);
+        }
+
+        _rows = rows;
+        if (SelectedLibraryItem is LibraryFolderItem selectedFolder && !folders.Contains(selectedFolder.RelativePath)
+            || SelectedLibraryItem is LibraryRow selectedRow && !rows.ContainsKey(selectedRow.Path))
+        {
+            SelectedLibraryItem = null;
+        }
+
+        OnPropertyChanged(nameof(LibraryTargetText));
         UpdateOpenRows();
 
-        var searching = !string.IsNullOrWhiteSpace(LibrarySearch);
-        var allPresets = _entries.Count(e => e.IsPreset);
-        var allDcps = _entries.Count - allPresets;
+        var allPresets = entries.Count(e => e.IsPreset);
+        var allDcps = entries.Count - allPresets;
         PresetsHeader = searching ? Loc.Format("Library_PresetsHeaderFiltered", presets.Count, allPresets) : Loc.Format("Library_PresetsHeader", allPresets);
         DcpsHeader = searching ? Loc.Format("Library_DcpsHeaderFiltered", dcps.Count, allDcps) : Loc.Format("Library_DcpsHeader", allDcps);
         PresetsEmptyText = presets.Count > 0 || _library is null ? ""
@@ -210,30 +313,122 @@ public sealed partial class MainViewModel
             : Loc.Get("Library_NoDcpMatch");
     }
 
-    /// <summary>Updates the list in place, so the selection and the scroll position survive a refresh.</summary>
-    private static void Sync(ObservableCollection<LibraryRow> rows, List<LibraryEntry> entries)
+    private void SyncFolder(ObservableCollection<LibraryTreeItem> target, LibraryFolderNode node, Func<LibraryEntry, LibraryRow> rowFor,
+        HashSet<string> folders)
     {
-        for (var i = 0; i < entries.Count; i++)
+        var items = new List<LibraryTreeItem>(node.Folders.Count + node.Entries.Count);
+        foreach (var folder in node.Folders)
         {
-            if (i >= rows.Count)
+            if (!_folderItems.TryGetValue(folder.RelativePath, out var item))
             {
-                rows.Add(new LibraryRow(entries[i]));
+                item = new LibraryFolderItem(folder.RelativePath, OnFolderExpansionChanged)
+                {
+                    IsExpanded = _expandedFolders.Contains(folder.RelativePath),
+                };
+                _folderItems[folder.RelativePath] = item;
             }
-            else if (rows[i].Entry != entries[i])
+
+            folders.Add(folder.RelativePath);
+            item.Update(folder);
+            SyncFolder(item.Children, folder, rowFor, folders);
+            items.Add(item);
+        }
+
+        items.AddRange(node.Entries.Select(rowFor));
+        SyncItems(target, items);
+    }
+
+    private void OnFolderExpansionChanged(LibraryFolderItem folder)
+    {
+        if (folder.IsExpanded)
+        {
+            _expandedFolders.Add(folder.RelativePath);
+        }
+        else
+        {
+            _expandedFolders.Remove(folder.RelativePath);
+        }
+    }
+
+    /// <summary>Opens the folders down to <paramref name="relativeFolder"/> in the tree.</summary>
+    private void ExpandFolder(string relativeFolder)
+    {
+        var parts = relativeFolder.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 1; i <= parts.Length; i++)
+        {
+            var path = string.Join('/', parts.Take(i));
+            _expandedFolders.Add(path);
+            if (_folderItems.TryGetValue(path, out var item))
             {
-                rows[i] = new LibraryRow(entries[i]);
+                item.IsExpanded = true;
+            }
+        }
+    }
+
+    /// <summary>Once per opened library file: its folders are opened in the tree, so it can be seen there.</summary>
+    private void RevealOpenFile()
+    {
+        if (_library is not { } library || FilePath is not { } path || !library.Contains(path) || SamePath(path, _revealedPath))
+        {
+            return;
+        }
+
+        _revealedPath = path;
+        var folder = Path.GetDirectoryName(Path.GetRelativePath(library.Folder, path))?.Replace('\\', '/') ?? "";
+        ExpandFolder(folder);
+    }
+
+    /// <summary>
+    /// Makes <paramref name="target"/> hold <paramref name="items"/> in that order with as few changes as possible, never
+    /// holding an item twice, so the selection and the scroll position survive a refresh.
+    /// </summary>
+    private static void SyncItems<T>(ObservableCollection<T> target, IReadOnlyList<T> items) where T : class
+    {
+        var wanted = new HashSet<T>(items, ReferenceEqualityComparer.Instance);
+        for (var i = target.Count - 1; i >= 0; i--)
+        {
+            if (!wanted.Contains(target[i]))
+            {
+                target.RemoveAt(i);
             }
         }
 
-        while (rows.Count > entries.Count)
+        for (var i = 0; i < items.Count; i++)
         {
-            rows.RemoveAt(rows.Count - 1);
+            if (i < target.Count && ReferenceEquals(target[i], items[i]))
+            {
+                continue;
+            }
+
+            var at = -1;
+            for (var j = i + 1; j < target.Count; j++)
+            {
+                if (ReferenceEquals(target[j], items[i]))
+                {
+                    at = j;
+                    break;
+                }
+            }
+
+            if (at >= 0)
+            {
+                target.Move(at, i);
+            }
+            else
+            {
+                target.Insert(i, items[i]);
+            }
+        }
+
+        while (target.Count > items.Count)
+        {
+            target.RemoveAt(target.Count - 1);
         }
     }
 
     private void UpdateOpenRows()
     {
-        foreach (var row in Presets.Concat(LibraryDcps))
+        foreach (var row in _rows.Values)
         {
             row.IsOpen = SamePath(row.Path, FilePath);
         }
@@ -313,8 +508,51 @@ public sealed partial class MainViewModel
         }
 
         SyncLines();
+        if (!KeepLegacyOriginal(FilePath, out var original))
+        {
+            return false;
+        }
+
         FollowHeaderName(library);
-        return WriteLibraryFile(FilePath, isNew: false);
+        var saved = WriteLibraryFile(FilePath, isNew: false);
+        ReportLegacyConverted(saved, FilePath, original);
+        return saved;
+    }
+
+    /// <summary>Folder for the originals of files written by DCP Tool 0.x (see <see cref="KeepLegacyOriginal"/>). Set once at start.</summary>
+    public string? LegacyBackupFolder { get; set; }
+
+    /// <summary>
+    /// The library may still be used by DCP Tool 0.x, which cannot read the new format. Before a file of the old format
+    /// in the library is overwritten for the first time, the original is copied to <see cref="LegacyBackupFolder"/>.
+    /// False when that failed: the file must not be overwritten then (the status text says why).
+    /// </summary>
+    private bool KeepLegacyOriginal(string path, out string? original)
+    {
+        original = null;
+        if (_library is not { } library || !library.Contains(path) || LegacyBackupFolder is not { } backups)
+        {
+            return true;
+        }
+
+        try
+        {
+            original = library.BackupIfLegacy(path, backups);
+            return true;
+        }
+        catch (DcpFileException ex)
+        {
+            SetStatus("Status_LegacyBackupFailed", Path.GetFileName(path), ex.Message);
+            return false;
+        }
+    }
+
+    private void ReportLegacyConverted(bool saved, string path, string? original)
+    {
+        if (saved && original is not null)
+        {
+            SetStatus("Status_LegacyConverted", Path.GetFileName(path), original);
+        }
     }
 
     private bool WriteLibraryFile(string path, bool isNew)
@@ -417,10 +655,16 @@ public sealed partial class MainViewModel
             return false;
         }
 
+        if (!KeepLegacyOriginal(path, out var original))
+        {
+            return false;
+        }
+
         try
         {
             DcpFile.Save(path, session.Dcp);
             SetStatus("Status_SessionSaved", RelativeName(path));
+            ReportLegacyConverted(true, path, original);
             return true;
         }
         catch (DcpFileException ex)
@@ -592,7 +836,110 @@ public sealed partial class MainViewModel
             return;
         }
 
-        StartNewDocument(dcp, null, dirty: false, "Status_NewFromPreset", row.Name);
+        StartNewDocument(dcp, NewDocumentFolder(), dirty: false, "Status_NewFromPreset", row.Name);
+    }
+
+    /// <summary>Where a new DCP gets its file: the folder selected in the library panel.</summary>
+    private string? NewDocumentFolder() => _library?.FolderPath(LibraryTargetFolder);
+
+    // ---------------------------------------------------------------- folders
+
+    [RelayCommand]
+    private void NewFolder(LibraryFolderItem? parent)
+    {
+        if (_library is null || IsBusy)
+        {
+            return;
+        }
+
+        var parentPath = parent?.RelativePath ?? LibraryTargetFolder;
+        OpenPrompt(Loc.Format("Prompt_NewFolderLabel", FolderDisplayName(parentPath)), "", Loc.Get("Prompt_Create"),
+            name => _ = CreateFolderAsync(parentPath, name));
+    }
+
+    private async Task CreateFolderAsync(string parentPath, string name)
+    {
+        if (_library is not { } library)
+        {
+            return;
+        }
+
+        string created;
+        try
+        {
+            created = library.CreateFolder(parentPath, name);
+        }
+        catch (DcpFileException ex)
+        {
+            SetStatus("Status_FileProblem", ex.Message);
+            return;
+        }
+
+        ExpandFolder(parentPath);
+        SetStatus("Status_FolderCreated", created);
+        await RefreshLibraryAsync();
+        if (_folderItems.TryGetValue(created, out var item))
+        {
+            SelectedLibraryItem = item;
+        }
+    }
+
+    /// <summary>The folders a DCP can be moved to: the library itself and every folder in the tree, as (path, display name).</summary>
+    public IReadOnlyList<(string Path, string Display)> MoveTargets() =>
+        [("", FolderDisplayName("")),
+         .. _folderItems.Keys.Order(NaturalComparer.Instance).Select(f => (f, f))];
+
+    public async Task MoveEntryAsync(LibraryRow row, string targetFolder)
+    {
+        if (IsBusy || _library is not { } library || row.IsPreset)
+        {
+            return;
+        }
+
+        var path = row.Path;
+        var isOpen = SamePath(path, FilePath);
+        if (isOpen)
+        {
+            // What is on screen goes into the file first, at its old place
+            CommitPendingEdits?.Invoke();
+            if (!SaveLibraryDocument(leaving: false))
+            {
+                return;
+            }
+
+            path = FilePath!;
+        }
+
+        try
+        {
+            var target = library.Move(path, targetFolder);
+            ReplaceRecent(path, target);
+            if (isOpen)
+            {
+                FilePath = target;
+                _revealedPath = target;
+                UpdateNameFollowsHeader();
+                ScheduleRecovery();
+            }
+
+            ExpandFolder(targetFolder);
+            SetStatus("Status_Moved", Path.GetFileName(target), FolderDisplayName(targetFolder));
+        }
+        catch (DcpFileException ex)
+        {
+            SetStatus("Status_FileProblem", ex.Message);
+        }
+
+        await RefreshLibraryAsync();
+    }
+
+    [RelayCommand]
+    private void OpenFolderInFileManager(LibraryFolderItem? folder)
+    {
+        if (_library is { } library)
+        {
+            OpenWithShell(library.FolderPath(folder?.RelativePath ?? ""));
+        }
     }
 
     /// <summary>A new DCP for the next episode of <paramref name="row"/>, or of the open DCP when null.</summary>
@@ -753,11 +1100,18 @@ public sealed partial class MainViewModel
             SyncLines();
         }
 
-        var existed = File.Exists(Path.Combine(library.PresetsFolder, DcpLibrary.SafeFileName(name) + DcpFile.Extension));
+        var presetPath = library.PresetPath(name);
+        var existed = File.Exists(presetPath);
+        if (!KeepLegacyOriginal(presetPath, out var original))
+        {
+            return;
+        }
+
         try
         {
             var path = library.SavePreset(dcp, name);
             SetStatus(existed ? "Status_PresetReplaced" : "Status_PresetSaved", Path.GetFileNameWithoutExtension(path));
+            ReportLegacyConverted(true, path, original);
         }
         catch (DcpFileException ex)
         {

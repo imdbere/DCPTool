@@ -23,6 +23,12 @@ public sealed class AppPaths
     /// <summary>The DCP that was open when the app closed or crashed, see <c>RecoveryStore</c>.</summary>
     public string RecoveryFolder => Path.Combine(Root, "recovery");
 
+    /// <summary>
+    /// Originals of library files written by DCP Tool 0.x, copied here (under their path below the library) before
+    /// they are first saved in the new format, which DCP Tool 0.x cannot read.
+    /// </summary>
+    public string LegacyBackupFolder => Path.Combine(Root, "legacy-backups");
+
     public string LogFolder => Path.Combine(Root, "logs");
 
     /// <summary>Protected password file of the Windows credential store.</summary>

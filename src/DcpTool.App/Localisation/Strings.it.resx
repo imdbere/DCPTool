@@ -168,6 +168,95 @@
   <data name="Import_UnsupportedFileType" xml:space="preserve">
     <value>Tipo di file non supportato.</value>
   </data>
+  <data name="Info_Autori" xml:space="preserve">
+    <value>Compositori e autori dei testi, mai gli esecutori. La RAI li comunica alla SIAE, che li remunera.
+Scrivere «Nome Cognome; Nome Cognome» oppure «Cognome, Nome; Cognome, Nome».</value>
+  </data>
+  <data name="Info_DataRegistrazione" xml:space="preserve">
+    <value>Data della registrazione. Se resta vuota, viene inviata la data di cinque giorni prima della trasmissione.</value>
+  </data>
+  <data name="Info_DataTrasmissione" xml:space="preserve">
+    <value>Data della messa in onda.</value>
+  </data>
+  <data name="Info_Durata" xml:space="preserve">
+    <value>Durata Tx.: durata della trasmissione, hh:mm:ss.</value>
+  </data>
+  <data name="Info_Edizione" xml:space="preserve">
+    <value>Editore musicale. La RAI accetta solo editori che conosce: nel dubbio lasciare vuoto. Vuoto per musicmedia e Artlist.</value>
+  </data>
+  <data name="Info_Esecutori" xml:space="preserve">
+    <value>Esecutori della registrazione.</value>
+  </data>
+  <data name="Info_FormOnly" xml:space="preserve">
+    <value>Viene solo stampato sul modulo Word, non caricato in RAI.</value>
+  </data>
+  <data name="Info_Genere" xml:space="preserve">
+    <value>Genere SIAE:
+ML  musica leggera, il valore abituale
+MC  musica classica
+DO  DOR: opere drammatiche e teatrali
+LI  lirica
+OL  OLAF: opere letterarie e arti figurative
+CI  cinema
+Segnaposto – da confermare: se il modulo web della RAI li accetta tutti.</value>
+  </data>
+  <data name="Info_LineDurata" xml:space="preserve">
+    <value>Durata effettivamente usata in onda, hh:mm:ss. Deve essere coerente con la Durata del programma.</value>
+  </data>
+  <data name="Info_LineTitolo" xml:space="preserve">
+    <value>Titolo del brano.</value>
+  </data>
+  <data name="Info_Marca" xml:space="preserve">
+    <value>Etichetta della registrazione. La RAI accetta solo etichette del proprio elenco; per le altre il programma avvisa.
+Etichette partner di musicmedia: «Sonoton». Artlist: «ARTLIST».</value>
+  </data>
+  <data name="Info_OraInizio" xml:space="preserve">
+    <value>Ora inizio e Ora fine: inizio e fine della trasmissione. Se sono diverse, la RAI ne ricava la Durata Tx.</value>
+  </data>
+  <data name="Info_Puntata" xml:space="preserve">
+    <value>Numero della puntata. La RAI accetta solo puntate che esistono per questo Uorg/Matricola nella sua Anagrafica Programmi.</value>
+  </data>
+  <data name="Info_Rete" xml:space="preserve">
+    <value>Rete o struttura, da TV1 a TV4. Da essa dipendono i valori di Tipo generazione che la RAI propone.</value>
+  </data>
+  <data name="Info_Ruolo" xml:space="preserve">
+    <value>Come viene usata la musica:
+SF  sottofondo, il valore abituale
+PP  primo piano: la musica è in primo piano
+SI  sigla di apertura o di chiusura</value>
+  </data>
+  <data name="Info_Sede" xml:space="preserve">
+    <value>La sede RAI che commissiona il programma:
+BZ/16  Bolzano, programmi in lingua tedesca
+BZ/14  Bolzano, programmi in lingua italiana
+BZ/15  Bolzano, programmi in lingua ladina
+Sede e Rete determinano chi verifica e approva il DCP in RAI.</value>
+  </data>
+  <data name="Info_Serie" xml:space="preserve">
+    <value>Numero della serie, inviato alla RAI con tre cifre (001).
+Segnaposto – da confermare: ulteriori dettagli.</value>
+  </data>
+  <data name="Info_SiglaNum" xml:space="preserve">
+    <value>Codice di catalogo della registrazione, ad es. SCDV 579 o MSC192.</value>
+  </data>
+  <data name="Info_Sottotitolo" xml:space="preserve">
+    <value>Sottotitolo della puntata.</value>
+  </data>
+  <data name="Info_TipoGenerazione" xml:space="preserve">
+    <value>9  opera su disco: musica registrata, il valore abituale
+1  dal vivo: eseguita dal vivo
+Segnaposto – da confermare: gli altri valori che la RAI propone per ogni Rete.</value>
+  </data>
+  <data name="Info_TitoloItaliano" xml:space="preserve">
+    <value>Titolo del programma in italiano.</value>
+  </data>
+  <data name="Info_TitoloOriginale" xml:space="preserve">
+    <value>Titolo del programma nella lingua originale.</value>
+  </data>
+  <data name="Info_UorgMatricola" xml:space="preserve">
+    <value>Uorg e Matricola sono i codici interni della RAI per la produzione: unità organizzativa e numero del programma. Si trovano nel contratto o li comunica la RAI.
+Segnaposto – da confermare: dove trovarli esattamente.</value>
+  </data>
   <data name="Issue_AlreadyUploaded" xml:space="preserve">
     <value>Questo DCP è già stato caricato il {0:g}. Un nuovo caricamento crea un secondo DCP su RAI.</value>
   </data>
@@ -318,11 +407,23 @@
   <data name="Library_Lines" xml:space="preserve">
     <value>{0} righe</value>
   </data>
+  <data name="Library_MoveTo" xml:space="preserve">
+    <value>Sposta in</value>
+  </data>
   <data name="Library_New" xml:space="preserve">
     <value>Nuovo</value>
   </data>
+  <data name="Library_NewFolder" xml:space="preserve">
+    <value>Nuova cartella</value>
+  </data>
+  <data name="Library_NewFolderTip" xml:space="preserve">
+    <value>Una nuova sottocartella nella cartella selezionata</value>
+  </data>
   <data name="Library_NewFromPreset" xml:space="preserve">
     <value>Nuovo DCP da questo modello</value>
+  </data>
+  <data name="Library_NewSubfolder" xml:space="preserve">
+    <value>Nuova sottocartella...</value>
   </data>
   <data name="Library_NewTip" xml:space="preserve">
     <value>Un nuovo DCP vuoto</value>
@@ -350,6 +451,12 @@
   </data>
   <data name="Library_OneLine" xml:space="preserve">
     <value>1 riga</value>
+  </data>
+  <data name="Library_OpenInFileManager" xml:space="preserve">
+    <value>Apri in Esplora file</value>
+  </data>
+  <data name="Library_OpenInFinder" xml:space="preserve">
+    <value>Apri nel Finder</value>
   </data>
   <data name="Library_PartlyUploaded" xml:space="preserve">
     <value>Caricato in parte</value>
@@ -387,8 +494,32 @@
   <data name="Library_ShowTip" xml:space="preserve">
     <value>Mostra l&apos;archivio</value>
   </data>
+  <data name="Library_SortBroadcast" xml:space="preserve">
+    <value>Data di trasmissione</value>
+  </data>
+  <data name="Library_SortLabel" xml:space="preserve">
+    <value>Ordina:</value>
+  </data>
+  <data name="Library_SortName" xml:space="preserve">
+    <value>Nome del file</value>
+  </data>
+  <data name="Library_SortRecent" xml:space="preserve">
+    <value>Modificati di recente</value>
+  </data>
+  <data name="Library_SortTip" xml:space="preserve">
+    <value>Ordine dei DCP e delle cartelle</value>
+  </data>
+  <data name="Library_SortTitle" xml:space="preserve">
+    <value>Titolo</value>
+  </data>
+  <data name="Library_TargetFolder" xml:space="preserve">
+    <value>I nuovi DCP vanno in: {0}</value>
+  </data>
   <data name="Library_Title" xml:space="preserve">
     <value>Archivio</value>
+  </data>
+  <data name="Library_TopLevel" xml:space="preserve">
+    <value>Archivio (livello principale)</value>
   </data>
   <data name="Library_Uploaded" xml:space="preserve">
     <value>Caricato</value>
@@ -398,9 +529,6 @@
   </data>
   <data name="Lines_AddMusicFiles" xml:space="preserve">
     <value>Aggiungi file musicali...</value>
-  </data>
-  <data name="Lines_AutoriTip" xml:space="preserve">
-    <value>Compositori e autori dei testi, mai gli esecutori. Scrivere «Nome Cognome; Nome Cognome» oppure «Cognome, Nome; Cognome, Nome».</value>
   </data>
   <data name="Lines_Delete" xml:space="preserve">
     <value>Elimina</value>
@@ -627,6 +755,12 @@
   <data name="Picker_WordDocument" xml:space="preserve">
     <value>Documento Word</value>
   </data>
+  <data name="Prompt_Create" xml:space="preserve">
+    <value>Crea</value>
+  </data>
+  <data name="Prompt_NewFolderLabel" xml:space="preserve">
+    <value>Nuova cartella in {0}</value>
+  </data>
   <data name="Prompt_PresetLabel" xml:space="preserve">
     <value>Nome del modello. Il modello conserva i dati del programma del DCP aperto, senza righe, puntata e date.</value>
   </data>
@@ -756,6 +890,9 @@
   <data name="Status_FileProblem" xml:space="preserve">
     <value>Problema con il file: {0}</value>
   </data>
+  <data name="Status_FolderCreated" xml:space="preserve">
+    <value>Cartella {0} creata.</value>
+  </data>
   <data name="Status_ImportProgress" xml:space="preserve">
     <value>Importazione {0}/{1}: {2}</value>
   </data>
@@ -767,6 +904,12 @@
   </data>
   <data name="Status_Importing" xml:space="preserve">
     <value>Importazione in corso...</value>
+  </data>
+  <data name="Status_LegacyBackupFailed" xml:space="preserve">
+    <value>{0} non è stato salvato: il file è nel formato di DCP Tool 0.x e non è stato possibile conservare una copia dell&apos;originale ({1}).</value>
+  </data>
+  <data name="Status_LegacyConverted" xml:space="preserve">
+    <value>{0} ora usa il nuovo formato di file, che DCP Tool 0.x non può aprire. L&apos;originale è conservato in {1}.</value>
   </data>
   <data name="Status_LibraryFolder" xml:space="preserve">
     <value>Cartella dell&apos;archivio: {0}</value>
@@ -782,6 +925,9 @@
   </data>
   <data name="Status_LoggingIn" xml:space="preserve">
     <value>Accesso a RAI in corso...</value>
+  </data>
+  <data name="Status_Moved" xml:space="preserve">
+    <value>{0} spostato in {1}.</value>
   </data>
   <data name="Status_MovedToRecycleBin" xml:space="preserve">
     <value>{0} spostato nel Cestino.</value>

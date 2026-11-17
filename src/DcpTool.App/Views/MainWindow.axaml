@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DcpTool.App.ViewModels"
         xmlns:l="using:DcpTool.App.Localisation"
+        xmlns:v="using:DcpTool.App.Views"
         x:Class="DcpTool.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{Binding WindowTitle}" Width="1280" Height="820" MinWidth="900" MinHeight="560"
@@ -13,6 +14,15 @@
     <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
     <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
   </Window.KeyBindings>
+  <Window.Resources>
+    <!-- A lower header of the "Programma" expander leaves more room for the lines in a small window -->
+    <x:Double x:Key="ExpanderMinHeight">36</x:Double>
+  </Window.Resources>
+  <Window.Styles>
+    <Style Selector="Expander /template/ ToggleButton#ExpanderHeader">
+      <Setter Property="MinHeight" Value="36" />
+    </Style>
+  </Window.Styles>
 
   <DockPanel>
     <Menu DockPanel.Dock="Top" IsEnabled="{Binding !IsBusy}">
@@ -103,6 +113,8 @@
                   ToolTip.Tip="{l:Tr Library_DuplicateTip}" />
           <Button Content="{l:Tr Library_SaveAsPreset}" Command="{Binding SaveAsPresetCommand}" Padding="8,2" FontSize="12"
                   ToolTip.Tip="{l:Tr Library_SaveAsPresetTip}" />
+          <Button Content="{l:Tr Library_NewFolder}" Command="{Binding NewFolderCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="{l:Tr Library_NewFolderTip}" />
         </WrapPanel>
 
         <!-- Name prompt for rename and save as preset -->
@@ -121,11 +133,19 @@
         <TextBox DockPanel.Dock="Top" Margin="0,6,0,0" Text="{Binding LibrarySearch}" PlaceholderText="{l:Tr Library_SearchPlaceholder}"
                  x:Name="SearchBox" />
 
+        <Grid DockPanel.Dock="Top" Margin="0,6,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="6">
+          <TextBlock Text="{l:Tr Library_SortLabel}" VerticalAlignment="Center" FontSize="12" Opacity="0.8" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding LibrarySortOptions}" SelectedItem="{Binding SelectedLibrarySort}"
+                    HorizontalAlignment="Stretch" FontSize="12" ToolTip.Tip="{l:Tr Library_SortTip}" />
+        </Grid>
+
         <TextBlock DockPanel.Dock="Top" Text="{Binding LibraryNotice}" IsVisible="{Binding LibraryNotice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                    TextWrapping="Wrap" Foreground="DarkOrange" Margin="0,4,0,0" FontSize="12" />
 
-        <TextBlock DockPanel.Dock="Bottom" Text="{Binding LibraryFolderText}" Opacity="0.5" FontSize="11" Margin="0,4,0,0"
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding LibraryFolderText}" Opacity="0.5" FontSize="11" Margin="0,2,0,0"
                    TextTrimming="PrefixCharacterEllipsis" ToolTip.Tip="{Binding LibraryFolderText}" />
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding LibraryTargetText}" Opacity="0.7" FontSize="11" Margin="0,4,0,0"
+                   TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LibraryTargetText}" />
 
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Margin="0,6,0,0">
           <TextBlock Text="{Binding PresetsHeader}" Classes="group" Opacity="0.8" />
@@ -150,7 +170,51 @@
           <TextBlock Grid.Row="3" Text="{Binding DcpsHeader}" Classes="group" Opacity="0.8" Margin="0,10,0,0" />
           <TextBlock Grid.Row="4" Text="{Binding DcpsEmptyText}" IsVisible="{Binding DcpsEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                      TextWrapping="Wrap" Opacity="0.6" FontSize="12" Margin="0,2,0,0" />
+          <!-- Not searching: the folders with their DCPs -->
+          <TreeView Grid.Row="5" x:Name="LibraryTreeView" ItemsSource="{Binding LibraryTree}" SelectedItem="{Binding SelectedLibraryItem}"
+                    IsVisible="{Binding !IsLibrarySearching}" Margin="0,2,0,0"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <TreeView.Styles>
+              <Style Selector="TreeViewItem" x:DataType="vm:LibraryTreeItem">
+                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                <Setter Property="MinHeight" Value="26" />
+              </Style>
+            </TreeView.Styles>
+            <TreeView.DataTemplates>
+              <TreeDataTemplate DataType="vm:LibraryFolderItem" ItemsSource="{Binding Children}">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" Background="Transparent" ToolTip.Tip="{Binding Tip}">
+                  <PathIcon Width="14" Height="12" Opacity="0.7" VerticalAlignment="Center"
+                            Data="M0,1 L6,1 L8,3 L16,3 L16,14 L0,14 Z" />
+                  <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                             VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="2" Text="{Binding CountText}" FontSize="11" Opacity="0.55" VerticalAlignment="Center"
+                             Margin="0,0,4,0" />
+                </Grid>
+              </TreeDataTemplate>
+              <DataTemplate DataType="vm:LibraryRow">
+                <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowAccent}" BorderThickness="3,0,0,0"
+                        Padding="6,2" Opacity="{Binding RowOpacity}" ToolTip.Tip="{Binding TreeTip}">
+                  <StackPanel Spacing="1">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                      <TextBlock Text="{Binding Name}" FontWeight="{Binding TitleWeight}" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Column="1" Text="{Binding DateText}" FontSize="12" Opacity="0.8" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsReadable}">
+                      <TextBlock Text="{Binding EpisodeText}" FontSize="11"
+                                 IsVisible="{Binding EpisodeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      <TextBlock Text="{Binding LinesText}" FontSize="11" Opacity="0.7" />
+                      <TextBlock Text="{Binding UploadText}" Foreground="{Binding UploadBrush}" FontSize="11" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <TextBlock Text="{l:Tr Library_CannotBeRead}" IsVisible="{Binding !IsReadable}" FontSize="11" FontStyle="Italic" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </TreeView.DataTemplates>
+          </TreeView>
+
+          <!-- Searching: the matching DCPs of all folders, each with its folder -->
           <ListBox Grid.Row="5" x:Name="DcpList" ItemsSource="{Binding LibraryDcps}" Margin="0,2,0,0"
+                   IsVisible="{Binding IsLibrarySearching}"
                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:LibraryRow">
@@ -189,49 +253,44 @@
     <GridSplitter Grid.Column="1" x:Name="LibrarySplitter" Width="5" ResizeDirection="Columns" Background="Transparent"
                   IsVisible="{Binding ShowLibraryPanel}" />
 
-    <DockPanel Grid.Column="2">
-    <!-- Issues -->
-    <Border DockPanel.Dock="Bottom" Height="150" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-      <TabControl Margin="8,0" Padding="0">
-        <TabItem Header="{Binding IssuesHeader}" FontSize="13">
-        <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:IssueItem">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="{Binding KindText}" Foreground="{Binding Brush}" FontWeight="SemiBold" Width="70" />
-                <TextBlock Text="{Binding Message}" />
-              </StackPanel>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-        </TabItem>
-        <TabItem Header="{l:Tr Log_Tab}" FontSize="13">
-          <ListBox ItemsSource="{Binding Activity}" FontFamily="Consolas,Menlo,monospace" FontSize="12" />
-        </TabItem>
-      </TabControl>
-    </Border>
+    <!-- Editor above, issues and log below; the splitter between them resizes the issues area -->
+    <Grid Grid.Column="2" x:Name="MainArea">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" MinHeight="230" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="130" MinHeight="56" />
+      </Grid.RowDefinitions>
 
-    <Grid RowDefinitions="Auto,Auto,*" Margin="8" IsEnabled="{Binding !IsBusy}">
+    <Grid x:Name="EditorGrid" Margin="8" IsEnabled="{Binding !IsBusy}">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" MinHeight="110" />
+      </Grid.RowDefinitions>
       <!-- Header form. The labels here and the line column headers below are the RAI form's own terms
-           (Titolo italiano, Sede, Durata ...) and stay as they are in every language: not in the resources. -->
+           (Titolo italiano, Sede, Durata ...) and stay as they are in every language: not in the resources.
+           The info icons explain them in the UI language. In a small window the form scrolls instead of being cut off. -->
 
-      <Expander Header="Programma" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-        <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16" DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
+      <Expander Header="Programma" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                Padding="12,6">
+        <ScrollViewer x:Name="HeaderScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Grid x:Name="HeaderForm" ColumnDefinitions="*,*,*,*" ColumnSpacing="16" MinWidth="700" Margin="0,0,0,4"
+              DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
           <StackPanel>
             <TextBlock Classes="group" Text="Programma" />
-            <TextBlock Classes="lbl" Text="Titolo italiano" />
+            <v:FieldLabel Text="Titolo italiano" Info="{l:Tr Info_TitoloItaliano}" />
             <TextBox Text="{Binding TitoloItaliano}" />
-            <TextBlock Classes="lbl" Text="Titolo originale" />
+            <v:FieldLabel Text="Titolo originale" Info="{l:Tr Info_TitoloOriginale}" />
             <TextBox Text="{Binding TitoloOriginale}" />
-            <TextBlock Classes="lbl" Text="Sottotitolo" />
+            <v:FieldLabel Text="Sottotitolo" Info="{l:Tr Info_Sottotitolo}" />
             <TextBox Text="{Binding Sottotitolo}" />
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
               <StackPanel>
-                <TextBlock Classes="lbl" Text="Puntata" />
+                <v:FieldLabel Text="Puntata" Info="{l:Tr Info_Puntata}" />
                 <TextBox Text="{Binding Puntata, UpdateSourceTrigger=LostFocus}" />
               </StackPanel>
               <StackPanel Grid.Column="1">
-                <TextBlock Classes="lbl" Text="Serie" />
+                <v:FieldLabel Text="Serie" Info="{l:Tr Info_Serie}" />
                 <TextBox Text="{Binding Serie, UpdateSourceTrigger=LostFocus}" />
               </StackPanel>
             </Grid>
@@ -239,17 +298,17 @@
 
           <StackPanel Grid.Column="1">
             <TextBlock Classes="group" Text="Trasmissione" />
-            <TextBlock Classes="lbl" Text="Data trasmissione" />
-            <DatePicker SelectedDate="{Binding DataTrasmissione}" HorizontalAlignment="Stretch" />
-            <TextBlock Classes="lbl" Text="{l:Tr Header_DataRegistrazione}" />
-            <DatePicker SelectedDate="{Binding DataRegistrazione}" HorizontalAlignment="Stretch" />
+            <v:FieldLabel Text="Data trasmissione" Info="{l:Tr Info_DataTrasmissione}" />
+            <DatePicker SelectedDate="{Binding DataTrasmissione}" HorizontalAlignment="Stretch" MinWidth="0" />
+            <v:FieldLabel Text="{l:Tr Header_DataRegistrazione}" Info="{l:Tr Info_DataRegistrazione}" />
+            <DatePicker SelectedDate="{Binding DataRegistrazione}" HorizontalAlignment="Stretch" MinWidth="0" />
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
               <StackPanel>
-                <TextBlock Classes="lbl" Text="Ora inizio" />
+                <v:FieldLabel Text="Ora inizio" Info="{l:Tr Info_OraInizio}" />
                 <TextBox Text="{Binding OraInizio, UpdateSourceTrigger=LostFocus}" PlaceholderText="hh:mm:ss" />
               </StackPanel>
               <StackPanel Grid.Column="1">
-                <TextBlock Classes="lbl" Text="Durata programma" />
+                <v:FieldLabel Text="Durata programma" Info="{l:Tr Info_Durata}" />
                 <TextBox Text="{Binding Durata, UpdateSourceTrigger=LostFocus}" PlaceholderText="hh:mm:ss" />
               </StackPanel>
             </Grid>
@@ -260,17 +319,17 @@
 
           <StackPanel Grid.Column="2">
             <TextBlock Classes="group" Text="RAI" />
-            <TextBlock Classes="lbl" Text="Sede" />
+            <v:FieldLabel Text="Sede" Info="{l:Tr Info_Sede}" />
             <ComboBox ItemsSource="{Binding Sedi}" SelectedItem="{Binding SedeEntry}" HorizontalAlignment="Stretch" />
-            <TextBlock Classes="lbl" Text="Rete" />
+            <v:FieldLabel Text="Rete" Info="{l:Tr Info_Rete}" />
             <ComboBox ItemsSource="{Binding Reti}" SelectedItem="{Binding ReteEntry}" HorizontalAlignment="Stretch" />
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
               <StackPanel>
-                <TextBlock Classes="lbl" Text="Uorg" />
+                <v:FieldLabel Text="Uorg" Info="{l:Tr Info_UorgMatricola}" />
                 <TextBox Text="{Binding Uorg, UpdateSourceTrigger=LostFocus}" />
               </StackPanel>
               <StackPanel Grid.Column="1">
-                <TextBlock Classes="lbl" Text="Matricola" />
+                <v:FieldLabel Text="Matricola" Info="{l:Tr Info_UorgMatricola}" />
                 <TextBox Text="{Binding Matricola, UpdateSourceTrigger=LostFocus}" />
               </StackPanel>
             </Grid>
@@ -278,27 +337,27 @@
 
           <StackPanel Grid.Column="3">
             <TextBlock Classes="group" Text="Contratto" />
-            <TextBlock Classes="lbl" Text="Numero contratto" />
+            <v:FieldLabel Text="Numero contratto" Info="{l:Tr Info_FormOnly}" />
             <TextBox Text="{Binding NumeroContratto}" />
-            <TextBlock Classes="lbl" Text="Data contratto" />
-            <DatePicker SelectedDate="{Binding DataContratto}" HorizontalAlignment="Stretch" />
-            <TextBlock Classes="lbl" Text="Responsabile RAI del programma" />
+            <v:FieldLabel Text="Data contratto" Info="{l:Tr Info_FormOnly}" />
+            <DatePicker SelectedDate="{Binding DataContratto}" HorizontalAlignment="Stretch" MinWidth="0" />
+            <v:FieldLabel Text="Responsabile RAI del programma" Info="{l:Tr Info_FormOnly}" />
             <TextBox Text="{Binding ResponsabileRai}" />
           </StackPanel>
         </Grid>
+        </ScrollViewer>
       </Expander>
 
-      <!-- Line toolbar -->
-      <!-- The hint takes the room the buttons leave, which is less in German and Italian -->
-      <DockPanel Grid.Row="1" Margin="0,8">
-        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="6">
+      <!-- Line toolbar: the buttons wrap in a narrow window; the hint takes the room they leave -->
+      <DockPanel Grid.Row="1" Margin="0,8" x:Name="LinesToolbar">
+        <WrapPanel DockPanel.Dock="Left" ItemSpacing="6" LineSpacing="6">
           <Button Content="{l:Tr Lines_AddMusicFiles}" Command="{Binding AddMusicFilesCommand}" />
           <Button Content="{l:Tr Lines_AddLine}" Command="{Binding AddLineCommand}" />
           <Button Content="{l:Tr Common_Duplicate}" Command="{Binding DuplicateLineCommand}" />
           <Button Content="{l:Tr Lines_Delete}" Command="{Binding DeleteLineCommand}" />
           <Button Content="{l:Tr Lines_MoveUp}" Command="{Binding MoveUpCommand}" />
           <Button Content="{l:Tr Lines_MoveDown}" Command="{Binding MoveDownCommand}" />
-        </StackPanel>
+        </WrapPanel>
         <TextBlock Text="{l:Tr Lines_DropHint}" ToolTip.Tip="{l:Tr Lines_DropHint}" VerticalAlignment="Center" Opacity="0.6"
                    Margin="12,0,0,0" TextTrimming="CharacterEllipsis" />
       </DockPanel>
@@ -318,43 +377,99 @@
             </DataGridTemplateColumn.CellTemplate>
           </DataGridTemplateColumn>
           <DataGridTextColumn x:DataType="vm:LineRow" Header="#" Binding="{Binding Number}" IsReadOnly="True" Width="44" />
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="Titolo" Binding="{Binding Titolo}" Width="220" />
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="240">
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Titolo}" Width="220">
             <DataGridTextColumn.Header>
-              <TextBlock Text="Autori" ToolTip.Tip="{l:Tr Lines_AutoriTip}" />
+              <v:FieldLabel Text="Titolo" Info="{l:Tr Info_LineTitolo}" IsColumnHeader="True" />
             </DataGridTextColumn.Header>
           </DataGridTextColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="Esecutori" Binding="{Binding Esecutori}" Width="160" />
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="Durata" Binding="{Binding DurataText}" Width="90" />
-          <DataGridTemplateColumn Header="Genere" Width="170">
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="240">
+            <DataGridTextColumn.Header>
+              <v:FieldLabel Text="Autori" Info="{l:Tr Info_Autori}" IsColumnHeader="True" />
+            </DataGridTextColumn.Header>
+          </DataGridTextColumn>
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Esecutori}" Width="160">
+            <DataGridTextColumn.Header>
+              <v:FieldLabel Text="Esecutori" Info="{l:Tr Info_Esecutori}" IsColumnHeader="True" />
+            </DataGridTextColumn.Header>
+          </DataGridTextColumn>
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding DurataText}" Width="110">
+            <DataGridTextColumn.Header>
+              <v:FieldLabel Text="Durata" Info="{l:Tr Info_LineDurata}" IsColumnHeader="True" />
+            </DataGridTextColumn.Header>
+          </DataGridTextColumn>
+          <DataGridTemplateColumn Width="170">
+            <DataGridTemplateColumn.Header>
+              <v:FieldLabel Text="Genere" Info="{l:Tr Info_Genere}" IsColumnHeader="True" />
+            </DataGridTemplateColumn.Header>
             <DataGridTemplateColumn.CellTemplate>
               <DataTemplate x:DataType="vm:LineRow">
                 <ComboBox ItemsSource="{Binding Generi}" SelectedItem="{Binding GenereEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
               </DataTemplate>
             </DataGridTemplateColumn.CellTemplate>
           </DataGridTemplateColumn>
-          <DataGridTemplateColumn Header="Ruolo" Width="140">
+          <DataGridTemplateColumn Width="140">
+            <DataGridTemplateColumn.Header>
+              <v:FieldLabel Text="Ruolo" Info="{l:Tr Info_Ruolo}" IsColumnHeader="True" />
+            </DataGridTemplateColumn.Header>
             <DataGridTemplateColumn.CellTemplate>
               <DataTemplate x:DataType="vm:LineRow">
                 <ComboBox ItemsSource="{Binding Ruoli}" SelectedItem="{Binding RuoloEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
               </DataTemplate>
             </DataGridTemplateColumn.CellTemplate>
           </DataGridTemplateColumn>
-          <DataGridTemplateColumn Header="Tipo gen." Width="150">
+          <DataGridTemplateColumn Width="150">
+            <DataGridTemplateColumn.Header>
+              <v:FieldLabel Text="Tipo gen." Info="{l:Tr Info_TipoGenerazione}" IsColumnHeader="True" />
+            </DataGridTemplateColumn.Header>
             <DataGridTemplateColumn.CellTemplate>
               <DataTemplate x:DataType="vm:LineRow">
                 <ComboBox ItemsSource="{Binding Tipi}" SelectedItem="{Binding TipoEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
               </DataTemplate>
             </DataGridTemplateColumn.CellTemplate>
           </DataGridTemplateColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="Marca" Binding="{Binding Marca}" Width="120" />
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="Sigla/num" Binding="{Binding SiglaNum}" Width="120" />
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="Edizione" Binding="{Binding Edizione}" Width="120" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Marca}" Width="120">
+            <DataGridTextColumn.Header>
+              <v:FieldLabel Text="Marca" Info="{l:Tr Info_Marca}" IsColumnHeader="True" />
+            </DataGridTextColumn.Header>
+          </DataGridTextColumn>
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding SiglaNum}" Width="120">
+            <DataGridTextColumn.Header>
+              <v:FieldLabel Text="Sigla/num" Info="{l:Tr Info_SiglaNum}" IsColumnHeader="True" />
+            </DataGridTextColumn.Header>
+          </DataGridTextColumn>
+          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Edizione}" Width="120">
+            <DataGridTextColumn.Header>
+              <v:FieldLabel Text="Edizione" Info="{l:Tr Info_Edizione}" IsColumnHeader="True" />
+            </DataGridTextColumn.Header>
+          </DataGridTextColumn>
           <DataGridTextColumn x:DataType="vm:LineRow" Header="{l:Tr Lines_Source}" Binding="{Binding SourceId, Mode=OneWay}" IsReadOnly="True" Width="90" />
         </DataGrid.Columns>
       </DataGrid>
     </Grid>
-    </DockPanel>
+
+    <GridSplitter Grid.Row="1" Height="5" ResizeDirection="Rows" Background="Transparent" />
+
+    <!-- Issues -->
+    <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
+      <TabControl Margin="8,0" Padding="0">
+        <TabItem Header="{Binding IssuesHeader}" FontSize="13">
+        <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:IssueItem">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="{Binding KindText}" Foreground="{Binding Brush}" FontWeight="SemiBold" Width="70" />
+                <TextBlock Text="{Binding Message}" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        </TabItem>
+        <TabItem Header="{l:Tr Log_Tab}" FontSize="13">
+          <ListBox ItemsSource="{Binding Activity}" FontFamily="Consolas,Menlo,monospace" FontSize="12" />
+        </TabItem>
+      </TabControl>
+    </Border>
+    </Grid>
     </Grid>
   </DockPanel>
 </Window>

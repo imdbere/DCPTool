@@ -62,6 +62,7 @@ public partial class App : Application
                 _dialogs)
             {
                 ActivityLogFolder = paths.LogFolder,
+                LegacyBackupFolder = paths.LegacyBackupFolder,
             };
 
             AppDomain.CurrentDomain.UnhandledException += (_, e) => OnUnhandled(e.ExceptionObject as Exception, "domain");

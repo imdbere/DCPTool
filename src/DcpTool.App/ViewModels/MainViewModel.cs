@@ -438,7 +438,7 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        StartNewDocument(_settings.Company.CreateDcp(), null, dirty: false, _library is null ? null : "Status_NewDcp");
+        StartNewDocument(_settings.Company.CreateDcp(), NewDocumentFolder(), dirty: false, _library is null ? null : "Status_NewDcp");
     }
 
     [RelayCommand]
@@ -575,10 +575,16 @@ public sealed partial class MainViewModel : ObservableObject
     private void SaveTo(string path)
     {
         CommitPendingEdits?.Invoke();
+        if (!KeepLegacyOriginal(path, out var original))
+        {
+            return;
+        }
+
         try
         {
             SyncLines();
             DcpFile.Save(path, _dcp);
+            ReportLegacyConverted(true, path, original);
             _lastWriteUtc = LastWriteUtc(path);
             _newFileFolder = null;
             FilePath = path;
@@ -586,7 +592,10 @@ public sealed partial class MainViewModel : ObservableObject
             UpdateNameFollowsHeader();
             RememberFile(path);
             WriteRecovery();
-            SetStatus("Status_Saved", Path.GetFileName(path));
+            if (original is null)
+            {
+                SetStatus("Status_Saved", Path.GetFileName(path));
+            }
             _ = RefreshLibraryAsync();
         }
         catch (DcpFileException ex)

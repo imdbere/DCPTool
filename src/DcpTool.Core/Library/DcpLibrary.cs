@@ -17,6 +17,7 @@ public enum LibraryUploadState
 /// <param name="Path">Full path of the file.</param>
 /// <param name="RelativePath">Path below the library folder, with <c>/</c> separators.</param>
 /// <param name="IsPreset">True for files in the <see cref="DcpLibrary.PresetsFolderName"/> folder.</param>
+/// <param name="Modified">Last write time of the file (local time).</param>
 /// <param name="Error">Why the file could not be read. The other values are empty then.</param>
 public sealed record LibraryEntry(
     string Path,
@@ -53,21 +54,51 @@ public sealed record LibraryEntry(
     }
 }
 
+/// <summary>What a scan found: the .dcp files and every folder below the library (empty ones too).</summary>
+/// <param name="Entries">All .dcp files, presets included, in no particular order.</param>
+/// <param name="Folders">Every sub-folder, as a path below the library with <c>/</c> separators.</param>
+/// <param name="FolderTimes">Last write time (local) of each folder in <paramref name="Folders"/>.</param>
+public sealed record LibrarySnapshot(
+    IReadOnlyList<LibraryEntry> Entries,
+    IReadOnlyList<string> Folders,
+    IReadOnlyDictionary<string, DateTime> FolderTimes)
+{
+    public static readonly LibrarySnapshot Empty = new([], [], new Dictionary<string, DateTime>());
+}
+
 /// <summary>
 /// The user's DCPs as plain <c>.dcp</c> files in one folder they choose (sub-folders allowed), like a
 /// notes vault: no database, the folder can be copied, synced or edited outside the app at any time.
 /// Presets are ordinary .dcp files without music lines in the <c>Presets</c> sub-folder.
-/// Everything here reads the folder afresh; nothing is cached, so there is nothing to get out of step.
+/// Every scan lists the folder afresh. What was read from a file is kept in memory under its path, last write
+/// time and size, so a re-scan only reads files that are new or changed, also when they were changed outside the app.
 /// </summary>
 public sealed class DcpLibrary(string folder)
 {
     public const string PresetsFolderName = "Presets";
+
+    private static readonly StringComparer PathComparer =
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
+    private static readonly EnumerationOptions Enumeration = new()
+    {
+        RecurseSubdirectories = true,
+        IgnoreInaccessible = true,
+        // Skips the temp files of AtomicFile and other hidden files
+        AttributesToSkip = FileAttributes.Hidden | FileAttributes.System,
+    };
+
+    private readonly Dictionary<string, CachedEntry> _cache = new(PathComparer);
+    private readonly Lock _cacheLock = new();
 
     public string Folder { get; } = Path.GetFullPath(folder);
 
     public string PresetsFolder => Path.Combine(Folder, PresetsFolderName);
 
     public bool Exists => Directory.Exists(Folder);
+
+    /// <summary>How many files the last <see cref="ScanAll"/> had to read; the others came from memory.</summary>
+    public int LastScanReads { get; private set; }
 
     /// <summary>True when <paramref name="path"/> lies in the library folder or below it.</summary>
     public bool Contains(string? path)
@@ -86,51 +117,122 @@ public sealed class DcpLibrary(string folder)
     /// Never throws: an unreadable file becomes an entry with <see cref="LibraryEntry.Error"/>, a missing
     /// folder gives an empty list.
     /// </summary>
-    public IReadOnlyList<LibraryEntry> Scan(CancellationToken cancellationToken = default)
+    public IReadOnlyList<LibraryEntry> Scan(CancellationToken cancellationToken = default) =>
+        LibrarySorting.Sort(ScanAll(cancellationToken).Entries, LibrarySort.BroadcastDate).ToList();
+
+    /// <summary>
+    /// All .dcp files and all folders. Never throws for unreadable files or folders; a missing library folder gives
+    /// an empty snapshot. Only new and changed files are read, see the class summary. Safe to call from any thread.
+    /// </summary>
+    public LibrarySnapshot ScanAll(CancellationToken cancellationToken = default)
     {
         if (!Exists)
         {
-            return [];
+            lock (_cacheLock)
+            {
+                _cache.Clear();
+            }
+
+            LastScanReads = 0;
+            return LibrarySnapshot.Empty;
         }
 
+        var folders = new List<string>();
+        var folderTimes = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         var entries = new List<LibraryEntry>();
-        IEnumerable<string> files;
+        var seen = new HashSet<string>(PathComparer);
+        var reads = 0;
         try
         {
-            files = Directory.EnumerateFiles(Folder, "*" + DcpFile.Extension, new EnumerationOptions
+            foreach (var info in new DirectoryInfo(Folder).EnumerateFileSystemInfos("*", Enumeration))
             {
-                RecurseSubdirectories = true,
-                IgnoreInaccessible = true,
-                // Skips the temp files of AtomicFile and other dot files
-                AttributesToSkip = FileAttributes.Hidden | FileAttributes.System,
-            }).ToList();
+                cancellationToken.ThrowIfCancellationRequested();
+                var relative = Relative(info.FullName);
+                if (relative.Split('/').Any(part => part.StartsWith('.')))
+                {
+                    continue; // dot files (temp files of AtomicFile) and anything in dot folders
+                }
+
+                if (info is DirectoryInfo directory)
+                {
+                    folders.Add(relative);
+                    folderTimes[relative] = SafeTime(directory);
+                }
+                else if (info is FileInfo file && file.Extension.Equals(DcpFile.Extension, StringComparison.OrdinalIgnoreCase))
+                {
+                    seen.Add(file.FullName);
+                    entries.Add(GetEntry(file, ref reads));
+                }
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return [];
+            // The folder went away or became unreadable during the scan: what was found so far
         }
 
-        foreach (var file in files)
+        lock (_cacheLock)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (Path.GetFileName(file).StartsWith('.'))
+            foreach (var gone in _cache.Keys.Where(k => !seen.Contains(k)).ToList())
             {
-                continue;
+                _cache.Remove(gone);
             }
-
-            entries.Add(ReadEntry(file));
         }
 
-        return entries
-            .OrderByDescending(e => e.DataTrasmissione ?? DateOnly.MinValue)
-            .ThenByDescending(e => e.Puntata ?? 0)
-            .ThenBy(e => e.RelativePath, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+        LastScanReads = reads;
+        return new LibrarySnapshot(entries, folders, folderTimes);
     }
 
+    private LibraryEntry GetEntry(FileInfo file, ref int reads)
+    {
+        DateTime writeUtc;
+        long size;
+        try
+        {
+            writeUtc = file.LastWriteTimeUtc;
+            size = file.Length;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            reads++;
+            return ReadEntry(file.FullName);
+        }
+
+        lock (_cacheLock)
+        {
+            if (_cache.TryGetValue(file.FullName, out var cached) && cached.WriteUtc == writeUtc && cached.Size == size)
+            {
+                return cached.Entry;
+            }
+        }
+
+        reads++;
+        var entry = ReadEntry(file.FullName);
+        lock (_cacheLock)
+        {
+            _cache[file.FullName] = new CachedEntry(writeUtc, size, entry);
+        }
+
+        return entry;
+    }
+
+    private static DateTime SafeTime(FileSystemInfo info)
+    {
+        try
+        {
+            return info.LastWriteTime;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return DateTime.MinValue;
+        }
+    }
+
+    private string Relative(string fullPath) => Path.GetRelativePath(Folder, fullPath).Replace('\\', '/');
+
+    /// <summary>Reads one file, always from disk. Never throws: an unreadable file gives an entry with <see cref="LibraryEntry.Error"/>.</summary>
     public LibraryEntry ReadEntry(string file)
     {
-        var relative = Path.GetRelativePath(Folder, file).Replace('\\', '/');
+        var relative = Relative(file);
         var isPreset = relative.StartsWith(PresetsFolderName + "/", StringComparison.OrdinalIgnoreCase);
         DateTime modified;
         try
@@ -150,9 +252,139 @@ public sealed class DcpLibrary(string folder)
         }
         catch (Exception ex) when (ex is DcpFileException or IOException or UnauthorizedAccessException)
         {
-            return new LibraryEntry(file, relative, isPreset, "", "", null, null, 0, LibraryUploadState.NotUploaded, null, default, ex.Message);
+            return new LibraryEntry(file, relative, isPreset, "", "", null, null, 0, LibraryUploadState.NotUploaded, null,
+                SafeTime(new FileInfo(file)), ex.Message);
         }
     }
+
+    // ---------------------------------------------------------------- folders
+
+    /// <summary>The full path of a folder given as a path below the library ("" = the library itself).</summary>
+    public string FolderPath(string? relativeFolder) =>
+        string.IsNullOrEmpty(relativeFolder)
+            ? Folder
+            : Path.GetFullPath(Path.Combine(Folder, relativeFolder.Replace('/', Path.DirectorySeparatorChar)));
+
+    /// <summary>
+    /// Creates the sub-folder <paramref name="name"/> in <paramref name="parentRelative"/> ("" = the library itself) and
+    /// returns its path below the library. Throws <see cref="DcpFileException"/> when it exists already or cannot be created.
+    /// </summary>
+    public string CreateFolder(string parentRelative, string name)
+    {
+        var parent = FolderPath(parentRelative);
+        if (!Contains(parent))
+        {
+            throw new DcpFileException("The folder is not in the library.");
+        }
+
+        var target = Path.Combine(parent, SafeFileName(name));
+        if (Directory.Exists(target) || File.Exists(target))
+        {
+            throw new DcpFileException($"A folder named \"{Path.GetFileName(target)}\" already exists here.");
+        }
+
+        try
+        {
+            Directory.CreateDirectory(target);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new DcpFileException($"Could not create the folder: {ex.Message}", ex);
+        }
+
+        return Relative(target);
+    }
+
+    /// <summary>
+    /// Moves a file into the library folder <paramref name="targetRelative"/> ("" = the library itself), keeping its
+    /// name, content and modified time. Returns the new path. Throws <see cref="DcpFileException"/> when a file of
+    /// that name is there already or the file cannot be moved.
+    /// </summary>
+    public string Move(string path, string targetRelative)
+    {
+        var directory = FolderPath(targetRelative);
+        if (!Contains(directory))
+        {
+            throw new DcpFileException("The folder is not in the library.");
+        }
+
+        var target = Path.Combine(directory, Path.GetFileName(path));
+        if (PathComparer.Equals(Path.GetFullPath(path), target))
+        {
+            return path;
+        }
+
+        if (File.Exists(target))
+        {
+            throw new DcpFileException($"A DCP named \"{Path.GetFileNameWithoutExtension(target)}\" already exists in that folder.");
+        }
+
+        try
+        {
+            Directory.CreateDirectory(directory);
+            File.Move(path, target);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new DcpFileException($"Could not move the file: {ex.Message}", ex);
+        }
+
+        return target;
+    }
+
+    // ---------------------------------------------------------------- files written by DCP Tool 0.x
+
+    /// <summary>
+    /// When <paramref name="path"/> is a file in the format of DCP Tool 0.x (which cannot read the new format), copies
+    /// it into <paramref name="backupRoot"/> under its path below the library, before it is overwritten in the new
+    /// format. Returns the copy's path, or null when the file is not in the old format or does not exist.
+    /// Throws <see cref="DcpFileException"/> when the copy cannot be made: the file must not be overwritten then.
+    /// </summary>
+    public string? BackupIfLegacy(string path, string backupRoot)
+    {
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            if (!DcpFile.Load(path).IsLegacy)
+            {
+                return null;
+            }
+        }
+        catch (DcpFileException)
+        {
+            return null; // not a DCP file at all, so not one of DCP Tool 0.x either
+        }
+
+        var relative = Contains(path) ? Path.GetRelativePath(Folder, path) : Path.GetFileName(path);
+        var target = Path.Combine(backupRoot, relative);
+        try
+        {
+            var directory = Path.GetDirectoryName(target)!;
+            Directory.CreateDirectory(directory);
+            if (File.Exists(target))
+            {
+                if (File.ReadAllBytes(target).AsSpan().SequenceEqual(File.ReadAllBytes(path)))
+                {
+                    return target; // this very original is kept already
+                }
+
+                target = FreePath(directory, Path.GetFileNameWithoutExtension(target), startCounterAt: 2);
+            }
+
+            File.Copy(path, target);
+            return target;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new DcpFileException($"Could not keep a copy of the original file: {ex.Message}", ex);
+        }
+    }
+
+    // ---------------------------------------------------------------- creating files
 
     /// <summary>
     /// A free path in <paramref name="subFolder"/> of the library for this DCP:
@@ -184,10 +416,13 @@ public sealed class DcpLibrary(string folder)
         preset.Puntata = null;
         preset.Sottotitolo = "";
         preset.DataRegistrazione = null;
-        var path = Path.Combine(PresetsFolder, SafeFileName(name) + DcpFile.Extension);
+        var path = PresetPath(name);
         DcpFile.Save(path, preset);
         return path;
     }
+
+    /// <summary>The path of the preset named <paramref name="name"/>, whether it exists or not.</summary>
+    public string PresetPath(string name) => Path.Combine(PresetsFolder, SafeFileName(name) + DcpFile.Extension);
 
     /// <summary>A new DCP with the preset's programme information and today's broadcast date. Not saved yet.</summary>
     public static Dcp CreateFromPreset(string presetPath)
@@ -271,4 +506,6 @@ public sealed class DcpLibrary(string folder)
             }
         }
     }
+
+    private sealed record CachedEntry(DateTime WriteUtc, long Size, LibraryEntry Entry);
 }

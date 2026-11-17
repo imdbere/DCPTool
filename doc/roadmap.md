@@ -91,6 +91,8 @@ the translations await a native check.
 
 ## M3: UI overhaul around the workflow
 
+Design brief for the designer (users, workflow, screens, data, states, constraints, deliverables, our suggestions): https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
+
 Goal: G4 and G5. Start with a short design concept (layout, colours, the five workflow steps on screen),
 agree on it, then build.
 

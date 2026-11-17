@@ -65,6 +65,9 @@ public sealed class AppSettings
     /// </summary>
     public string? LibraryFolder { get; set; }
 
+    /// <summary>Order of the library panel: "recent" (the default), "broadcast", "title" or "name", see <c>LibrarySorting</c>.</summary>
+    public string LibrarySort { get; set; } = "recent";
+
     /// <summary>
     /// Language of the user interface: "" follows the system (German and Italian systems get theirs, all others
     /// English), "de", "it" or "en". Read at start, so a change takes effect after a restart.

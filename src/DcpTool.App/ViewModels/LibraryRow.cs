@@ -5,13 +5,28 @@ using DcpTool.Core.Library;
 
 namespace DcpTool.App.ViewModels;
 
-/// <summary>One file in the library panel: a DCP or a preset. Immutable apart from <see cref="IsOpen"/>.</summary>
-public sealed partial class LibraryRow(LibraryEntry entry) : ObservableObject
+/// <summary>
+/// One file in the library panel: a DCP or a preset. The same object stays for the same file across scans
+/// (see <see cref="Update"/>), so the tree's selection and scroll position survive a refresh.
+/// </summary>
+public sealed partial class LibraryRow(LibraryEntry entry) : LibraryTreeItem
 {
     private static readonly IBrush OpenBackground = new SolidColorBrush(Color.FromArgb(0x33, 0x1E, 0x90, 0xFF));
     private static readonly IBrush OpenAccent = new SolidColorBrush(Color.FromRgb(0x1E, 0x90, 0xFF));
 
-    public LibraryEntry Entry { get; } = entry;
+    public LibraryEntry Entry { get; private set; } = entry;
+
+    /// <summary>The file was read again: everything shown about it may have changed.</summary>
+    public void Update(LibraryEntry entry)
+    {
+        if (Entry == entry)
+        {
+            return;
+        }
+
+        Entry = entry;
+        OnPropertyChanged(string.Empty);
+    }
 
     public string Path => Entry.Path;
     public string Name => Entry.Name;
@@ -53,6 +68,11 @@ public sealed partial class LibraryRow(LibraryEntry entry) : ObservableObject
     public bool HasFolder => Folder.Length > 0;
 
     public string Tip => Entry.Error is { } error ? Loc.Format("Library_CannotBeReadTip", error) : Entry.RelativePath;
+
+    /// <summary>The tree shows the file name, so its tip adds the title.</summary>
+    public string TreeTip => Entry.Error is null && !string.IsNullOrWhiteSpace(Entry.Title)
+        ? Entry.Title.Trim() + (string.IsNullOrWhiteSpace(Entry.Sottotitolo) ? "" : " – " + Entry.Sottotitolo.Trim()) + "\n" + Entry.RelativePath
+        : Tip;
 
     public double RowOpacity => IsReadable ? 1 : 0.45;
 

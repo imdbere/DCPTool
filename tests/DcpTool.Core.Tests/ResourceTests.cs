@@ -14,13 +14,17 @@ public class ResourceTests
     private static readonly string AppFolder = Path.Combine(RepositoryRoot(), "src", "DcpTool.App");
     private static readonly string ResourceFolder = Path.Combine(AppFolder, "Localisation");
 
-    private static string RepositoryRoot()
+    // Starts from this source file too: with --artifacts-path the binaries live outside the repository
+    private static string RepositoryRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "")
     {
-        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        foreach (var start in new[] { AppContext.BaseDirectory, Path.GetDirectoryName(here) ?? "" })
         {
-            if (File.Exists(Path.Combine(dir.FullName, "DcpTool.sln")))
+            for (var dir = new DirectoryInfo(start); dir is not null; dir = dir.Parent)
             {
-                return dir.FullName;
+                if (File.Exists(Path.Combine(dir.FullName, "DcpTool.sln")))
+                {
+                    return dir.FullName;
+                }
             }
         }
 
