@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using DcpTool.App.Localisation;
 using DcpTool.App.ViewModels;
 using DcpTool.Core.Rai;
 using DcpTool.Core.Settings;
@@ -25,12 +26,12 @@ public sealed class Dialogs
         return await dialog.ShowDialog<T?>(Owner);
     }
 
-    public async Task Message(string title, string text) => await Show<bool>(new MessageWindow(title, text, "OK", null));
+    public async Task Message(string title, string text) => await Show<bool>(new MessageWindow(title, text, Loc.Get("Common_Ok"), null));
 
-    public async Task<bool> Confirm(string title, string text, string yes = "OK", string no = "Cancel") =>
+    public async Task<bool> Confirm(string title, string text, string yes, string no) =>
         await Show<bool>(new MessageWindow(title, text, yes, no));
 
-    public async Task ShowText(string title, string text) => await Show<bool>(new MessageWindow(title, text, "Close", null, monospace: true));
+    public async Task ShowText(string title, string text) => await Show<bool>(new MessageWindow(title, text, Loc.Get("Common_Close"), null, monospace: true));
 
     public async Task<LoginInput?> ShowLogin(string username, string password, bool remember, bool canRemember, string? error) =>
         await Show<LoginInput>(new LoginWindow(username, password, remember, canRemember, error));
@@ -76,10 +77,10 @@ public sealed class Dialogs
     {
         var files = await Storage!.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Open DCP",
+            Title = Loc.Get("Picker_OpenDcp"),
             AllowMultiple = false,
             SuggestedStartLocation = await FolderAsync(folder),
-            FileTypeFilter = [new FilePickerFileType("DCP files") { Patterns = ["*.dcp"] }, FilePickerFileTypes.All],
+            FileTypeFilter = [new FilePickerFileType(Loc.Get("Picker_DcpFiles")) { Patterns = ["*.dcp"] }, FilePickerFileTypes.All],
         });
         return files.Count == 0 ? null : files[0].TryGetLocalPath();
     }
@@ -88,10 +89,10 @@ public sealed class Dialogs
     {
         var files = await Storage!.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Add music files",
+            Title = Loc.Get("Picker_AddMusicFiles"),
             AllowMultiple = true,
             SuggestedStartLocation = await FolderAsync(folder),
-            FileTypeFilter = [new FilePickerFileType("Music and cue sheets") { Patterns = [.. patterns] }, FilePickerFileTypes.All],
+            FileTypeFilter = [new FilePickerFileType(Loc.Get("Picker_MusicAndCueSheets")) { Patterns = [.. patterns] }, FilePickerFileTypes.All],
         });
         return files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList();
     }

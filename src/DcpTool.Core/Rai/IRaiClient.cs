@@ -35,10 +35,22 @@ public enum RaiErrorKind
     Network,
 }
 
-/// <summary>Something went wrong while talking to the RAI portal. The message is meant for the user.</summary>
+/// <summary>
+/// Something went wrong while talking to the RAI portal. The message is English, for the user, logs and diagnostics;
+/// the UI words <see cref="Kind"/> (and <see cref="Code"/>, <see cref="PartialUpload"/>) in its own language.
+/// </summary>
 public sealed class RaiException(RaiErrorKind kind, string message, Exception? inner = null) : Exception(message, inner)
 {
+    /// <summary><see cref="Code"/>: the portal reports too many open sessions and they could not be closed.</summary>
+    public const string TooManySessions = "too-many-sessions";
+
+    /// <summary><see cref="Code"/>: the draft an earlier, incomplete upload left at RAI was not found.</summary>
+    public const string DraftNotFound = "draft-not-found";
+
     public RaiErrorKind Kind { get; } = kind;
+
+    /// <summary>A more specific case of <see cref="Kind"/> (one of the constants above), or null.</summary>
+    public string? Code { get; init; }
 
     /// <summary>The error text RAI's page showed, if any.</summary>
     public string? PortalMessage { get; init; }

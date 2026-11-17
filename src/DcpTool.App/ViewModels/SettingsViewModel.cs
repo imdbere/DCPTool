@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using DcpTool.App.Localisation;
 using DcpTool.Core.Model;
 using DcpTool.Core.Settings;
 
@@ -7,7 +8,22 @@ namespace DcpTool.App.ViewModels;
 /// <summary>Edits a copy of the settings; <see cref="Apply"/> writes it back when the dialog is accepted.</summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
-    private static readonly Sede NoSede = new("", "", "(none)", "");
+    private static readonly Sede NoSede = new("", "", Loc.Get("Settings_NoSede"), "");
+    private readonly string _languageAtStart;
+
+    /// <summary>"System" first, then the languages by their own names.</summary>
+    public IReadOnlyList<LanguageOption> Languages { get; } =
+        [new("", Loc.Get("Settings_LanguageSystem")), .. UiLanguage.Available.Select(l => new LanguageOption(l.Code, l.Name))];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LanguageNote))]
+    private LanguageOption? _language;
+
+    /// <summary>Says that a changed language applies after a restart, in the language that was chosen.</summary>
+    public string LanguageNote =>
+        Language is null || UiLanguage.Resolve(Language.Code) == UiLanguage.Resolve(_languageAtStart)
+            ? ""
+            : Loc.Get("Settings_LanguageRestart", UiLanguage.UiCulture(Language.Code));
 
     public IReadOnlyList<Sede> Sedi { get; } = [NoSede, .. RaiCodeTables.Sedi];
     public IReadOnlyList<CodeEntry> Reti { get; } = RaiCodeTables.Reti;
@@ -31,6 +47,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public SettingsViewModel(AppSettings s)
     {
+        _languageAtStart = s.Language;
+        _language = Languages.FirstOrDefault(l => l.Code == s.Language) ?? Languages[0];
         _fornitore = s.Company.Fornitore;
         _compilatore = s.Company.Compilatore;
         _legaleRappresentante = s.Company.LegaleRappresentante;
@@ -48,6 +66,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public void Apply(AppSettings s)
     {
+        s.Language = Language?.Code ?? s.Language;
         s.Company.Fornitore = Fornitore.Trim();
         s.Company.Compilatore = Compilatore.Trim();
         s.Company.LegaleRappresentante = LegaleRappresentante.Trim();
@@ -68,3 +87,9 @@ public sealed partial class SettingsViewModel : ObservableObject
 }
 
 public sealed record LoginInput(string Username, string Password, bool Remember);
+
+/// <param name="Code">Value of <c>AppSettings.Language</c>.</param>
+public sealed record LanguageOption(string Code, string Name)
+{
+    public override string ToString() => Name;
+}

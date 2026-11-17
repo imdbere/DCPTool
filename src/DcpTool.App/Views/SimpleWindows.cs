@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using DcpTool.App.Localisation;
 using DcpTool.App.ViewModels;
 using DcpTool.Core.Settings;
 
@@ -40,7 +41,7 @@ public partial class SettingsWindow : Window
             : await StorageProvider.TryGetFolderFromPathAsync(vm.LibraryFolder);
         var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Library folder",
+            Title = Loc.Get("Settings_LibraryFolder"),
             AllowMultiple = false,
             SuggestedStartLocation = start,
         });

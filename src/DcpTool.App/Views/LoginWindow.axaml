@@ -1,18 +1,19 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="using:DcpTool.App.Localisation"
         x:Class="DcpTool.App.Views.LoginWindow"
-        Title="Log in to RAI" Width="400" SizeToContent="Height" CanResize="False"
+        Title="{l:Tr Login_Title}" Width="420" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner">
   <StackPanel Margin="16" Spacing="8">
     <TextBlock x:Name="ErrorText" Foreground="Crimson" TextWrapping="Wrap" IsVisible="False"/>
-    <TextBlock Text="User name"/>
+    <TextBlock Text="{l:Tr Login_User}"/>
     <TextBox x:Name="UserBox"/>
-    <TextBlock Text="Password"/>
+    <TextBlock Text="{l:Tr Login_Password}"/>
     <TextBox x:Name="PasswordBox" PasswordChar="&#8226;"/>
-    <CheckBox x:Name="RememberBox" Content="Remember the password on this computer"/>
+    <CheckBox x:Name="RememberBox" Content="{l:Tr Login_Remember}"/>
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
-      <Button Content="Log in" IsDefault="True" Click="Ok_Click" MinWidth="80"/>
-      <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" MinWidth="80"/>
+      <Button Content="{l:Tr Login_LogIn}" IsDefault="True" Click="Ok_Click" MinWidth="80"/>
+      <Button Content="{l:Tr Common_Cancel}" IsCancel="True" Click="Cancel_Click" MinWidth="80"/>
     </StackPanel>
   </StackPanel>
 </Window>

@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DcpTool.App.Localisation;
 using DcpTool.Core.Library;
 
 namespace DcpTool.App.ViewModels;
@@ -27,15 +28,16 @@ public sealed partial class LibraryRow(LibraryEntry entry) : ObservableObject
 
     public bool HasPresetProgramme => PresetProgramme.Length > 0;
 
+    // Puntata is the RAI form's term, the same in every language
     public string EpisodeText => Entry.Puntata is { } p ? $"Puntata {p}" : "";
-    public string DateText => Entry.DataTrasmissione?.ToString("dd.MM.yyyy") ?? "";
-    public string LinesText => Entry.LineCount == 1 ? "1 line" : $"{Entry.LineCount} lines";
+    public string DateText => Entry.DataTrasmissione?.ToString("d", System.Globalization.CultureInfo.CurrentCulture) ?? "";
+    public string LinesText => Entry.LineCount == 1 ? Loc.Get("Library_OneLine") : Loc.Format("Library_Lines", Entry.LineCount);
 
     public string UploadText => Entry.UploadState switch
     {
-        LibraryUploadState.Uploaded => Entry.RaiCodice is { Length: > 0 } code ? $"RAI {code}" : "Uploaded",
-        LibraryUploadState.Partial => "Partly uploaded",
-        _ => "Not uploaded",
+        LibraryUploadState.Uploaded => Entry.RaiCodice is { Length: > 0 } code ? $"RAI {code}" : Loc.Get("Library_Uploaded"),
+        LibraryUploadState.Partial => Loc.Get("Library_PartlyUploaded"),
+        _ => Loc.Get("Library_NotUploaded"),
     };
 
     public IBrush UploadBrush => Entry.UploadState switch
@@ -50,7 +52,7 @@ public sealed partial class LibraryRow(LibraryEntry entry) : ObservableObject
 
     public bool HasFolder => Folder.Length > 0;
 
-    public string Tip => Entry.Error is { } error ? "This file cannot be read: " + error : Entry.RelativePath;
+    public string Tip => Entry.Error is { } error ? Loc.Format("Library_CannotBeReadTip", error) : Entry.RelativePath;
 
     public double RowOpacity => IsReadable ? 1 : 0.45;
 

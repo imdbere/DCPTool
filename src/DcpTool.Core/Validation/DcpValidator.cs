@@ -21,7 +21,8 @@ public enum ValidationPurpose
     Document,
 }
 
-/// <param name="Code">Stable identifier of the rule, for tests and for filtering.</param>
+/// <param name="Code">Stable identifier of the rule, for tests, for filtering and for the UI to word the issue in its language.</param>
+/// <param name="Message">The issue in English: for logs and diagnostics, and the fallback text.</param>
 /// <param name="Field">Name of the <see cref="Dcp"/> or <see cref="DcpLine"/> property the issue is about, if any.</param>
 /// <param name="LineId"><see cref="DcpLine.Id"/> when the issue belongs to a line.</param>
 /// <param name="LineNumber">1-based position of that line.</param>
@@ -34,6 +35,12 @@ public sealed record ValidationIssue(
     int? LineNumber = null)
 {
     public bool IsError => Severity == IssueSeverity.Error;
+
+    /// <summary>
+    /// The values <see cref="Message"/> is built from, in order, so the UI can build its own text for <see cref="Code"/>.
+    /// Empty when there are none. A line's number and title are not repeated here (see <see cref="LineNumber"/>).
+    /// </summary>
+    public IReadOnlyList<object> Args { get; init; } = [];
 }
 
 /// <summary>
@@ -47,10 +54,10 @@ public static class DcpValidator
         var issues = new List<ValidationIssue>();
         var upload = purpose == ValidationPurpose.Upload;
 
-        void Error(string code, string message, string? field = null) =>
-            issues.Add(new ValidationIssue(IssueSeverity.Error, code, message, field));
-        void Warning(string code, string message, string? field = null) =>
-            issues.Add(new ValidationIssue(IssueSeverity.Warning, code, message, field));
+        void Error(string code, string message, string field, params object[] args) =>
+            issues.Add(new ValidationIssue(IssueSeverity.Error, code, message, field) { Args = args });
+        void Warning(string code, string message, string field, params object[] args) =>
+            issues.Add(new ValidationIssue(IssueSeverity.Warning, code, message, field) { Args = args });
 
         if (string.IsNullOrWhiteSpace(dcp.TitoloItaliano))
         {
@@ -68,7 +75,7 @@ public static class DcpValidator
                 upload ? IssueSeverity.Error : IssueSeverity.Warning,
                 "sede-unknown",
                 $"Sede \"{dcp.Sede}\" is not one of the known RAI offices.",
-                nameof(Dcp.Sede)));
+                nameof(Dcp.Sede)) { Args = [dcp.Sede] });
         }
 
         if (upload)
@@ -79,7 +86,7 @@ public static class DcpValidator
             }
             else if (!RaiCodeTables.IsKnown(RaiCodeTables.Reti, dcp.Rete))
             {
-                Warning("rete-unknown", $"Rete \"{dcp.Rete}\" is not one of the known codes. RAI may reject it.", nameof(Dcp.Rete));
+                Warning("rete-unknown", $"Rete \"{dcp.Rete}\" is not one of the known codes. RAI may reject it.", nameof(Dcp.Rete), dcp.Rete);
             }
 
             if (dcp.Lines.Count == 0)
@@ -105,7 +112,8 @@ public static class DcpValidator
                         ? $"This DCP was already uploaded on {record.UploadedAt.LocalDateTime:g}. Uploading again creates a second DCP at RAI."
                         : $"An upload on {record.UploadedAt.LocalDateTime:g} stopped after {record.LinesSaved} of {dcp.Lines.Count} lines. " +
                           $"Uploading again continues that DCP{(record.Codice is null ? "" : " (" + record.Codice + ")")} at RAI.",
-                    nameof(Dcp.Upload));
+                    nameof(Dcp.Upload),
+                    record.UploadedAt.LocalDateTime, record.Complete, record.LinesSaved, dcp.Lines.Count, record.Codice ?? "");
             }
         }
 
@@ -138,8 +146,8 @@ public static class DcpValidator
     {
         var name = string.IsNullOrWhiteSpace(line.Titolo) ? $"Line {number}" : $"Line {number} ({line.Titolo.Trim()})";
 
-        void Add(IssueSeverity severity, string code, string message, string field) =>
-            issues.Add(new ValidationIssue(severity, code, $"{name}: {message}", field, line.Id, number));
+        void Add(IssueSeverity severity, string code, string message, string field, params object[] args) =>
+            issues.Add(new ValidationIssue(severity, code, $"{name}: {message}", field, line.Id, number) { Args = args });
 
         // What the upload refuses is only a warning on the document, which can be completed by hand
         var blocking = upload ? IssueSeverity.Error : IssueSeverity.Warning;
@@ -157,7 +165,8 @@ public static class DcpValidator
                 line.Origin is { Incomplete: true }
                     ? "Autori are missing because the source's cue sheet was not found. Add the cue sheet or enter the authors."
                     : "Autori are missing.",
-                nameof(DcpLine.Autori));
+                nameof(DcpLine.Autori),
+                line.Origin is { Incomplete: true });
         }
         else if (line.Autori.Any(a => !a.IsEmpty && string.IsNullOrWhiteSpace(a.Cognome)))
         {
@@ -187,7 +196,7 @@ public static class DcpValidator
         }
         else if (upload && !RaiMarche.Contains(line.Marca))
         {
-            Add(IssueSeverity.Warning, "line-marca-unknown", $"Marca \"{line.Marca.Trim()}\" is not in RAI's list of labels. RAI may reject it.", nameof(DcpLine.Marca));
+            Add(IssueSeverity.Warning, "line-marca-unknown", $"Marca \"{line.Marca.Trim()}\" is not in RAI's list of labels. RAI may reject it.", nameof(DcpLine.Marca), line.Marca.Trim());
         }
 
         if (upload && !string.IsNullOrWhiteSpace(line.Edizione))
@@ -204,7 +213,7 @@ public static class DcpValidator
             }
             else if (!RaiCodeTables.IsKnown(table, value))
             {
-                Add(IssueSeverity.Warning, code + "-unknown", $"{label} \"{value}\" is not one of the known codes. RAI may reject it.", field);
+                Add(IssueSeverity.Warning, code + "-unknown", $"{label} \"{value}\" is not one of the known codes. RAI may reject it.", field, value);
             }
         }
     }

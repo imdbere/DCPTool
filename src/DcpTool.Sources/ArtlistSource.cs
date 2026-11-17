@@ -61,7 +61,8 @@ public sealed class ArtlistSource : MusicSourceBase
         if (cue is null)
         {
             return new SourceLine(line, null,
-                "No Artlist cue sheet found, so the authors are missing. Download it (Artlist > Downloads > Song License > Cue sheet) and drop it onto the list.");
+                "No Artlist cue sheet found, so the authors are missing. Download it (Artlist > Downloads > Song License > Cue sheet) and drop it onto the list.",
+                "artlist-cue-sheet-missing");
         }
 
         Apply(line, cue);

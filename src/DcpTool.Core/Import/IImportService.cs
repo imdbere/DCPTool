@@ -18,7 +18,15 @@ public enum ImportSeverity
 }
 
 /// <param name="File">File name (not the full path) the message is about, if any.</param>
-public sealed record ImportMessage(ImportSeverity Severity, string? File, string Text);
+/// <param name="Text">The message in English: for logs and diagnostics, and the fallback text.</param>
+public sealed record ImportMessage(ImportSeverity Severity, string? File, string Text)
+{
+    /// <summary>Stable identifier of the message, so the UI can word it in its language. Null: only <see cref="Text"/> exists.</summary>
+    public string? Code { get; init; }
+
+    /// <summary>The values <see cref="Text"/> is built from, in order. Empty when there are none.</summary>
+    public IReadOnlyList<object> Args { get; init; } = [];
+}
 
 /// <param name="Done">Files finished so far.</param>
 /// <param name="Total">Files to process.</param>

@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using DcpTool.App.Localisation;
 using DcpTool.Core.Rai;
 
 namespace DcpTool.App.Views;
@@ -19,7 +20,7 @@ public sealed class BrowserWindow : Window
     {
         _uri = uri;
         _client = client;
-        Title = "RAI portal";
+        Title = Loc.Get("Browser_Title");
         Width = 1100;
         Height = 760;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;

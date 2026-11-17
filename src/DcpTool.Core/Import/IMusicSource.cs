@@ -14,8 +14,9 @@ public interface ISidecar
 
 /// <param name="Line">The new line. The source fills the music data and <see cref="DcpLine.Origin"/>; the import sets the default codes.</param>
 /// <param name="UsedSidecar">The sidecar the data came from, if any.</param>
-/// <param name="Warning">Something the user has to do for this line, e.g. "no cue sheet found". Null when the line is complete.</param>
-public sealed record SourceLine(DcpLine Line, ISidecar? UsedSidecar = null, string? Warning = null);
+/// <param name="Warning">Something the user has to do for this line, e.g. "no cue sheet found", in English. Null when the line is complete.</param>
+/// <param name="WarningCode">Stable identifier of <paramref name="Warning"/> (<see cref="ImportMessage.Code"/>), so the UI can word it in its language.</param>
+public sealed record SourceLine(DcpLine Line, ISidecar? UsedSidecar = null, string? Warning = null, string? WarningCode = null);
 
 /// <summary>
 /// One music library or shop (musicmedia.it, Artlist, ...): knows how to recognise its files and how to

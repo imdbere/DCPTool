@@ -130,7 +130,9 @@ public class ImportServiceTests
         var result = service.Import(new ImportRequest([bad], [], Defaults));
 
         Assert.True(result.HasErrors);
-        Assert.StartsWith("Not an Artlist cue sheet", Assert.Single(result.Messages).Text);
+        var message = Assert.Single(result.Messages);
+        Assert.StartsWith("Not an Artlist cue sheet", message.Text);
+        Assert.Equal("not-a-cue-sheet", message.Code);
     }
 
     [Fact]

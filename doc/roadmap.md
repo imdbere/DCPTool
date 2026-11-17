@@ -84,6 +84,11 @@ episode in two clicks, and the whole library can be copied to another PC as a fo
 Open questions: one shared library on a network drive for several users (locking, conflicts)?
 Should uploaded DCPs become read-only?
 
+Status 2026-11-17: built: library folder, side panel with search, presets, next episode, duplicate,
+rename, delete, automatic saving of library files. Covered by tests in Core; the panel itself has not
+been clicked through yet. Localisation (German, Italian, English; 291 texts) is also built, ahead of M3;
+the translations await a native check.
+
 ## M3: UI overhaul around the workflow
 
 Goal: G4 and G5. Start with a short design concept (layout, colours, the five workflow steps on screen),

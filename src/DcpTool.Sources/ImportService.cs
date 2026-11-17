@@ -39,7 +39,7 @@ public sealed class ImportService : IImportService
             }
             else if (!File.Exists(path))
             {
-                Add(result, ImportSeverity.Error, path, "File not found.");
+                Add(result, ImportSeverity.Error, path, "File not found.", "file-not-found");
             }
             else if (_reader.IsAudioFile(path))
             {
@@ -51,7 +51,7 @@ public sealed class ImportService : IImportService
             }
             else
             {
-                Add(result, ImportSeverity.Warning, path, "Unsupported file type.");
+                Add(result, ImportSeverity.Warning, path, "Unsupported file type.", "unsupported-file-type");
             }
         }
         audioPaths = audioPaths.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -105,7 +105,7 @@ public sealed class ImportService : IImportService
                 var (source, own) = ChooseSource(audio, sidecars);
                 if (source is null)
                 {
-                    Add(result, ImportSeverity.Error, file, "No music source recognised this file.");
+                    Add(result, ImportSeverity.Error, file, "No music source recognised this file.", "no-source");
                     continue;
                 }
 
@@ -118,7 +118,7 @@ public sealed class ImportService : IImportService
                 }
                 if (sourceLine.Warning is not null)
                 {
-                    Add(result, ImportSeverity.Warning, file, sourceLine.Warning);
+                    Add(result, ImportSeverity.Warning, file, sourceLine.Warning, sourceLine.WarningCode);
                 }
             }
             catch (OperationCanceledException)
@@ -127,7 +127,7 @@ public sealed class ImportService : IImportService
             }
             catch (Exception ex)
             {
-                Add(result, ImportSeverity.Error, file, ex.Message);
+                AddFailure(result, ImportSeverity.Error, file, ex);
             }
         }
         progress?.Report(new ImportProgress(audioPaths.Count, audioPaths.Count, null));
@@ -185,14 +185,14 @@ public sealed class ImportService : IImportService
                     completed.Add(match.Line);
                 }
                 Add(result, ImportSeverity.Info, match.Sidecar.Path,
-                    $"Completed \"{match.Line.Titolo}\" with this file.");
+                    $"Completed \"{match.Line.Titolo}\" with this file.", "line-completed", match.Line.Titolo);
             }
         }
         result.CompletedLines.AddRange(completed);
 
         foreach (var u in unused.Where(u => !matched.Contains(u.Sidecar)))
         {
-            Add(result, ImportSeverity.Warning, u.Sidecar.Path, "Matches none of the new files or of the lines in the list.");
+            Add(result, ImportSeverity.Warning, u.Sidecar.Path, "Matches none of the new files or of the lines in the list.", "sidecar-unmatched");
         }
     }
 
@@ -207,7 +207,7 @@ public sealed class ImportService : IImportService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Add(result, severityOnError, path, ex.Message);
+                AddFailure(result, severityOnError, path, ex);
             }
         }
         return null;
@@ -221,7 +221,7 @@ public sealed class ImportService : IImportService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Add(result, ImportSeverity.Warning, dir, ex.Message);
+            AddFailure(result, ImportSeverity.Warning, dir, ex);
             return [];
         }
     }
@@ -234,11 +234,24 @@ public sealed class ImportService : IImportService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Add(result, ImportSeverity.Error, dir, ex.Message);
+            AddFailure(result, ImportSeverity.Error, dir, ex);
             return [];
         }
     }
 
-    private static void Add(ImportResult result, ImportSeverity severity, string path, string text) =>
-        result.Messages.Add(new ImportMessage(severity, Path.GetFileName(path), text));
+    private static void Add(ImportResult result, ImportSeverity severity, string path, string text, string? code, params object[] args) =>
+        result.Messages.Add(new ImportMessage(severity, Path.GetFileName(path), text) { Code = code, Args = args });
+
+    // An ImportException names the problem; anything else is reported with its own (English) message as the detail
+    private static void AddFailure(ImportResult result, ImportSeverity severity, string path, Exception ex)
+    {
+        if (ex is ImportException { Code: { } code })
+        {
+            Add(result, severity, path, ex.Message, code);
+        }
+        else
+        {
+            Add(result, severity, path, ex.Message, "read-failed", ex.Message);
+        }
+    }
 }

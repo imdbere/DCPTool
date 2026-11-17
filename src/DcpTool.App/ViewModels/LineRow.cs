@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DcpTool.App.Localisation;
 using DcpTool.Core.Model;
 using DcpTool.Core.Validation;
 
@@ -139,7 +140,8 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
         private set => SetProperty(ref _issueTip, value);
     }
 
-    public void SetIssues(IReadOnlyList<ValidationIssue> issues)
+    /// <param name="text">Words an issue in the UI language.</param>
+    public void SetIssues(IReadOnlyList<ValidationIssue> issues, Func<ValidationIssue, string> text)
     {
         if (issues.Count == 0)
         {
@@ -151,9 +153,24 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
         var error = issues.Any(i => i.IsError);
         IssueMark = error ? "●" : "▲";
         IssueBrush = error ? Brushes.Crimson : Brushes.DarkOrange;
-        IssueTip = string.Join(Environment.NewLine, issues.Select(i => i.Message));
+        IssueTip = string.Join(Environment.NewLine, issues.Select(text));
     }
 }
 
+public enum IssueLevel
+{
+    Info,
+    Warning,
+    Error,
+}
+
 /// <summary>A row of the issues panel.</summary>
-public sealed record IssueItem(string Kind, IBrush Brush, string Message, Guid? LineId);
+public sealed record IssueItem(IssueLevel Level, IBrush Brush, string Message, Guid? LineId)
+{
+    public string KindText => Level switch
+    {
+        IssueLevel.Error => Loc.Get("Kind_Error"),
+        IssueLevel.Warning => Loc.Get("Kind_Warning"),
+        _ => Loc.Get("Kind_Info"),
+    };
+}

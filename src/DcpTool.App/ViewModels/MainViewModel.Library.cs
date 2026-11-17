@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DcpTool.App.Localisation;
 using DcpTool.App.Services;
 using DcpTool.Core.Library;
 using DcpTool.Core.Model;
@@ -49,13 +50,13 @@ public sealed partial class MainViewModel
     [ObservableProperty] private string _libraryNotice = "";
     [ObservableProperty] private string _presetsEmptyText = "";
     [ObservableProperty] private string _dcpsEmptyText = "";
-    [ObservableProperty] private string _presetsHeader = "Presets";
-    [ObservableProperty] private string _dcpsHeader = "DCPs";
+    [ObservableProperty] private string _presetsHeader = Loc.Format("Library_PresetsHeader", 0);
+    [ObservableProperty] private string _dcpsHeader = Loc.Format("Library_DcpsHeader", 0);
 
     [ObservableProperty] private bool _isPromptOpen;
     [ObservableProperty] private string _promptLabel = "";
     [ObservableProperty] private string _promptValue = "";
-    [ObservableProperty] private string _promptAction = "OK";
+    [ObservableProperty] private string _promptAction = "";
 
     public bool HasLibrary => _library is not null;
     public bool ShowLibraryBanner => _library is null;
@@ -88,7 +89,7 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or IOException or System.Security.SecurityException)
         {
-            ProgressText = $"The library folder \"{folder}\" cannot be used: {ex.Message}";
+            SetStatus("Status_LibraryUnusable", folder, ex.Message);
             return null;
         }
     }
@@ -112,7 +113,7 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private async Task ChooseLibraryFolder()
     {
-        var folder = await _dialogs.PickFolder("Choose the library folder for your DCPs");
+        var folder = await _dialogs.PickFolder(Loc.Get("Picker_ChooseLibrary"));
         if (folder is null)
         {
             return;
@@ -123,7 +124,7 @@ public sealed partial class MainViewModel
         ApplyLibrarySetting();
         if (_library is not null)
         {
-            ProgressText = $"Library folder: {_library.Folder}";
+            SetStatus("Status_LibraryFolder", _library.Folder);
         }
     }
 
@@ -170,7 +171,7 @@ public sealed partial class MainViewModel
                     }
 
                     _entries = entries;
-                    LibraryNotice = exists ? "" : "The library folder does not exist (any more). Choose another one in Settings, or it is created when a DCP is saved.";
+                    LibraryNotice = exists ? "" : Loc.Get("Library_FolderMissing");
                 }
 
                 ApplyLibraryFilter();
@@ -179,7 +180,7 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DcpFileException)
         {
-            ProgressText = "Could not read the library folder: " + ex.Message;
+            SetStatus("Status_LibraryReadFailed", ex.Message);
         }
         finally
         {
@@ -199,14 +200,14 @@ public sealed partial class MainViewModel
         var searching = !string.IsNullOrWhiteSpace(LibrarySearch);
         var allPresets = _entries.Count(e => e.IsPreset);
         var allDcps = _entries.Count - allPresets;
-        PresetsHeader = searching ? $"Presets ({presets.Count} of {allPresets})" : $"Presets ({allPresets})";
-        DcpsHeader = searching ? $"DCPs ({dcps.Count} of {allDcps})" : $"DCPs ({allDcps})";
+        PresetsHeader = searching ? Loc.Format("Library_PresetsHeaderFiltered", presets.Count, allPresets) : Loc.Format("Library_PresetsHeader", allPresets);
+        DcpsHeader = searching ? Loc.Format("Library_DcpsHeaderFiltered", dcps.Count, allDcps) : Loc.Format("Library_DcpsHeader", allDcps);
         PresetsEmptyText = presets.Count > 0 || _library is null ? ""
-            : allPresets == 0 ? "No presets yet. \"Save as preset\" keeps the programme information of the open DCP for its next episodes."
-            : "No preset matches the search.";
+            : allPresets == 0 ? Loc.Format("Library_NoPresets", Loc.Get("Library_SaveAsPreset"))
+            : Loc.Get("Library_NoPresetMatch");
         DcpsEmptyText = dcps.Count > 0 || _library is null ? ""
-            : allDcps == 0 ? "No DCPs in the library yet. Start one with \"New\" or by clicking a preset."
-            : "No DCP matches the search.";
+            : allDcps == 0 ? Loc.Format("Library_NoDcps", Loc.Get("Library_New"))
+            : Loc.Get("Library_NoDcpMatch");
     }
 
     /// <summary>Updates the list in place, so the selection and the scroll position survive a refresh.</summary>
@@ -267,13 +268,14 @@ public sealed partial class MainViewModel
         return await ConfirmDiscardAsync();
     }
 
-    private void StartNewDocument(Dcp dcp, string? folder, bool dirty, string status)
+    /// <param name="statusKey">Status text to show (with <paramref name="statusArgs"/>), or null for none.</param>
+    private void StartNewDocument(Dcp dcp, string? folder, bool dirty, string? statusKey, params object?[] statusArgs)
     {
         LoadDcp(dcp, null, dirty);
         _newFileFolder = folder;
-        if (status.Length > 0)
+        if (statusKey is not null)
         {
-            ProgressText = status;
+            SetStatus(statusKey, statusArgs);
         }
 
         // Has it a title already (preset, next episode)? Then it gets its file right away
@@ -328,7 +330,7 @@ public sealed partial class MainViewModel
             {
                 _newFileFolder = null;
                 RememberFile(path);
-                ProgressText = $"Saved the new DCP in the library as {RelativeName(path)}.";
+                SetStatus("Status_SavedNewInLibrary", RelativeName(path));
             }
 
             _ = RefreshLibraryAsync();
@@ -336,7 +338,7 @@ public sealed partial class MainViewModel
         }
         catch (DcpFileException ex)
         {
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
             return false;
         }
     }
@@ -357,12 +359,12 @@ public sealed partial class MainViewModel
             var moved = DcpLibrary.Rename(current, Path.GetFileNameWithoutExtension(target));
             ReplaceRecent(current, moved);
             FilePath = moved;
-            ProgressText = $"Renamed the file to {Path.GetFileName(moved)} to match the DCP.";
+            SetStatus("Status_RenamedToMatch", Path.GetFileName(moved));
         }
         catch (DcpFileException ex)
         {
             _nameFollowsHeader = false;
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
         }
     }
 
@@ -418,12 +420,12 @@ public sealed partial class MainViewModel
         try
         {
             DcpFile.Save(path, session.Dcp);
-            ProgressText = $"Saved the DCP from the last session as {RelativeName(path)}.";
+            SetStatus("Status_SessionSaved", RelativeName(path));
             return true;
         }
         catch (DcpFileException ex)
         {
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
             return false;
         }
     }
@@ -448,7 +450,7 @@ public sealed partial class MainViewModel
                 }
                 catch (DcpFileException ex)
                 {
-                    ProgressText = "The upload could not be recorded in the file: " + ex.Message;
+                    SetStatus("Status_UploadNotRecorded", ex.Message);
                 }
             }
         }
@@ -477,8 +479,14 @@ public sealed partial class MainViewModel
                 if (_externalNotice != DateTime.MaxValue)
                 {
                     _externalNotice = DateTime.MaxValue;
-                    ProgressText = $"{name} was moved or deleted outside DCP Tool. The DCP stays open"
-                                   + (IsLibraryDocument ? " and is written there again when you change it." : "; Save writes it again.");
+                    if (IsLibraryDocument)
+                    {
+                        SetStatus("Status_FileGoneLibrary", name);
+                    }
+                    else
+                    {
+                        SetStatus("Status_FileGone", name, Loc.MenuName("Menu_Save"));
+                    }
                 }
 
                 return;
@@ -504,7 +512,7 @@ public sealed partial class MainViewModel
                 LoadDcp(content.Dcp, path, false);
                 _lastWriteUtc = modified;
                 UpdateNameFollowsHeader();
-                ProgressText = $"Reloaded {name}: it was changed outside DCP Tool.";
+                SetStatus("Status_Reloaded", name);
                 _ = RefreshLibraryAsync();
             }
             catch (DcpFileException ex)
@@ -512,7 +520,7 @@ public sealed partial class MainViewModel
                 if (_externalNotice != modified)
                 {
                     _externalNotice = modified;
-                    ProgressText = $"{name} was changed outside DCP Tool and cannot be read now: {ex.Message}";
+                    SetStatus("Status_ChangedUnreadable", name, ex.Message);
                 }
             }
 
@@ -525,9 +533,14 @@ public sealed partial class MainViewModel
         }
 
         _externalNotice = modified;
-        ProgressText = IsLibraryDocument
-            ? $"{name} was changed outside DCP Tool. Your changes are kept and replace that version."
-            : $"{name} was changed outside DCP Tool. Your unsaved changes are kept; Save writes them over that version.";
+        if (IsLibraryDocument)
+        {
+            SetStatus("Status_ChangedKeptLibrary", name);
+        }
+        else
+        {
+            SetStatus("Status_ChangedKept", name, Loc.MenuName("Menu_Save"));
+        }
     }
 
     // ---------------------------------------------------------------- panel actions
@@ -543,7 +556,7 @@ public sealed partial class MainViewModel
 
         if (row.Entry.Error is { } error)
         {
-            ProgressText = $"{row.Name} cannot be opened: {error}";
+            SetStatus("Status_CannotOpenEntry", row.Name, error);
             return;
         }
 
@@ -575,11 +588,11 @@ public sealed partial class MainViewModel
         }
         catch (DcpFileException ex)
         {
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
             return;
         }
 
-        StartNewDocument(dcp, null, dirty: false, $"New DCP from the preset \"{row.Name}\".");
+        StartNewDocument(dcp, null, dirty: false, "Status_NewFromPreset", row.Name);
     }
 
     /// <summary>A new DCP for the next episode of <paramref name="row"/>, or of the open DCP when null.</summary>
@@ -609,11 +622,11 @@ public sealed partial class MainViewModel
         }
         catch (DcpFileException ex)
         {
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
             return;
         }
 
-        StartNewDocument(next, Path.GetDirectoryName(row.Path), dirty: true, $"Next episode of {row.Name}.");
+        StartNewDocument(next, Path.GetDirectoryName(row.Path), dirty: true, "Status_NextEpisodeOf", row.Name);
     }
 
     /// <summary>An exact copy (never uploaded) of <paramref name="row"/>, or of the open DCP when null, which is then opened.</summary>
@@ -635,7 +648,7 @@ public sealed partial class MainViewModel
             clone.Upload = null;
             if (await LeaveDocumentAsync())
             {
-                StartNewDocument(clone, null, dirty: true, "Copy of the DCP.");
+                StartNewDocument(clone, null, dirty: true, "Status_CopyOfDcp");
             }
 
             return;
@@ -654,12 +667,12 @@ public sealed partial class MainViewModel
             if (await TryOpenAsync(copy, quiet: true))
             {
                 RememberFile(copy);
-                ProgressText = $"Duplicated {Path.GetFileName(source)} as {RelativeName(copy)}.";
+                SetStatus("Status_Duplicated", Path.GetFileName(source), RelativeName(copy));
             }
         }
         catch (DcpFileException ex)
         {
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
         }
 
         _ = RefreshLibraryAsync();
@@ -675,7 +688,7 @@ public sealed partial class MainViewModel
         }
 
         var name = Path.GetFileNameWithoutExtension(path);
-        OpenPrompt($"New name for \"{name}\"", name, "Rename", newName => RenameFile(path, newName));
+        OpenPrompt(Loc.Format("Prompt_RenameLabel", name), name, Loc.Get("Prompt_Rename"), newName => RenameFile(path, newName));
     }
 
     private void RenameFile(string path, string newName)
@@ -702,11 +715,11 @@ public sealed partial class MainViewModel
                 UpdateNameFollowsHeader();
             }
 
-            ProgressText = $"Renamed {Path.GetFileName(path)} to {Path.GetFileName(target)}.";
+            SetStatus("Status_Renamed", Path.GetFileName(path), Path.GetFileName(target));
         }
         catch (DcpFileException ex)
         {
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
         }
 
         _ = RefreshLibraryAsync();
@@ -724,8 +737,8 @@ public sealed partial class MainViewModel
         SyncLines();
         var dcp = _dcp;
         var name = dcp.TitoloItaliano.Trim();
-        OpenPrompt("Preset name. The preset keeps the programme information of the open DCP, without lines, episode and dates.",
-            name, "Save preset", presetName => SavePreset(dcp, presetName));
+        OpenPrompt(Loc.Get("Prompt_PresetLabel"),
+            name, Loc.Get("Prompt_SavePreset"), presetName => SavePreset(dcp, presetName));
     }
 
     private void SavePreset(Dcp dcp, string name)
@@ -744,11 +757,11 @@ public sealed partial class MainViewModel
         try
         {
             var path = library.SavePreset(dcp, name);
-            ProgressText = $"{(existed ? "Replaced" : "Saved")} the preset \"{Path.GetFileNameWithoutExtension(path)}\".";
+            SetStatus(existed ? "Status_PresetReplaced" : "Status_PresetSaved", Path.GetFileNameWithoutExtension(path));
         }
         catch (DcpFileException ex)
         {
-            ProgressText = ex.Message;
+            SetStatus("Status_FileProblem", ex.Message);
         }
 
         _ = RefreshLibraryAsync();
@@ -760,7 +773,7 @@ public sealed partial class MainViewModel
         var path = row?.Path ?? FilePath;
         if (path is null)
         {
-            ProgressText = "This DCP has no file yet.";
+            SetStatus("Status_NoFileYet");
             return;
         }
 
@@ -776,14 +789,23 @@ public sealed partial class MainViewModel
         }
 
         var name = Path.GetFileName(row.Path);
-        var what = row.IsPreset ? "preset" : "DCP";
         var isOpen = SamePath(row.Path, FilePath);
-        var openNote = isOpen ? " It is the DCP that is open now and will be closed." : "";
         var recycle = FileManager.DeletesToRecycleBin;
-        var text = recycle
-            ? $"Move the {what} \"{name}\" to the Recycle Bin?{openNote} You can restore it from there."
-            : $"Delete the {what} \"{name}\" permanently?{openNote} This cannot be undone.";
-        if (!await _dialogs.Confirm($"Delete {what}", text, recycle ? "Move to Recycle Bin" : "Delete permanently", "Cancel"))
+        var question = (row.IsPreset, recycle) switch
+        {
+            (true, true) => Loc.Format("Msg_RecyclePreset", name),
+            (true, false) => Loc.Format("Msg_DeletePreset", name),
+            (false, true) => Loc.Format("Msg_RecycleDcp", name),
+            (false, false) => Loc.Format("Msg_DeleteDcp", name),
+        };
+        var text = string.Join(" ", new[]
+        {
+            question,
+            isOpen ? Loc.Get("Msg_DeleteOpenNote") : "",
+            Loc.Get(recycle ? "Msg_RecycleNote" : "Msg_DeleteNote"),
+        }.Where(s => s.Length > 0));
+        if (!await _dialogs.Confirm(Loc.Get(row.IsPreset ? "Dlg_DeletePreset" : "Dlg_DeleteDcp"), text,
+                Loc.Get(recycle ? "Dlg_MoveToRecycleBin" : "Dlg_DeletePermanently"), Loc.Get("Common_Cancel")))
         {
             return;
         }
@@ -796,7 +818,7 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            ProgressText = $"{name} was not deleted: {ex.Message}";
+            SetStatus("Status_NotDeleted", name, ex.Message);
             ScheduleRecovery();
             return;
         }
@@ -812,7 +834,7 @@ public sealed partial class MainViewModel
             LoadDcp(_settings.Company.CreateDcp(), null, false);
         }
 
-        ProgressText = recycle ? $"Moved {name} to the Recycle Bin." : $"Deleted {name}.";
+        SetStatus(recycle ? "Status_MovedToRecycleBin" : "Status_Deleted", name);
         _ = RefreshLibraryAsync();
     }
 

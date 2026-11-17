@@ -30,7 +30,7 @@ public sealed class AtlAudioFileReader : IAudioFileReader
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            throw new ImportException($"Could not read the audio file: {ex.Message}", ex);
+            throw new ImportException($"Could not read the audio file: {ex.Message}", ex) { Code = "audio-unreadable" };
         }
 
         var extra = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

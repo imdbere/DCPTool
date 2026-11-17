@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DcpTool.App.Localisation;
 using DcpTool.App.Services;
 using DcpTool.App.Views;
 using DcpTool.Core.Export;
@@ -86,40 +87,61 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _progressText = "";
     [ObservableProperty] private bool _updateReady;
-    [ObservableProperty] private string _loginText = "RAI: not logged in";
+    [ObservableProperty] private string _loginText = Loc.Get("Login_NotLoggedIn");
+
+    // The English twin of the status text being set, for the activity log file (see SetStatus)
+    private string? _statusEnglish;
 
     public string[] RecentFiles => [.. _settings.RecentFiles];
+
+    private string DocumentName => FilePath is null ? Loc.Get("Doc_Untitled") : Path.GetFileName(FilePath);
 
     public string FileText
     {
         get
         {
-            var name = FilePath is null ? "Untitled" : Path.GetFileName(FilePath);
             if (IsLibraryDocument)
             {
-                return name + "  • library, saved automatically";
+                return Loc.Format("Doc_InLibrary", DocumentName);
             }
 
             if (IsPendingLibraryDocument)
             {
-                return name + "  • saved to the library once it has a Titolo italiano";
+                return Loc.Format("Doc_PendingLibrary", DocumentName);
             }
 
-            return name + (IsDirty ? "  • modified" : "");
+            return IsDirty ? Loc.Format("Doc_Modified", DocumentName) : DocumentName;
         }
     }
 
-    public string WindowTitle =>
-        $"{(FilePath is null ? "Untitled" : Path.GetFileName(FilePath))}{(IsDirty && !IsAutoSaved ? "*" : "")} – DCP Tool";
+    public string WindowTitle => $"{DocumentName}{(IsDirty && !IsAutoSaved ? "*" : "")} – DCP Tool";
 
-    public string IssueSummary
+    /// <summary>Header of the issues tab: the counts, or that there is nothing.</summary>
+    public string IssuesHeader
     {
         get
         {
-            var errors = Issues.Count(i => i.Kind == "Error");
-            var warnings = Issues.Count(i => i.Kind == "Warning");
-            return Issues.Count == 0 ? "No problems found." : $"{errors} error(s), {warnings} warning(s), {Issues.Count - errors - warnings} note(s)";
+            var errors = Issues.Count(i => i.Level == IssueLevel.Error);
+            var warnings = Issues.Count(i => i.Level == IssueLevel.Warning);
+            return Loc.Format("Issues_Tab", Issues.Count == 0
+                ? Loc.Get("Issues_None")
+                : Loc.Format("Issues_Counts", errors, warnings, Issues.Count - errors - warnings));
         }
+    }
+
+    /// <summary>A validation issue in the UI language.</summary>
+    private string IssueText(ValidationIssue issue) =>
+        MessageText.Issue(issue, id => _dcp.Lines.FirstOrDefault(l => l.Id == id)?.Titolo);
+
+    /// <summary>Shows a status text in the UI language; the activity log file gets it in English.</summary>
+    private void SetStatus(string key, params object?[] args) => SetStatusText(Loc.Format(key, args), Loc.English(key, args));
+
+    /// <param name="english">The text for the log file; null when <paramref name="text"/> is the same in every language.</param>
+    private void SetStatusText(string text, string? english = null)
+    {
+        _statusEnglish = english;
+        ProgressText = text;
+        _statusEnglish = null;
     }
 
     public IReadOnlyList<string> ImportPatterns => _importService.FilePatterns;
@@ -131,7 +153,8 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Folder of the activity log files. Set once at start.</summary>
     public string? ActivityLogFolder { get; set; }
 
-    // Every status text is an event worth keeping: import results, login, each upload step, failures
+    // Every status text is an event worth keeping: import results, login, each upload step, failures.
+    // The Log tab shows it in the UI language, the file keeps English.
     partial void OnProgressTextChanged(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -139,8 +162,9 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        var entry = $"{DateTime.Now:HH:mm:ss}  {value}";
-        Activity.Add(entry);
+        var time = DateTime.Now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+        Activity.Add($"{time}  {value}");
+        var entry = $"{time}  {_statusEnglish ?? value}";
         while (Activity.Count > 500)
         {
             Activity.RemoveAt(0);
@@ -261,7 +285,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            ProgressText = "Could not write the recovery snapshot: " + ex.Message;
+            SetStatus("Status_RecoveryFailed", ex.Message);
         }
     }
 
@@ -271,14 +295,14 @@ public sealed partial class MainViewModel : ObservableObject
         var byLine = found.Where(i => i.LineId is not null).ToLookup(i => i.LineId!.Value);
         foreach (var row in Lines)
         {
-            row.SetIssues(byLine[row.Line.Id].ToList());
+            row.SetIssues(byLine[row.Line.Id].ToList(), IssueText);
         }
 
         var selected = SelectedLine;
         Issues.Clear();
         foreach (var i in found)
         {
-            Issues.Add(new IssueItem(i.IsError ? "Error" : "Warning", i.IsError ? Brushes.Crimson : Brushes.DarkOrange, i.Message, i.LineId));
+            Issues.Add(new IssueItem(i.IsError ? IssueLevel.Error : IssueLevel.Warning, i.IsError ? Brushes.Crimson : Brushes.DarkOrange, IssueText(i), i.LineId));
         }
 
         foreach (var item in _uploadMessages)
@@ -288,17 +312,17 @@ public sealed partial class MainViewModel : ObservableObject
 
         foreach (var m in _importMessages)
         {
-            var (kind, brush) = m.Severity switch
+            var (level, brush) = m.Severity switch
             {
-                ImportSeverity.Error => ("Error", Brushes.Crimson),
-                ImportSeverity.Warning => ("Warning", Brushes.DarkOrange),
-                _ => ("Info", Brushes.SteelBlue),
+                ImportSeverity.Error => (IssueLevel.Error, Brushes.Crimson),
+                ImportSeverity.Warning => (IssueLevel.Warning, Brushes.DarkOrange),
+                _ => (IssueLevel.Info, Brushes.SteelBlue),
             };
-            Issues.Add(new IssueItem(kind, brush, (m.File is null ? "" : m.File + ": ") + m.Text, null));
+            Issues.Add(new IssueItem(level, brush, MessageText.Import(m), null));
         }
 
         SelectedLine = selected;
-        OnPropertyChanged(nameof(IssueSummary));
+        OnPropertyChanged(nameof(IssuesHeader));
         OnPropertyChanged(nameof(HasRaiDcp));
         OnPropertyChanged(nameof(RaiDcpText));
     }
@@ -327,10 +351,10 @@ public sealed partial class MainViewModel : ObservableObject
             // Opening the file would overwrite the snapshot, the only copy of unsaved work from last time.
             // A DCP of the library is simply written to its file first.
             var keep = session is { HasUnsavedChanges: true } && !SaveSessionToLibrary(session) && !await _dialogs.Confirm(
-                "Unsaved changes",
-                $"The DCP from the last session has changes that were never saved to a file. Open \"{Path.GetFileName(arg)}\" and discard those changes?",
-                "Open file",
-                "Keep unsaved DCP");
+                Loc.Get("Dlg_UnsavedChanges"),
+                Loc.Format("Msg_UnsavedSession", Path.GetFileName(arg)),
+                Loc.Get("Dlg_OpenFile"),
+                Loc.Get("Dlg_KeepUnsaved"));
             if (!keep && await TryOpenAsync(arg))
             {
                 return;
@@ -414,7 +438,7 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        StartNewDocument(_settings.Company.CreateDcp(), null, dirty: false, _library is null ? "" : "New DCP. It is saved to the library once it has a Titolo italiano.");
+        StartNewDocument(_settings.Company.CreateDcp(), null, dirty: false, _library is null ? null : "Status_NewDcp");
     }
 
     [RelayCommand]
@@ -432,7 +456,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         SyncLines();
-        StartNewDocument(_dcp.CreateNextEpisode(), folder, dirty: true, _library is null ? "" : "Next episode created.");
+        StartNewDocument(_dcp.CreateNextEpisode(), folder, dirty: true, _library is null ? null : "Status_NextEpisodeCreated");
     }
 
     [RelayCommand]
@@ -486,14 +510,13 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (content.IsLegacy)
             {
-                const string text = "This file was written by an older version of DCP Tool. It will be saved in the new format the next time it is saved.";
                 if (quiet || inLibrary)
                 {
-                    ProgressText = Path.GetFileName(path) + ": " + text;
+                    SetStatus("Status_OlderFormat", Path.GetFileName(path));
                 }
                 else
                 {
-                    await _dialogs.Message("Older file format", text);
+                    await _dialogs.Message(Loc.Get("Dlg_OlderFormat"), Loc.Get("Msg_OlderFormat"));
                 }
             }
 
@@ -501,13 +524,14 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (DcpFileException ex)
         {
+            // The file layer's messages are English; the sentence around them is not
             if (quiet)
             {
-                ProgressText = ex.Message;
+                SetStatus("Status_CannotOpen", ex.Message);
             }
             else
             {
-                await _dialogs.Message("Open", ex.Message);
+                await _dialogs.Message(Loc.Get("Common_Open"), Loc.Format("Status_CannotOpen", ex.Message));
             }
 
             return false;
@@ -541,7 +565,7 @@ public sealed partial class MainViewModel : ObservableObject
             name += $" {p}";
         }
 
-        var path = await _dialogs.PickSave("Save DCP", Sanitize(name), DcpFile.Extension, "DCP file", _settings.LastDocumentFolder ?? _library?.Folder);
+        var path = await _dialogs.PickSave(Loc.Get("Picker_SaveDcp"), Sanitize(name), DcpFile.Extension, Loc.Get("Picker_DcpFile"), _settings.LastDocumentFolder ?? _library?.Folder);
         if (path is not null)
         {
             SaveTo(path);
@@ -562,12 +586,12 @@ public sealed partial class MainViewModel : ObservableObject
             UpdateNameFollowsHeader();
             RememberFile(path);
             WriteRecovery();
-            ProgressText = "Saved " + Path.GetFileName(path);
+            SetStatus("Status_Saved", Path.GetFileName(path));
             _ = RefreshLibraryAsync();
         }
         catch (DcpFileException ex)
         {
-            _ = _dialogs.Message("Save", ex.Message);
+            _ = _dialogs.Message(Loc.Get("Common_Save"), Loc.Format("Msg_SaveFailed", ex.Message));
         }
     }
 
@@ -587,12 +611,12 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            ProgressText = "Could not save the settings: " + ex.Message;
+            SetStatus("Status_SettingsNotSaved", ex.Message);
         }
     }
 
     private async Task<bool> ConfirmDiscardAsync() =>
-        !IsDirty || await _dialogs.Confirm("Unsaved changes", "The current DCP has changes that are not saved to a file. Replace it anyway?", "Replace", "Cancel");
+        !IsDirty || await _dialogs.Confirm(Loc.Get("Dlg_UnsavedChanges"), Loc.Get("Msg_DiscardChanges"), Loc.Get("Dlg_Replace"), Loc.Get("Common_Cancel"));
 
     private static string Sanitize(string name) =>
         string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
@@ -633,7 +657,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
-        ProgressText = "Importing...";
+        SetStatus("Status_Importing");
         try
         {
             // Copies with the same Ids: the import runs on another thread and must not read the live model
@@ -644,7 +668,7 @@ public sealed partial class MainViewModel : ObservableObject
                 return copy;
             }).ToList();
             var request = new ImportRequest(paths, existing, _settings.LineDefaults);
-            var progress = new Progress<ImportProgress>(p => ProgressText = $"Importing {p.Done}/{p.Total}: {p.CurrentFile}");
+            var progress = new Progress<ImportProgress>(p => SetStatus("Status_ImportProgress", p.Done, p.Total, p.CurrentFile ?? ""));
             var result = await Task.Run(() => _importService.Import(request, progress));
 
             _loading = true;
@@ -687,12 +711,19 @@ public sealed partial class MainViewModel : ObservableObject
                 Revalidate();
             }
 
-            ProgressText = $"Imported {result.NewLines.Count} line(s)" + (result.CompletedLines.Count > 0 ? $", completed {result.CompletedLines.Count}" : "") + ".";
+            if (result.CompletedLines.Count > 0)
+            {
+                SetStatus("Status_ImportedCompleted", result.NewLines.Count, result.CompletedLines.Count);
+            }
+            else
+            {
+                SetStatus("Status_Imported", result.NewLines.Count);
+            }
         }
         catch (Exception ex)
         {
             CrashLog.Write(ex, "import");
-            await _dialogs.Message("Import", "The import failed: " + ex.Message);
+            await _dialogs.Message(Loc.Get("Dlg_Import"), Loc.Format("Msg_ImportFailed", ex.Message));
             ProgressText = "";
         }
         finally
@@ -795,14 +826,14 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var upload = Validate(ValidationPurpose.Upload);
         var document = Validate(ValidationPurpose.Document);
-        var text = "For upload to RAI:\n" + Describe(upload) + "\n\nFor the Word document:\n" + Describe(document);
-        await _dialogs.ShowText("Check", text);
+        var text = Loc.Get("Check_ForUpload") + "\n" + Describe(upload) + "\n\n" + Loc.Get("Check_ForDocument") + "\n" + Describe(document);
+        await _dialogs.ShowText(Loc.Get("Check_Title"), text);
     }
 
-    private static string Describe(IReadOnlyList<ValidationIssue> issues) =>
+    private string Describe(IReadOnlyList<ValidationIssue> issues) =>
         issues.Count == 0
-            ? "  No problems found."
-            : string.Join("\n", issues.Select(i => $"  [{(i.IsError ? "Error" : "Warning")}] {i.Message}"));
+            ? "  " + Loc.Get("Issues_None")
+            : string.Join("\n", issues.Select(i => $"  [{Loc.Get(i.IsError ? "Kind_Error" : "Kind_Warning")}] {IssueText(i)}"));
 
     /// <summary>Drops what is known about an earlier upload, so the next upload creates a new DCP at RAI.</summary>
     [RelayCommand]
@@ -810,14 +841,12 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (_dcp.Upload is null)
         {
-            ProgressText = "This DCP has no earlier upload.";
+            SetStatus("Status_NoEarlierUpload");
             return;
         }
 
-        var what = _dcp.Upload.Codice is { } codice ? $"DCP {codice}" : "the DCP";
-        if (!await _dialogs.Confirm("Forget the earlier upload",
-                $"The next upload will create a new DCP at RAI. {what} that was saved there earlier is not deleted; delete it in RAI's DCP search if it is not needed.",
-                "Forget", "Cancel"))
+        var text = _dcp.Upload.Codice is { } codice ? Loc.Format("Msg_ForgetUploadCodice", codice) : Loc.Get("Msg_ForgetUpload");
+        if (!await _dialogs.Confirm(Loc.MenuName("Menu_ForgetUpload"), text, Loc.Get("Dlg_Forget"), Loc.Get("Common_Cancel")))
         {
             return;
         }
@@ -825,7 +854,7 @@ public sealed partial class MainViewModel : ObservableObject
         _dcp.Upload = null;
         OnChanged();
         Revalidate();
-        ProgressText = "The earlier upload was forgotten.";
+        SetStatus("Status_UploadForgotten");
     }
 
     [RelayCommand]
@@ -835,11 +864,12 @@ public sealed partial class MainViewModel : ObservableObject
         SyncLines();
         try
         {
-            await _dialogs.ShowText("What would be uploaded", _rai.DescribeUpload(_dcp));
+            // The preview itself is a technical listing of the form fields and stays English
+            await _dialogs.ShowText(Loc.Get("Dlg_UploadPreview"), _rai.DescribeUpload(_dcp));
         }
         catch (Exception ex)
         {
-            await _dialogs.Message("Show what would be uploaded", ex.Message);
+            await _dialogs.Message(Loc.Get("Dlg_UploadPreview"), ex.Message);
         }
     }
 
@@ -858,15 +888,16 @@ public sealed partial class MainViewModel : ObservableObject
         {
             // No dialog: the problems are in the list below the grid, each one selects its line
             Revalidate();
-            ProgressText = $"Not uploaded: {errors.Count} problem(s) to fix first, see the list below.";
-            SelectedIssue = Issues.FirstOrDefault(i => i.Kind == "Error");
+            SetStatus("Status_NotUploadedProblems", errors.Count);
+            SelectedIssue = Issues.FirstOrDefault(i => i.Level == IssueLevel.Error);
             return;
         }
 
         // A complete upload would be duplicated, so ask. An incomplete one is continued on its draft at RAI.
         if (_dcp.Upload is { Complete: true } &&
             issues.FirstOrDefault(i => i.Code == "already-uploaded") is { } again &&
-            !await _dialogs.Confirm("Already uploaded", again.Message + "\n\nUpload anyway?", "Upload again", "Cancel"))
+            !await _dialogs.Confirm(Loc.Get("Dlg_AlreadyUploaded"), IssueText(again) + "\n\n" + Loc.Get("Msg_UploadAnyway"),
+                Loc.Get("Dlg_UploadAgain"), Loc.Get("Common_Cancel")))
         {
             return;
         }
@@ -883,18 +914,27 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             _operation = new CancellationTokenSource();
-            var progress = new Progress<UploadProgress>(p => ProgressText = $"Uploading: {p.LinesSaved}/{p.LinesTotal} lines. {p.Message}");
-            ProgressText = "Uploading...";
+            // The client's step text (English) goes only into the log file
+            var progress = new Progress<UploadProgress>(p => SetStatusText(
+                Loc.Format("Status_UploadProgress", p.LinesSaved, p.LinesTotal),
+                Loc.English("Status_UploadProgress", p.LinesSaved, p.LinesTotal) + " " + p.Message));
+            SetStatus("Status_Uploading");
             var result = await _rai.UploadAsync(dcp, progress, _operation.Token);
             dcp.Upload = result.Record;
             OnChanged();
             SaveUploadRecord(dcp);
-            ProgressText = $"Uploaded {result.Record.LinesSaved} line(s) to RAI{(result.Record.Codice is { } c ? $" as DCP {c}" + (result.Record.Stato is { } st ? $" ({st})" : "") : "")}." +
-                           (result.Verified ? " RAI's page lists every title." : "");
-            _uploadMessages.Add(new IssueItem("Info", Brushes.SeaGreen, ProgressText, null));
+            var record = result.Record;
+            var (key, args) = record.Codice is { } c
+                ? ("Status_UploadedAs", new object?[] { record.LinesSaved, record.Stato is { } st ? $"{c} ({st})" : c })
+                : ("Status_Uploaded", new object?[] { record.LinesSaved });
+            SetStatusText(
+                Loc.Format(key, args) + (result.Verified ? " " + Loc.Get("Status_UploadVerified") : ""),
+                Loc.English(key, args) + (result.Verified ? " " + Loc.English("Status_UploadVerified") : ""));
+            _uploadMessages.Add(new IssueItem(IssueLevel.Info, Brushes.SeaGreen, ProgressText, null));
             foreach (var w in result.Warnings)
             {
-                _uploadMessages.Add(new IssueItem("Warning", Brushes.DarkOrange, "Upload: " + w, null));
+                // The client's checks of RAI's answer, in English
+                _uploadMessages.Add(new IssueItem(IssueLevel.Warning, Brushes.DarkOrange, Loc.Format("Issue_Upload", w), null));
             }
 
             Revalidate();
@@ -904,8 +944,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            ProgressText = "Upload cancelled. RAI may already have saved part of the DCP.";
-            _uploadMessages.Add(new IssueItem("Warning", Brushes.DarkOrange, ProgressText, null));
+            SetStatus("Status_UploadCancelled");
+            _uploadMessages.Add(new IssueItem(IssueLevel.Warning, Brushes.DarkOrange, ProgressText, null));
             Revalidate();
         }
         catch (RaiException ex)
@@ -928,14 +968,13 @@ public sealed partial class MainViewModel : ObservableObject
             dcp.Upload = partial;
             OnChanged();
             SaveUploadRecord(dcp);
-            _uploadMessages.Add(new IssueItem("Error", Brushes.Crimson,
-                $"The upload is incomplete: RAI saved {partial.LinesSaved} of {dcp.Lines.Count} lines, and that partial DCP exists at RAI. " +
-                "Complete or delete it in RAI's DCP search before uploading again, or a second DCP is created.", null));
+            _uploadMessages.Add(new IssueItem(IssueLevel.Error, Brushes.Crimson,
+                Loc.Format("Issue_PartialUpload", partial.LinesSaved, dcp.Lines.Count), null));
         }
 
         if (ex.PortalMessages.Count == 0)
         {
-            _uploadMessages.Add(new IssueItem("Error", Brushes.Crimson, "Upload: " + ex.Message, null));
+            _uploadMessages.Add(new IssueItem(IssueLevel.Error, Brushes.Crimson, Loc.Format("Issue_Upload", MessageText.Rai(ex)), null));
         }
 
         foreach (var message in ex.PortalMessages)
@@ -944,15 +983,24 @@ public sealed partial class MainViewModel : ObservableObject
             var match = System.Text.RegularExpressions.Regex.Match(message, @"opera\s+(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             var line = match.Success && int.TryParse(match.Groups[1].Value, out var n) && n >= 1 && n <= dcp.Lines.Count ? dcp.Lines[n - 1] : null;
             var title = line is null || string.IsNullOrWhiteSpace(line.Titolo) ? "" : $" ({line.Titolo.Trim()})";
-            _uploadMessages.Add(new IssueItem("Error", Brushes.Crimson, $"RAI: {message}{title}", line?.Id));
+            // RAI's own message, as RAI wrote it
+            _uploadMessages.Add(new IssueItem(IssueLevel.Error, Brushes.Crimson, $"RAI: {message}{title}", line?.Id));
         }
 
         Revalidate();
         var failed = _uploadMessages.Count(i => i.LineId is not null);
-        ProgressText = failed > 0
-            ? $"Upload failed: RAI rejected {failed} line(s), see the list below."
-            : "Upload failed, see the list below. RAI > Save diagnostics collects the details for the developers.";
-        SelectedIssue = Issues.FirstOrDefault(i => i.Kind == "Error" && i.LineId is not null) ?? SelectedIssue;
+        // The log file gets the client's English message, which has the details
+        if (failed > 0)
+        {
+            SetStatusText(Loc.Format("Status_UploadRejectedLines", failed), Loc.English("Status_UploadRejectedLines", failed) + " " + ex.Message);
+        }
+        else
+        {
+            SetStatusText(
+                Loc.Format("Status_UploadFailed", Loc.MenuName("Menu_SaveDiagnostics")),
+                Loc.English("Status_UploadFailed", Loc.MenuName("Menu_SaveDiagnostics", System.Globalization.CultureInfo.InvariantCulture)) + " " + ex.Message);
+        }
+        SelectedIssue = Issues.FirstOrDefault(i => i.Level == IssueLevel.Error && i.LineId is not null) ?? SelectedIssue;
         await Task.CompletedTask;
     }
 
@@ -964,12 +1012,12 @@ public sealed partial class MainViewModel : ObservableObject
         var errors = issues.Where(i => i.IsError).ToList();
         if (errors.Count > 0)
         {
-            await _dialogs.ShowText("Cannot export yet", "Fix these problems first:\n\n" + string.Join("\n", errors.Select(e => "- " + e.Message)));
+            await _dialogs.ShowText(Loc.Get("Dlg_CannotExport"), Loc.Get("Msg_FixFirst") + "\n\n" + string.Join("\n", errors.Select(e => "- " + IssueText(e))));
             return;
         }
 
         var name = string.IsNullOrWhiteSpace(_dcp.TitoloItaliano) ? "DCP" : _dcp.TitoloItaliano.Trim();
-        var path = await _dialogs.PickSave("Export Word document", Sanitize(name), _exporter.FileExtension, _exporter.DisplayName, _settings.LastDocumentFolder);
+        var path = await _dialogs.PickSave(Loc.MenuName("Menu_Export"), Sanitize(name), _exporter.FileExtension, Loc.Get("Picker_WordDocument"), _settings.LastDocumentFolder);
         if (path is null)
         {
             return;
@@ -984,24 +1032,24 @@ public sealed partial class MainViewModel : ObservableObject
                 File.WriteAllBytes(path, buffer.ToArray());
             }
 
-            ProgressText = "Exported " + Path.GetFileName(path);
+            SetStatus("Status_Exported", Path.GetFileName(path));
             OpenWithShell(path);
             var warnings = issues.Where(i => !i.IsError).ToList();
             if (warnings.Count > 0)
             {
-                await _dialogs.ShowText("Exported with warnings", "The document was written, but please check:\n\n" + string.Join("\n", warnings.Select(w => "- " + w.Message)));
+                await _dialogs.ShowText(Loc.Get("Dlg_ExportedWithWarnings"), Loc.Get("Msg_ExportWarnings") + "\n\n" + string.Join("\n", warnings.Select(w => "- " + IssueText(w))));
             }
         }
         catch (Exception ex) when (ex is ExportException or IOException or UnauthorizedAccessException)
         {
-            await _dialogs.Message("Export", ex.Message);
+            await _dialogs.Message(Loc.Get("Dlg_Export"), Loc.Format("Msg_ExportFailed", ex.Message));
         }
     }
 
     // ---------------------------------------------------------------- RAI
 
     private void RefreshLogin() =>
-        LoginText = _rai.IsLoggedIn ? $"RAI: logged in as {_rai.Username}" : "RAI: not logged in";
+        LoginText = _rai.IsLoggedIn ? Loc.Format("Login_LoggedInAs", _rai.Username) : Loc.Get("Login_NotLoggedIn");
 
     private async Task<bool> EnsureLoginAsync(bool forcePrompt = false)
     {
@@ -1035,9 +1083,9 @@ public sealed partial class MainViewModel : ObservableObject
             _operation = new CancellationTokenSource();
             try
             {
-                ProgressText = "Logging in to RAI...";
+                SetStatus("Status_LoggingIn");
                 await _rai.LoginAsync(attempt, _operation.Token);
-                ProgressText = "Logged in.";
+                SetStatus("Status_LoggedIn");
                 if (_settings.RaiUsername != attempt.Username)
                 {
                     _settings.RaiUsername = attempt.Username;
@@ -1061,13 +1109,13 @@ public sealed partial class MainViewModel : ObservableObject
             }
             catch (RaiException ex) when (ex.Kind == RaiErrorKind.InvalidCredentials)
             {
-                error = ex.Message;
+                error = MessageText.Rai(ex);
                 attempt = null;
                 saved = null;
             }
             catch (RaiException ex)
             {
-                await _dialogs.Message("RAI login", ex.Message);
+                await _dialogs.Message(Loc.Get("Dlg_RaiLogin"), MessageText.Rai(ex));
                 return false;
             }
             catch (OperationCanceledException)
@@ -1094,7 +1142,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             if (await EnsureLoginAsync(forcePrompt: true))
             {
-                await _dialogs.Message("RAI", "Logged in to the RAI portal.");
+                await _dialogs.Message("RAI", Loc.Get("Msg_LoggedIn"));
             }
         }
         finally
@@ -1118,7 +1166,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             var text = "RAI " + (record.Codice ?? "DCP") + (record.Stato is null ? "" : $" ({record.Stato})");
-            return record.Complete ? text : $"{text}, {record.LinesSaved} of {_dcp.Lines.Count} lines saved";
+            return record.Complete ? text : Loc.Format("Status_RaiDcpPartly", text, record.LinesSaved, _dcp.Lines.Count);
         }
     }
 
@@ -1129,7 +1177,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (_dcp.Upload is not { Url.Length: > 0 } record || !Uri.TryCreate(record.Url, UriKind.Absolute, out var uri)
             || !string.Equals(uri.Host, _rai.PortalUri.Host, StringComparison.OrdinalIgnoreCase))
         {
-            ProgressText = "This DCP has not been uploaded to RAI yet.";
+            SetStatus("Status_NotUploadedYet");
             return;
         }
 
@@ -1158,15 +1206,15 @@ public sealed partial class MainViewModel : ObservableObject
         {
             OpenWithShell(uri.ToString());
             await _dialogs.Message(
-                "Opened in the system browser",
-                "The built-in browser is not available here, so the page was opened in your system browser. You have to sign in to the RAI portal there yourself.");
+                Loc.Get("Dlg_SystemBrowser"),
+                Loc.Get("Msg_SystemBrowser"));
         }
     }
 
     [RelayCommand]
     private async Task SaveDiagnostics()
     {
-        var folder = await _dialogs.PickFolder("Save diagnostics to");
+        var folder = await _dialogs.PickFolder(Loc.Get("Picker_SaveDiagnostics"));
         if (folder is null)
         {
             return;
@@ -1175,11 +1223,11 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var file = await _rai.SaveDiagnosticsAsync(folder);
-            await _dialogs.Message("Diagnostics saved", $"Saved {file}\n\nSend this file to the developers. Passwords, cookies and session tokens are removed from it.");
+            await _dialogs.Message(Loc.Get("Dlg_DiagnosticsSaved"), Loc.Format("Msg_DiagnosticsSaved", file) + "\n\n" + Loc.Get("Msg_DiagnosticsSend"));
         }
         catch (Exception ex) when (ex is RaiException or IOException or UnauthorizedAccessException)
         {
-            await _dialogs.Message("Diagnostics", ex.Message);
+            await _dialogs.Message(Loc.MenuName("Menu_SaveDiagnostics"), ex is RaiException rai ? MessageText.Rai(rai) : ex.Message);
         }
     }
 
@@ -1191,23 +1239,23 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task CheckForUpdates()
     {
-        ProgressText = "Checking for updates...";
+        SetStatus("Status_CheckingForUpdates");
         var outcome = await Task.Run(_updates.CheckAndDownloadAsync);
         ProgressText = "";
         switch (outcome)
         {
             case UpdateCheckOutcome.Downloaded:
                 UpdateReady = true;
-                await _dialogs.Message("Update", $"Version {_updates.ReadyVersion} was downloaded. Use \"Update ready - restart\" in the status bar to install it.");
+                await _dialogs.Message(Loc.Get("Dlg_Update"), Loc.Format("Msg_UpdateDownloaded", _updates.ReadyVersion, Loc.Get("Status_UpdateReady")));
                 break;
             case UpdateCheckOutcome.UpToDate:
-                await _dialogs.Message("Update", "You have the latest version.");
+                await _dialogs.Message(Loc.Get("Dlg_Update"), Loc.Get("Msg_UpToDate"));
                 break;
             case UpdateCheckOutcome.NotInstalled:
-                await _dialogs.Message("Update", "This copy was not installed with the installer, so it cannot update itself.");
+                await _dialogs.Message(Loc.Get("Dlg_Update"), Loc.Get("Msg_NotInstalled"));
                 break;
             default:
-                await _dialogs.Message("Update", "The update check failed: " + _updates.LastError);
+                await _dialogs.Message(Loc.Get("Dlg_Update"), Loc.Format("Msg_UpdateFailed", _updates.LastError));
                 break;
         }
     }
@@ -1218,8 +1266,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task About()
     {
-        var version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
-        await _dialogs.Message("About DCP Tool", $"DCP Tool\nVersion {version.Split('+')[0]}\n\nCreates RAI music cue sheets (DCP).");
+        var version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? Loc.Get("About_UnknownVersion");
+        await _dialogs.Message(Loc.MenuName("Menu_About"), "DCP Tool\n" + Loc.Format("About_Version", version.Split('+')[0]) + "\n\n" + Loc.Get("About_Text"));
     }
 
     public static void OpenWithShell(string pathOrUrl)

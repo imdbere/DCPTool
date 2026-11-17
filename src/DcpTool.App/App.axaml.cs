@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using DcpTool.App.Localisation;
 using DcpTool.App.Services;
 using DcpTool.App.ViewModels;
 using DcpTool.App.Views;
@@ -29,6 +30,9 @@ public partial class App : Application
             var paths = new AppPaths();
             var settingsStore = new SettingsStore(paths);
             var settings = settingsStore.Load();
+
+            // Before any window exists: every text is read in this language, so a change needs a restart
+            UiLanguage.Apply(settings.Language);
             ICredentialStore credentials = OperatingSystem.IsWindows()
                 ? new DpapiCredentialStore(paths)
                 : new MemoryCredentialStore();
@@ -121,8 +125,8 @@ public partial class App : Application
             try
             {
                 await _dialogs.Message(
-                    "Unexpected error",
-                    $"Something went wrong: {ex.Message}\n\nYour work is kept and restored on the next start." + (file is null ? "" : $"\nDetails: {file}"));
+                    Loc.Get("Dlg_UnexpectedError"),
+                    Loc.Format("Msg_Crash", ex.Message) + "\n\n" + Loc.Get("Msg_CrashKept") + (file is null ? "" : "\n" + Loc.Format("Msg_CrashDetails", file)));
             }
             catch
             {

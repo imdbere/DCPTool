@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
+using DcpTool.App.Localisation;
 using DcpTool.App.ViewModels;
 
 namespace DcpTool.App.Views;
@@ -192,23 +193,23 @@ public partial class MainWindow : Window
         {
             if (row.IsPreset)
             {
-                yield return Item("New DCP from this preset", vm.NewFromPresetCommand, row);
-                yield return Item("Edit preset", vm.OpenLibraryEntryCommand, row);
+                yield return Item(Loc.Get("Library_NewFromPreset"), vm.NewFromPresetCommand, row);
+                yield return Item(Loc.Get("Library_EditPreset"), vm.OpenLibraryEntryCommand, row);
             }
             else
             {
-                yield return Item("Open", vm.OpenLibraryEntryCommand, row);
-                yield return Item("Duplicate as next episode", vm.DuplicateNextEpisodeCommand, row);
-                yield return Item("Duplicate", vm.DuplicateDcpCommand, row);
+                yield return Item(Loc.Get("Common_Open"), vm.OpenLibraryEntryCommand, row);
+                yield return Item(Loc.Get("Library_DuplicateNextEpisode"), vm.DuplicateNextEpisodeCommand, row);
+                yield return Item(Loc.Get("Common_Duplicate"), vm.DuplicateDcpCommand, row);
             }
 
             yield return new Separator();
         }
 
-        yield return Item("Rename...", vm.RenameEntryCommand, row);
-        yield return Item(OperatingSystem.IsMacOS() ? "Show in Finder" : "Show in file manager", vm.ShowInFileManagerCommand, row);
+        yield return Item(Loc.Get("Library_Rename"), vm.RenameEntryCommand, row);
+        yield return Item(Loc.Get(OperatingSystem.IsMacOS() ? "Library_ShowInFinder" : "Library_ShowInFileManager"), vm.ShowInFileManagerCommand, row);
         yield return new Separator();
-        yield return Item("Delete...", vm.DeleteEntryCommand, row);
+        yield return Item(Loc.Get("Library_Delete"), vm.DeleteEntryCommand, row);
     }
 
     private void OnPromptKeyDown(object? sender, KeyEventArgs e)
@@ -238,7 +239,7 @@ public partial class MainWindow : Window
         var recent = Vm?.RecentFiles ?? [];
         if (recent.Length == 0)
         {
-            RecentMenu.Items.Add(new MenuItem { Header = "(none)", IsEnabled = false });
+            RecentMenu.Items.Add(new MenuItem { Header = Loc.Get("Menu_RecentNone"), IsEnabled = false });
             return;
         }
 

@@ -1,37 +1,48 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DcpTool.App.ViewModels"
+        xmlns:l="using:DcpTool.App.Localisation"
         x:Class="DcpTool.App.Views.SettingsWindow"
         x:DataType="vm:SettingsViewModel"
-        Title="Settings" Width="520" SizeToContent="Height" CanResize="False"
+        Title="{l:Tr Settings_Title}" Width="580" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner">
+  <!-- Fornitore, Compilatore, Legale rappresentante, Genere SIAE, Ruolo and Tipo generazione are the terms
+       of RAI's forms and stay as they are in every language. -->
   <StackPanel Margin="16" Spacing="8">
-    <TextBlock Text="Library" FontWeight="SemiBold"/>
-    <Grid ColumnDefinitions="170,*,Auto" ColumnSpacing="6">
-      <TextBlock Text="Library folder" VerticalAlignment="Center"/>
-      <TextBox Grid.Column="1" Text="{Binding LibraryFolder}" PlaceholderText="(none: DCPs are single files)"
-               ToolTip.Tip="The folder that holds all your DCPs as .dcp files. DCPs in it are saved automatically."/>
-      <Button Grid.Column="2" Content="Browse..." Click="BrowseLibrary_Click"/>
+    <TextBlock Text="{l:Tr Settings_General}" FontWeight="SemiBold"/>
+    <Grid ColumnDefinitions="210,*" ColumnSpacing="8" RowDefinitions="Auto,Auto" RowSpacing="4">
+      <TextBlock Text="{l:Tr Settings_Language}" VerticalAlignment="Center"/>
+      <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Languages}" SelectedItem="{Binding Language}"/>
+      <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LanguageNote}" TextWrapping="Wrap" FontSize="12" Foreground="DarkOrange"
+                 IsVisible="{Binding LanguageNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </Grid>
 
-    <TextBlock Text="Company (printed on the Word document)" FontWeight="SemiBold" Margin="0,8,0,0"/>
-    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+    <TextBlock Text="{l:Tr Library_Title}" FontWeight="SemiBold" Margin="0,8,0,0"/>
+    <Grid ColumnDefinitions="210,*,Auto" ColumnSpacing="8">
+      <TextBlock Text="{l:Tr Settings_LibraryFolder}" VerticalAlignment="Center"/>
+      <TextBox Grid.Column="1" Text="{Binding LibraryFolder}" PlaceholderText="{l:Tr Settings_LibraryFolderNone}"
+               ToolTip.Tip="{l:Tr Settings_LibraryFolderTip}"/>
+      <Button Grid.Column="2" Content="{l:Tr Common_Browse}" Click="BrowseLibrary_Click"/>
+    </Grid>
+
+    <TextBlock Text="{l:Tr Settings_Company}" FontWeight="SemiBold" Margin="0,8,0,0"/>
+    <Grid ColumnDefinitions="210,*" ColumnSpacing="8" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
       <TextBlock Grid.Row="0" Text="Fornitore del Programma" VerticalAlignment="Center"/>
       <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Fornitore}"/>
       <TextBlock Grid.Row="1" Text="Compilatore" VerticalAlignment="Center"/>
       <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Compilatore}"/>
       <TextBlock Grid.Row="2" Text="Legale rappresentante" VerticalAlignment="Center"/>
       <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding LegaleRappresentante}"/>
-      <TextBlock Grid.Row="3" Text="Default Sede" VerticalAlignment="Center"/>
+      <TextBlock Grid.Row="3" Text="{l:Tr Settings_DefaultSede}" VerticalAlignment="Center"/>
       <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Sedi}" SelectedItem="{Binding DefaultSede}"/>
-      <TextBlock Grid.Row="4" Text="Default Rete" VerticalAlignment="Center"/>
+      <TextBlock Grid.Row="4" Text="{l:Tr Settings_DefaultRete}" VerticalAlignment="Center"/>
       <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Reti}" SelectedItem="{Binding DefaultRete}"/>
-      <TextBlock Grid.Row="5" Text="Default Responsabile RAI" VerticalAlignment="Center"/>
+      <TextBlock Grid.Row="5" Text="{l:Tr Settings_DefaultResponsabile}" VerticalAlignment="Center"/>
       <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding DefaultResponsabileRai}"/>
     </Grid>
 
-    <TextBlock Text="New lines start with" FontWeight="SemiBold" Margin="0,8,0,0"/>
-    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+    <TextBlock Text="{l:Tr Settings_NewLines}" FontWeight="SemiBold" Margin="0,8,0,0"/>
+    <Grid ColumnDefinitions="210,*" ColumnSpacing="8" RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
       <TextBlock Grid.Row="0" Text="Genere SIAE" VerticalAlignment="Center"/>
       <ComboBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Generi}" SelectedItem="{Binding Genere}"/>
       <TextBlock Grid.Row="1" Text="Ruolo" VerticalAlignment="Center"/>
@@ -40,17 +51,17 @@
       <ComboBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Tipi}" SelectedItem="{Binding Tipo}"/>
     </Grid>
 
-    <TextBlock Text="RAI portal and updates" FontWeight="SemiBold" Margin="0,8,0,0"/>
-    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto" RowSpacing="6">
-      <TextBlock Text="RAI user name" VerticalAlignment="Center"/>
+    <TextBlock Text="{l:Tr Settings_RaiAndUpdates}" FontWeight="SemiBold" Margin="0,8,0,0"/>
+    <Grid ColumnDefinitions="210,*" ColumnSpacing="8" RowDefinitions="Auto" RowSpacing="6">
+      <TextBlock Text="{l:Tr Settings_RaiUser}" VerticalAlignment="Center"/>
       <TextBox Grid.Column="1" Text="{Binding RaiUsername}"/>
     </Grid>
-    <CheckBox Content="Check for updates on start" IsChecked="{Binding CheckForUpdates}"/>
-    <CheckBox Content="Include pre-release versions" IsChecked="{Binding IncludePrereleases}"/>
+    <CheckBox Content="{l:Tr Settings_CheckForUpdates}" IsChecked="{Binding CheckForUpdates}"/>
+    <CheckBox Content="{l:Tr Settings_IncludePrereleases}" IsChecked="{Binding IncludePrereleases}"/>
 
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
-      <Button Content="OK" IsDefault="True" Click="Ok_Click" MinWidth="80"/>
-      <Button Content="Cancel" IsCancel="True" Click="Cancel_Click" MinWidth="80"/>
+      <Button Content="{l:Tr Common_Ok}" IsDefault="True" Click="Ok_Click" MinWidth="80"/>
+      <Button Content="{l:Tr Common_Cancel}" IsCancel="True" Click="Cancel_Click" MinWidth="80"/>
     </StackPanel>
   </StackPanel>
 </Window>

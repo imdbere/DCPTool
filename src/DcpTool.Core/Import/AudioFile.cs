@@ -50,4 +50,8 @@ public interface IAudioFileReader
 }
 
 /// <summary>A file could not be imported. The message is meant for the user and doesn't repeat the file name.</summary>
-public sealed class ImportException(string message, Exception? inner = null) : Exception(message, inner);
+public sealed class ImportException(string message, Exception? inner = null) : Exception(message, inner)
+{
+    /// <summary>Stable identifier of the problem, passed on as <see cref="ImportMessage.Code"/>. Null when there is none.</summary>
+    public string? Code { get; init; }
+}

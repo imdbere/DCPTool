@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:DcpTool.App.ViewModels"
+        xmlns:l="using:DcpTool.App.Localisation"
         x:Class="DcpTool.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{Binding WindowTitle}" Width="1280" Height="820" MinWidth="900" MinHeight="560"
@@ -15,39 +16,39 @@
 
   <DockPanel>
     <Menu DockPanel.Dock="Top" IsEnabled="{Binding !IsBusy}">
-      <MenuItem Header="_File">
-        <MenuItem Header="_New" InputGesture="Ctrl+N" Command="{Binding NewDcpCommand}" />
-        <MenuItem Header="New _next episode" Command="{Binding NewNextEpisodeCommand}" />
-        <MenuItem Header="_Open..." InputGesture="Ctrl+O" Command="{Binding OpenCommand}" />
-        <MenuItem x:Name="RecentMenu" Header="Open _recent" />
+      <MenuItem Header="{l:Tr Menu_File}">
+        <MenuItem Header="{l:Tr Menu_New}" InputGesture="Ctrl+N" Command="{Binding NewDcpCommand}" />
+        <MenuItem Header="{l:Tr Menu_NewNextEpisode}" Command="{Binding NewNextEpisodeCommand}" />
+        <MenuItem Header="{l:Tr Menu_Open}" InputGesture="Ctrl+O" Command="{Binding OpenCommand}" />
+        <MenuItem x:Name="RecentMenu" Header="{l:Tr Menu_OpenRecent}" />
         <Separator />
-        <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCommand}" />
-        <MenuItem Header="Save _as..." InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
+        <MenuItem Header="{l:Tr Menu_Save}" InputGesture="Ctrl+S" Command="{Binding SaveCommand}" />
+        <MenuItem Header="{l:Tr Menu_SaveAs}" InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
         <Separator />
-        <MenuItem Header="Add _music files..." Command="{Binding AddMusicFilesCommand}" />
+        <MenuItem Header="{l:Tr Menu_AddMusicFiles}" Command="{Binding AddMusicFilesCommand}" />
         <Separator />
-        <MenuItem Header="Se_ttings..." Command="{Binding ShowSettingsCommand}" />
+        <MenuItem Header="{l:Tr Menu_Settings}" Command="{Binding ShowSettingsCommand}" />
         <Separator />
-        <MenuItem Header="E_xit" Click="Exit_Click" />
+        <MenuItem Header="{l:Tr Menu_Exit}" Click="Exit_Click" />
       </MenuItem>
-      <MenuItem Header="_Publish">
-        <MenuItem Header="_Check" Command="{Binding CheckCommand}" />
-        <MenuItem Header="_Upload to RAI..." Command="{Binding UploadCommand}" />
-        <MenuItem Header="_Export Word document..." Command="{Binding ExportCommand}" />
+      <MenuItem Header="{l:Tr Menu_Publish}">
+        <MenuItem Header="{l:Tr Menu_Check}" Command="{Binding CheckCommand}" />
+        <MenuItem Header="{l:Tr Menu_Upload}" Command="{Binding UploadCommand}" />
+        <MenuItem Header="{l:Tr Menu_Export}" Command="{Binding ExportCommand}" />
         <Separator />
-        <MenuItem Header="Show what would be _uploaded" Command="{Binding ShowUploadPreviewCommand}" />
+        <MenuItem Header="{l:Tr Menu_UploadPreview}" Command="{Binding ShowUploadPreviewCommand}" />
       </MenuItem>
-      <MenuItem Header="_RAI">
-        <MenuItem Header="_Log in..." Command="{Binding LogInCommand}" />
-        <MenuItem Header="Open DCP _search in browser" Command="{Binding OpenDcpSearchCommand}" />
+      <MenuItem Header="_RAI"> <!-- a name, the same in every language -->
+        <MenuItem Header="{l:Tr Menu_LogIn}" Command="{Binding LogInCommand}" />
+        <MenuItem Header="{l:Tr Menu_OpenDcpSearch}" Command="{Binding OpenDcpSearchCommand}" />
         <Separator />
-        <MenuItem Header="Open this DCP at _RAI" Command="{Binding OpenRaiDcpCommand}" />
-        <MenuItem Header="_Forget the earlier upload..." Command="{Binding ForgetUploadCommand}" />
-        <MenuItem Header="Save _diagnostics..." Command="{Binding SaveDiagnosticsCommand}" />
+        <MenuItem Header="{l:Tr Menu_OpenRaiDcp}" Command="{Binding OpenRaiDcpCommand}" />
+        <MenuItem Header="{l:Tr Menu_ForgetUpload}" Command="{Binding ForgetUploadCommand}" />
+        <MenuItem Header="{l:Tr Menu_SaveDiagnostics}" Command="{Binding SaveDiagnosticsCommand}" />
       </MenuItem>
-      <MenuItem Header="_Help">
-        <MenuItem Header="Check for _updates" Command="{Binding CheckForUpdatesCommand}" />
-        <MenuItem Header="_About" Command="{Binding AboutCommand}" />
+      <MenuItem Header="{l:Tr Menu_Help}">
+        <MenuItem Header="{l:Tr Menu_CheckForUpdates}" Command="{Binding CheckForUpdatesCommand}" />
+        <MenuItem Header="{l:Tr Menu_About}" Command="{Binding AboutCommand}" />
       </MenuItem>
     </Menu>
 
@@ -58,11 +59,11 @@
         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
           <TextBlock Text="{Binding LoginText}" VerticalAlignment="Center" />
           <TextBlock Text="{Binding RaiDcpText}" FontWeight="SemiBold" VerticalAlignment="Center" IsVisible="{Binding HasRaiDcp}" />
-          <Button Content="Open at RAI" Command="{Binding OpenRaiDcpCommand}" IsVisible="{Binding HasRaiDcp}" Padding="8,2" />
+          <Button Content="{l:Tr Status_OpenAtRai}" Command="{Binding OpenRaiDcpCommand}" IsVisible="{Binding HasRaiDcp}" Padding="8,2" />
         </StackPanel>
         <TextBlock Grid.Column="4" Text="{Binding ProgressText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-        <Button Grid.Column="5" Content="Cancel" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" />
-        <Button Grid.Column="7" Content="Update ready - restart" Command="{Binding RestartForUpdateCommand}" IsVisible="{Binding UpdateReady}" />
+        <Button Grid.Column="5" Content="{l:Tr Common_Cancel}" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" />
+        <Button Grid.Column="7" Content="{l:Tr Status_UpdateReady}" Command="{Binding RestartForUpdateCommand}" IsVisible="{Binding UpdateReady}" />
       </Grid>
     </Border>
 
@@ -73,8 +74,8 @@
             BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <StackPanel Orientation="Horizontal" Spacing="12">
         <TextBlock VerticalAlignment="Center"
-                   Text="Keep all your DCPs in one folder: DCP Tool lists them, saves them automatically and starts new episodes from presets." />
-        <Button Content="Choose a library folder" Command="{Binding ChooseLibraryFolderCommand}" Padding="10,2" />
+                   Text="{l:Tr Banner_Text}" />
+        <Button Content="{l:Tr Banner_ChooseFolder}" Command="{Binding ChooseLibraryFolderCommand}" Padding="10,2" />
       </StackPanel>
     </Border>
 
@@ -85,23 +86,23 @@
             BorderThickness="0,0,1,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <DockPanel Margin="8,6,6,6" IsEnabled="{Binding !IsBusy}">
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
-          <TextBlock Text="Library" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center"
+          <TextBlock Text="{l:Tr Library_Title}" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center"
                      ToolTip.Tip="{Binding LibraryFolderText}" />
-          <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshLibraryCommand}" Padding="6,1" FontSize="12"
-                  ToolTip.Tip="Read the library folder again" />
+          <Button Grid.Column="1" Content="{l:Tr Library_Refresh}" Command="{Binding RefreshLibraryCommand}" Padding="6,1" FontSize="12"
+                  ToolTip.Tip="{l:Tr Library_RefreshTip}" />
           <Button Grid.Column="2" Content="«" Command="{Binding ToggleLibraryPanelCommand}" Padding="7,1" FontSize="12"
-                  ToolTip.Tip="Hide the library" />
+                  ToolTip.Tip="{l:Tr Library_HideTip}" />
         </Grid>
 
         <WrapPanel DockPanel.Dock="Top" Margin="0,6,0,0" ItemSpacing="4" LineSpacing="4">
-          <Button Content="New" Command="{Binding NewDcpCommand}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="A new, empty DCP" />
-          <Button Content="Next episode" Command="{Binding DuplicateNextEpisodeCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="A new DCP for the next episode of the open one: same programme information, Puntata + 1, no lines" />
-          <Button Content="Duplicate" Command="{Binding DuplicateDcpCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="An exact copy of the open DCP, as never uploaded" />
-          <Button Content="Save as preset" Command="{Binding SaveAsPresetCommand}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="Keep the programme information of the open DCP as a preset for new episodes" />
+          <Button Content="{l:Tr Library_New}" Command="{Binding NewDcpCommand}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="{l:Tr Library_NewTip}" />
+          <Button Content="{l:Tr Library_NextEpisode}" Command="{Binding DuplicateNextEpisodeCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="{l:Tr Library_NextEpisodeTip}" />
+          <Button Content="{l:Tr Common_Duplicate}" Command="{Binding DuplicateDcpCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="{l:Tr Library_DuplicateTip}" />
+          <Button Content="{l:Tr Library_SaveAsPreset}" Command="{Binding SaveAsPresetCommand}" Padding="8,2" FontSize="12"
+                  ToolTip.Tip="{l:Tr Library_SaveAsPresetTip}" />
         </WrapPanel>
 
         <!-- Name prompt for rename and save as preset -->
@@ -112,12 +113,12 @@
             <TextBox x:Name="PromptBox" Text="{Binding PromptValue}" />
             <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
               <Button Content="{Binding PromptAction}" Command="{Binding AcceptPromptCommand}" Padding="8,2" FontSize="12" />
-              <Button Content="Cancel" Command="{Binding CancelPromptCommand}" Padding="8,2" FontSize="12" />
+              <Button Content="{l:Tr Common_Cancel}" Command="{Binding CancelPromptCommand}" Padding="8,2" FontSize="12" />
             </StackPanel>
           </StackPanel>
         </Border>
 
-        <TextBox DockPanel.Dock="Top" Margin="0,6,0,0" Text="{Binding LibrarySearch}" PlaceholderText="Search title, episode, date, RAI code"
+        <TextBox DockPanel.Dock="Top" Margin="0,6,0,0" Text="{Binding LibrarySearch}" PlaceholderText="{l:Tr Library_SearchPlaceholder}"
                  x:Name="SearchBox" />
 
         <TextBlock DockPanel.Dock="Top" Text="{Binding LibraryNotice}" IsVisible="{Binding LibraryNotice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
@@ -166,7 +167,7 @@
                       <TextBlock Text="{Binding LinesText}" FontSize="12" Opacity="0.7" />
                       <TextBlock Text="{Binding UploadText}" Foreground="{Binding UploadBrush}" FontSize="12" FontWeight="SemiBold" />
                     </StackPanel>
-                    <TextBlock Text="Cannot be read" IsVisible="{Binding !IsReadable}" FontSize="12" FontStyle="Italic" />
+                    <TextBlock Text="{l:Tr Library_CannotBeRead}" IsVisible="{Binding !IsReadable}" FontSize="12" FontStyle="Italic" />
                     <TextBlock Text="{Binding Folder}" IsVisible="{Binding HasFolder}" Opacity="0.5" FontSize="11"
                                TextTrimming="CharacterEllipsis" />
                   </StackPanel>
@@ -182,7 +183,7 @@
     <Border Grid.Column="0" IsVisible="{Binding ShowLibraryStrip}" BorderThickness="0,0,1,0"
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <Button Content="»" Command="{Binding ToggleLibraryPanelCommand}" VerticalAlignment="Top" Margin="2,6"
-              Padding="6,2" ToolTip.Tip="Show the library" />
+              Padding="6,2" ToolTip.Tip="{l:Tr Library_ShowTip}" />
     </Border>
 
     <GridSplitter Grid.Column="1" x:Name="LibrarySplitter" Width="5" ResizeDirection="Columns" Background="Transparent"
@@ -192,26 +193,28 @@
     <!-- Issues -->
     <Border DockPanel.Dock="Bottom" Height="150" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
       <TabControl Margin="8,0" Padding="0">
-        <TabItem Header="{Binding IssueSummary, StringFormat='Issues: {0}'}" FontSize="13">
+        <TabItem Header="{Binding IssuesHeader}" FontSize="13">
         <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:IssueItem">
               <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="{Binding Kind}" Foreground="{Binding Brush}" FontWeight="SemiBold" Width="60" />
+                <TextBlock Text="{Binding KindText}" Foreground="{Binding Brush}" FontWeight="SemiBold" Width="70" />
                 <TextBlock Text="{Binding Message}" />
               </StackPanel>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
         </TabItem>
-        <TabItem Header="Log" FontSize="13">
+        <TabItem Header="{l:Tr Log_Tab}" FontSize="13">
           <ListBox ItemsSource="{Binding Activity}" FontFamily="Consolas,Menlo,monospace" FontSize="12" />
         </TabItem>
       </TabControl>
     </Border>
 
     <Grid RowDefinitions="Auto,Auto,*" Margin="8" IsEnabled="{Binding !IsBusy}">
-      <!-- Header form -->
+      <!-- Header form. The labels here and the line column headers below are the RAI form's own terms
+           (Titolo italiano, Sede, Durata ...) and stay as they are in every language: not in the resources. -->
+
       <Expander Header="Programma" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
         <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="16" DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
           <StackPanel>
@@ -238,7 +241,7 @@
             <TextBlock Classes="group" Text="Trasmissione" />
             <TextBlock Classes="lbl" Text="Data trasmissione" />
             <DatePicker SelectedDate="{Binding DataTrasmissione}" HorizontalAlignment="Stretch" />
-            <TextBlock Classes="lbl" Text="Data registrazione (empty = 5 days before)" />
+            <TextBlock Classes="lbl" Text="{l:Tr Header_DataRegistrazione}" />
             <DatePicker SelectedDate="{Binding DataRegistrazione}" HorizontalAlignment="Stretch" />
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
               <StackPanel>
@@ -286,15 +289,19 @@
       </Expander>
 
       <!-- Line toolbar -->
-      <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,8">
-        <Button Content="Add music files..." Command="{Binding AddMusicFilesCommand}" />
-        <Button Content="Add line" Command="{Binding AddLineCommand}" />
-        <Button Content="Duplicate" Command="{Binding DuplicateLineCommand}" />
-        <Button Content="Delete" Command="{Binding DeleteLineCommand}" />
-        <Button Content="Move up" Command="{Binding MoveUpCommand}" />
-        <Button Content="Move down" Command="{Binding MoveDownCommand}" />
-        <TextBlock Text="Drop audio files, cue sheets or folders anywhere on the window." VerticalAlignment="Center" Opacity="0.6" Margin="12,0,0,0" />
-      </StackPanel>
+      <!-- The hint takes the room the buttons leave, which is less in German and Italian -->
+      <DockPanel Grid.Row="1" Margin="0,8">
+        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="6">
+          <Button Content="{l:Tr Lines_AddMusicFiles}" Command="{Binding AddMusicFilesCommand}" />
+          <Button Content="{l:Tr Lines_AddLine}" Command="{Binding AddLineCommand}" />
+          <Button Content="{l:Tr Common_Duplicate}" Command="{Binding DuplicateLineCommand}" />
+          <Button Content="{l:Tr Lines_Delete}" Command="{Binding DeleteLineCommand}" />
+          <Button Content="{l:Tr Lines_MoveUp}" Command="{Binding MoveUpCommand}" />
+          <Button Content="{l:Tr Lines_MoveDown}" Command="{Binding MoveDownCommand}" />
+        </StackPanel>
+        <TextBlock Text="{l:Tr Lines_DropHint}" ToolTip.Tip="{l:Tr Lines_DropHint}" VerticalAlignment="Center" Opacity="0.6"
+                   Margin="12,0,0,0" TextTrimming="CharacterEllipsis" />
+      </DockPanel>
 
       <!-- Lines -->
       <DataGrid Grid.Row="2" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}"
@@ -314,7 +321,7 @@
           <DataGridTextColumn x:DataType="vm:LineRow" Header="Titolo" Binding="{Binding Titolo}" Width="220" />
           <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="240">
             <DataGridTextColumn.Header>
-              <TextBlock Text="Autori" ToolTip.Tip="Composers and lyricists, never the performers.&#10;Write &quot;Nome Cognome; Nome Cognome&quot; or &quot;Cognome, Nome; Cognome, Nome&quot;." />
+              <TextBlock Text="Autori" ToolTip.Tip="{l:Tr Lines_AutoriTip}" />
             </DataGridTextColumn.Header>
           </DataGridTextColumn>
           <DataGridTextColumn x:DataType="vm:LineRow" Header="Esecutori" Binding="{Binding Esecutori}" Width="160" />
@@ -343,7 +350,7 @@
           <DataGridTextColumn x:DataType="vm:LineRow" Header="Marca" Binding="{Binding Marca}" Width="120" />
           <DataGridTextColumn x:DataType="vm:LineRow" Header="Sigla/num" Binding="{Binding SiglaNum}" Width="120" />
           <DataGridTextColumn x:DataType="vm:LineRow" Header="Edizione" Binding="{Binding Edizione}" Width="120" />
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="Source" Binding="{Binding SourceId, Mode=OneWay}" IsReadOnly="True" Width="90" />
+          <DataGridTextColumn x:DataType="vm:LineRow" Header="{l:Tr Lines_Source}" Binding="{Binding SourceId, Mode=OneWay}" IsReadOnly="True" Width="90" />
         </DataGrid.Columns>
       </DataGrid>
     </Grid>

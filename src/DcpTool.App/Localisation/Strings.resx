@@ -1,0 +1,888 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>  <!-- English: the base and fallback. Keys are used as literal strings in the app (see ResourceTests). -->
+  <data name="About_Text" xml:space="preserve">
+    <value>Creates RAI music cue sheets (DCP).</value>
+  </data>
+  <data name="About_UnknownVersion" xml:space="preserve">
+    <value>unknown</value>
+  </data>
+  <data name="About_Version" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="Banner_ChooseFolder" xml:space="preserve">
+    <value>Choose a library folder</value>
+  </data>
+  <data name="Banner_Text" xml:space="preserve">
+    <value>Keep all your DCPs in one folder: DCP Tool lists them, saves them automatically and starts new episodes from presets.</value>
+  </data>
+  <data name="Browser_Title" xml:space="preserve">
+    <value>RAI portal</value>
+  </data>
+  <data name="Check_ForDocument" xml:space="preserve">
+    <value>For the Word document:</value>
+  </data>
+  <data name="Check_ForUpload" xml:space="preserve">
+    <value>For upload to RAI:</value>
+  </data>
+  <data name="Check_Title" xml:space="preserve">
+    <value>Check</value>
+  </data>
+  <data name="Common_Browse" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common_Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Dlg_AlreadyUploaded" xml:space="preserve">
+    <value>Already uploaded</value>
+  </data>
+  <data name="Dlg_CannotExport" xml:space="preserve">
+    <value>Cannot export yet</value>
+  </data>
+  <data name="Dlg_DeleteDcp" xml:space="preserve">
+    <value>Delete DCP</value>
+  </data>
+  <data name="Dlg_DeletePermanently" xml:space="preserve">
+    <value>Delete permanently</value>
+  </data>
+  <data name="Dlg_DeletePreset" xml:space="preserve">
+    <value>Delete preset</value>
+  </data>
+  <data name="Dlg_DiagnosticsSaved" xml:space="preserve">
+    <value>Diagnostics saved</value>
+  </data>
+  <data name="Dlg_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="Dlg_ExportedWithWarnings" xml:space="preserve">
+    <value>Exported with warnings</value>
+  </data>
+  <data name="Dlg_Forget" xml:space="preserve">
+    <value>Forget</value>
+  </data>
+  <data name="Dlg_Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="Dlg_KeepUnsaved" xml:space="preserve">
+    <value>Keep unsaved DCP</value>
+  </data>
+  <data name="Dlg_MoveToRecycleBin" xml:space="preserve">
+    <value>Move to Recycle Bin</value>
+  </data>
+  <data name="Dlg_OlderFormat" xml:space="preserve">
+    <value>Older file format</value>
+  </data>
+  <data name="Dlg_OpenFile" xml:space="preserve">
+    <value>Open file</value>
+  </data>
+  <data name="Dlg_RaiLogin" xml:space="preserve">
+    <value>RAI login</value>
+  </data>
+  <data name="Dlg_Replace" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="Dlg_SystemBrowser" xml:space="preserve">
+    <value>Opened in the system browser</value>
+  </data>
+  <data name="Dlg_UnexpectedError" xml:space="preserve">
+    <value>Unexpected error</value>
+  </data>
+  <data name="Dlg_UnsavedChanges" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="Dlg_Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Dlg_UploadAgain" xml:space="preserve">
+    <value>Upload again</value>
+  </data>
+  <data name="Dlg_UploadPreview" xml:space="preserve">
+    <value>What would be uploaded</value>
+  </data>
+  <data name="Doc_InLibrary" xml:space="preserve">
+    <value>{0}  • library, saved automatically</value>
+  </data>
+  <data name="Doc_Modified" xml:space="preserve">
+    <value>{0}  • modified</value>
+  </data>
+  <data name="Doc_PendingLibrary" xml:space="preserve">
+    <value>{0}  • saved to the library once it has a Titolo italiano</value>
+  </data>
+  <data name="Doc_Untitled" xml:space="preserve">
+    <value>Untitled</value>
+  </data>
+  <data name="Header_DataRegistrazione" xml:space="preserve">
+    <value>Data registrazione (empty = 5 days before)</value>
+  </data>
+  <data name="Import_ArtlistCueSheetMissing" xml:space="preserve">
+    <value>No Artlist cue sheet found, so the authors are missing. Download it (Artlist &gt; Downloads &gt; Song License &gt; Cue sheet) and drop it onto the list.</value>
+  </data>
+  <data name="Import_AudioUnreadable" xml:space="preserve">
+    <value>The audio file could not be read.</value>
+  </data>
+  <data name="Import_FileNotFound" xml:space="preserve">
+    <value>File not found.</value>
+  </data>
+  <data name="Import_LineCompleted" xml:space="preserve">
+    <value>Completed &quot;{0}&quot; with this file.</value>
+  </data>
+  <data name="Import_NoSource" xml:space="preserve">
+    <value>No music source recognised this file.</value>
+  </data>
+  <data name="Import_NotACueSheet" xml:space="preserve">
+    <value>Not an Artlist cue sheet.</value>
+  </data>
+  <data name="Import_ReadFailed" xml:space="preserve">
+    <value>Could not be read: {0}</value>
+  </data>
+  <data name="Import_SidecarUnmatched" xml:space="preserve">
+    <value>Matches none of the new files or of the lines in the list.</value>
+  </data>
+  <data name="Import_UnsupportedFileType" xml:space="preserve">
+    <value>Unsupported file type.</value>
+  </data>
+  <data name="Issue_AlreadyUploaded" xml:space="preserve">
+    <value>This DCP was already uploaded on {0:g}. Uploading again creates a second DCP at RAI.</value>
+  </data>
+  <data name="Issue_AlreadyUploadedPartly" xml:space="preserve">
+    <value>An upload on {0:g} stopped after {1} of {2} lines. Uploading again continues that DCP{3} at RAI.</value>
+  </data>
+  <data name="Issue_DurataMissing" xml:space="preserve">
+    <value>The programme&apos;s Durata is empty.</value>
+  </data>
+  <data name="Issue_DurataTooLong" xml:space="preserve">
+    <value>The programme&apos;s Durata must be shorter than 24 hours.</value>
+  </data>
+  <data name="Issue_Line" xml:space="preserve">
+    <value>Line {0}</value>
+  </data>
+  <data name="Issue_LineAutoreCognomeMissing" xml:space="preserve">
+    <value>an author has no Cognome (surname).</value>
+  </data>
+  <data name="Issue_LineAutoriMissing" xml:space="preserve">
+    <value>Autori are missing.</value>
+  </data>
+  <data name="Issue_LineAutoriMissingCueSheet" xml:space="preserve">
+    <value>Autori are missing because the source&apos;s cue sheet was not found. Add the cue sheet or enter the authors.</value>
+  </data>
+  <data name="Issue_LineDurataExceedsProgramme" xml:space="preserve">
+    <value>Durata is longer than the programme. Enter the length that was actually used.</value>
+  </data>
+  <data name="Issue_LineDurataMissing" xml:space="preserve">
+    <value>Durata is empty.</value>
+  </data>
+  <data name="Issue_LineDurataTooLong" xml:space="preserve">
+    <value>Durata must be shorter than 24 hours.</value>
+  </data>
+  <data name="Issue_LineEdizioneSet" xml:space="preserve">
+    <value>Edizione is filled in. RAI only accepts publishers it knows, leave it empty if in doubt.</value>
+  </data>
+  <data name="Issue_LineGenereMissing" xml:space="preserve">
+    <value>Genere SIAE is empty.</value>
+  </data>
+  <data name="Issue_LineGenereUnknown" xml:space="preserve">
+    <value>Genere SIAE &quot;{0}&quot; is not one of the known codes. RAI may reject it.</value>
+  </data>
+  <data name="Issue_LineMarcaMissing" xml:space="preserve">
+    <value>Marca is empty.</value>
+  </data>
+  <data name="Issue_LineMarcaUnknown" xml:space="preserve">
+    <value>Marca &quot;{0}&quot; is not in RAI&apos;s list of labels. RAI may reject it.</value>
+  </data>
+  <data name="Issue_LineRuoloMissing" xml:space="preserve">
+    <value>Ruolo is empty.</value>
+  </data>
+  <data name="Issue_LineRuoloUnknown" xml:space="preserve">
+    <value>Ruolo &quot;{0}&quot; is not one of the known codes. RAI may reject it.</value>
+  </data>
+  <data name="Issue_LineTipoGenerazioneMissing" xml:space="preserve">
+    <value>Tipo generazione is empty.</value>
+  </data>
+  <data name="Issue_LineTipoGenerazioneUnknown" xml:space="preserve">
+    <value>Tipo generazione &quot;{0}&quot; is not one of the known codes. RAI may reject it.</value>
+  </data>
+  <data name="Issue_LineTitoloMissing" xml:space="preserve">
+    <value>Titolo is empty.</value>
+  </data>
+  <data name="Issue_LineWithTitle" xml:space="preserve">
+    <value>Line {0} ({1})</value>
+  </data>
+  <data name="Issue_MatricolaMissing" xml:space="preserve">
+    <value>Matricola is empty.</value>
+  </data>
+  <data name="Issue_NoLines" xml:space="preserve">
+    <value>The DCP has no music lines, there is nothing to upload.</value>
+  </data>
+  <data name="Issue_PartialUpload" xml:space="preserve">
+    <value>The upload is incomplete: RAI saved {0} of {1} lines, and that partial DCP exists at RAI. Complete or delete it in RAI&apos;s DCP search before uploading again, or a second DCP is created.</value>
+  </data>
+  <data name="Issue_RegistrazioneAfterTrasmissione" xml:space="preserve">
+    <value>Data registrazione is after Data trasmissione.</value>
+  </data>
+  <data name="Issue_ReteMissing" xml:space="preserve">
+    <value>No Rete (Struttura) selected.</value>
+  </data>
+  <data name="Issue_ReteUnknown" xml:space="preserve">
+    <value>Rete &quot;{0}&quot; is not one of the known codes. RAI may reject it.</value>
+  </data>
+  <data name="Issue_SedeMissing" xml:space="preserve">
+    <value>No Sede selected.</value>
+  </data>
+  <data name="Issue_SedeUnknown" xml:space="preserve">
+    <value>Sede &quot;{0}&quot; is not one of the known RAI offices.</value>
+  </data>
+  <data name="Issue_TitoloMissing" xml:space="preserve">
+    <value>Titolo italiano is empty.</value>
+  </data>
+  <data name="Issue_UorgMissing" xml:space="preserve">
+    <value>Uorg is empty.</value>
+  </data>
+  <data name="Issue_Upload" xml:space="preserve">
+    <value>Upload: {0}</value>
+  </data>
+  <data name="Issues_Counts" xml:space="preserve">
+    <value>{0} error(s), {1} warning(s), {2} note(s)</value>
+  </data>
+  <data name="Issues_None" xml:space="preserve">
+    <value>No problems found.</value>
+  </data>
+  <data name="Issues_Tab" xml:space="preserve">
+    <value>Issues: {0}</value>
+  </data>
+  <data name="Kind_Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Kind_Info" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="Kind_Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Library_CannotBeRead" xml:space="preserve">
+    <value>Cannot be read</value>
+  </data>
+  <data name="Library_CannotBeReadTip" xml:space="preserve">
+    <value>This file cannot be read: {0}</value>
+  </data>
+  <data name="Library_DcpsHeader" xml:space="preserve">
+    <value>DCPs ({0})</value>
+  </data>
+  <data name="Library_DcpsHeaderFiltered" xml:space="preserve">
+    <value>DCPs ({0} of {1})</value>
+  </data>
+  <data name="Library_Delete" xml:space="preserve">
+    <value>Delete...</value>
+  </data>
+  <data name="Library_DuplicateNextEpisode" xml:space="preserve">
+    <value>Duplicate as next episode</value>
+  </data>
+  <data name="Library_DuplicateTip" xml:space="preserve">
+    <value>An exact copy of the open DCP, as never uploaded</value>
+  </data>
+  <data name="Library_EditPreset" xml:space="preserve">
+    <value>Edit preset</value>
+  </data>
+  <data name="Library_FolderMissing" xml:space="preserve">
+    <value>The library folder does not exist (any more). Choose another one in Settings, or it is created when a DCP is saved.</value>
+  </data>
+  <data name="Library_HideTip" xml:space="preserve">
+    <value>Hide the library</value>
+  </data>
+  <data name="Library_Lines" xml:space="preserve">
+    <value>{0} lines</value>
+  </data>
+  <data name="Library_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Library_NewFromPreset" xml:space="preserve">
+    <value>New DCP from this preset</value>
+  </data>
+  <data name="Library_NewTip" xml:space="preserve">
+    <value>A new, empty DCP</value>
+  </data>
+  <data name="Library_NextEpisode" xml:space="preserve">
+    <value>Next episode</value>
+  </data>
+  <data name="Library_NextEpisodeTip" xml:space="preserve">
+    <value>A new DCP for the next episode of the open one: same programme information, Puntata + 1, no lines</value>
+  </data>
+  <data name="Library_NoDcpMatch" xml:space="preserve">
+    <value>No DCP matches the search.</value>
+  </data>
+  <data name="Library_NoDcps" xml:space="preserve">
+    <value>No DCPs in the library yet. Start one with &quot;{0}&quot; or by clicking a preset.</value>
+  </data>
+  <data name="Library_NoPresetMatch" xml:space="preserve">
+    <value>No preset matches the search.</value>
+  </data>
+  <data name="Library_NoPresets" xml:space="preserve">
+    <value>No presets yet. &quot;{0}&quot; keeps the programme information of the open DCP for its next episodes.</value>
+  </data>
+  <data name="Library_NotUploaded" xml:space="preserve">
+    <value>Not uploaded</value>
+  </data>
+  <data name="Library_OneLine" xml:space="preserve">
+    <value>1 line</value>
+  </data>
+  <data name="Library_PartlyUploaded" xml:space="preserve">
+    <value>Partly uploaded</value>
+  </data>
+  <data name="Library_PresetsHeader" xml:space="preserve">
+    <value>Presets ({0})</value>
+  </data>
+  <data name="Library_PresetsHeaderFiltered" xml:space="preserve">
+    <value>Presets ({0} of {1})</value>
+  </data>
+  <data name="Library_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Library_RefreshTip" xml:space="preserve">
+    <value>Read the library folder again</value>
+  </data>
+  <data name="Library_Rename" xml:space="preserve">
+    <value>Rename...</value>
+  </data>
+  <data name="Library_SaveAsPreset" xml:space="preserve">
+    <value>Save as preset</value>
+  </data>
+  <data name="Library_SaveAsPresetTip" xml:space="preserve">
+    <value>Keep the programme information of the open DCP as a preset for new episodes</value>
+  </data>
+  <data name="Library_SearchPlaceholder" xml:space="preserve">
+    <value>Search title, episode, date, RAI code</value>
+  </data>
+  <data name="Library_ShowInFileManager" xml:space="preserve">
+    <value>Show in file manager</value>
+  </data>
+  <data name="Library_ShowInFinder" xml:space="preserve">
+    <value>Show in Finder</value>
+  </data>
+  <data name="Library_ShowTip" xml:space="preserve">
+    <value>Show the library</value>
+  </data>
+  <data name="Library_Title" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="Library_Uploaded" xml:space="preserve">
+    <value>Uploaded</value>
+  </data>
+  <data name="Lines_AddLine" xml:space="preserve">
+    <value>Add line</value>
+  </data>
+  <data name="Lines_AddMusicFiles" xml:space="preserve">
+    <value>Add music files...</value>
+  </data>
+  <data name="Lines_AutoriTip" xml:space="preserve">
+    <value>Composers and lyricists, never the performers. Write &quot;Nome Cognome; Nome Cognome&quot; or &quot;Cognome, Nome; Cognome, Nome&quot;.</value>
+  </data>
+  <data name="Lines_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Lines_DropHint" xml:space="preserve">
+    <value>Drop audio files, cue sheets or folders anywhere on the window.</value>
+  </data>
+  <data name="Lines_MoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="Lines_MoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="Lines_Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="Log_Tab" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="Login_LogIn" xml:space="preserve">
+    <value>Log in</value>
+  </data>
+  <data name="Login_LoggedInAs" xml:space="preserve">
+    <value>RAI: logged in as {0}</value>
+  </data>
+  <data name="Login_NotLoggedIn" xml:space="preserve">
+    <value>RAI: not logged in</value>
+  </data>
+  <data name="Login_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Login_Remember" xml:space="preserve">
+    <value>Remember the password on this computer</value>
+  </data>
+  <data name="Login_Title" xml:space="preserve">
+    <value>Log in to RAI</value>
+  </data>
+  <data name="Login_User" xml:space="preserve">
+    <value>User name</value>
+  </data>
+  <data name="Menu_About" xml:space="preserve">
+    <value>_About</value>
+  </data>
+  <data name="Menu_AddMusicFiles" xml:space="preserve">
+    <value>Add _music files...</value>
+  </data>
+  <data name="Menu_Check" xml:space="preserve">
+    <value>_Check</value>
+  </data>
+  <data name="Menu_CheckForUpdates" xml:space="preserve">
+    <value>Check for _updates</value>
+  </data>
+  <data name="Menu_Exit" xml:space="preserve">
+    <value>E_xit</value>
+  </data>
+  <data name="Menu_Export" xml:space="preserve">
+    <value>_Export Word document...</value>
+  </data>
+  <data name="Menu_File" xml:space="preserve">
+    <value>_File</value>
+  </data>
+  <data name="Menu_ForgetUpload" xml:space="preserve">
+    <value>_Forget the earlier upload...</value>
+  </data>
+  <data name="Menu_Help" xml:space="preserve">
+    <value>_Help</value>
+  </data>
+  <data name="Menu_LogIn" xml:space="preserve">
+    <value>_Log in...</value>
+  </data>
+  <data name="Menu_New" xml:space="preserve">
+    <value>_New</value>
+  </data>
+  <data name="Menu_NewNextEpisode" xml:space="preserve">
+    <value>New _next episode</value>
+  </data>
+  <data name="Menu_Open" xml:space="preserve">
+    <value>_Open...</value>
+  </data>
+  <data name="Menu_OpenDcpSearch" xml:space="preserve">
+    <value>Open DCP _search in browser</value>
+  </data>
+  <data name="Menu_OpenRaiDcp" xml:space="preserve">
+    <value>Open this DCP at _RAI</value>
+  </data>
+  <data name="Menu_OpenRecent" xml:space="preserve">
+    <value>Open _recent</value>
+  </data>
+  <data name="Menu_Publish" xml:space="preserve">
+    <value>_Publish</value>
+  </data>
+  <data name="Menu_RecentNone" xml:space="preserve">
+    <value>(none)</value>
+  </data>
+  <data name="Menu_Save" xml:space="preserve">
+    <value>_Save</value>
+  </data>
+  <data name="Menu_SaveAs" xml:space="preserve">
+    <value>Save _as...</value>
+  </data>
+  <data name="Menu_SaveDiagnostics" xml:space="preserve">
+    <value>Save _diagnostics...</value>
+  </data>
+  <data name="Menu_Settings" xml:space="preserve">
+    <value>Se_ttings...</value>
+  </data>
+  <data name="Menu_Upload" xml:space="preserve">
+    <value>_Upload to RAI...</value>
+  </data>
+  <data name="Menu_UploadPreview" xml:space="preserve">
+    <value>Show what would be _uploaded</value>
+  </data>
+  <data name="Msg_Crash" xml:space="preserve">
+    <value>Something went wrong: {0}</value>
+  </data>
+  <data name="Msg_CrashDetails" xml:space="preserve">
+    <value>Details: {0}</value>
+  </data>
+  <data name="Msg_CrashKept" xml:space="preserve">
+    <value>Your work is kept and restored on the next start.</value>
+  </data>
+  <data name="Msg_DeleteDcp" xml:space="preserve">
+    <value>Delete the DCP &quot;{0}&quot; permanently?</value>
+  </data>
+  <data name="Msg_DeleteNote" xml:space="preserve">
+    <value>This cannot be undone.</value>
+  </data>
+  <data name="Msg_DeleteOpenNote" xml:space="preserve">
+    <value>It is the DCP that is open now and will be closed.</value>
+  </data>
+  <data name="Msg_DeletePreset" xml:space="preserve">
+    <value>Delete the preset &quot;{0}&quot; permanently?</value>
+  </data>
+  <data name="Msg_DiagnosticsSaved" xml:space="preserve">
+    <value>Saved {0}</value>
+  </data>
+  <data name="Msg_DiagnosticsSend" xml:space="preserve">
+    <value>Send this file to the developers. Passwords, cookies and session tokens are removed from it.</value>
+  </data>
+  <data name="Msg_DiscardChanges" xml:space="preserve">
+    <value>The current DCP has changes that are not saved to a file. Replace it anyway?</value>
+  </data>
+  <data name="Msg_ExportFailed" xml:space="preserve">
+    <value>The document could not be written: {0}</value>
+  </data>
+  <data name="Msg_ExportWarnings" xml:space="preserve">
+    <value>The document was written, but please check:</value>
+  </data>
+  <data name="Msg_FixFirst" xml:space="preserve">
+    <value>Fix these problems first:</value>
+  </data>
+  <data name="Msg_ForgetUpload" xml:space="preserve">
+    <value>The next upload will create a new DCP at RAI. The DCP that was saved there earlier is not deleted; delete it in RAI&apos;s DCP search if it is not needed.</value>
+  </data>
+  <data name="Msg_ForgetUploadCodice" xml:space="preserve">
+    <value>The next upload will create a new DCP at RAI. DCP {0}, saved there earlier, is not deleted; delete it in RAI&apos;s DCP search if it is not needed.</value>
+  </data>
+  <data name="Msg_ImportFailed" xml:space="preserve">
+    <value>The import failed: {0}</value>
+  </data>
+  <data name="Msg_LoggedIn" xml:space="preserve">
+    <value>Logged in to the RAI portal.</value>
+  </data>
+  <data name="Msg_NotInstalled" xml:space="preserve">
+    <value>This copy was not installed with the installer, so it cannot update itself.</value>
+  </data>
+  <data name="Msg_OlderFormat" xml:space="preserve">
+    <value>This file was written by an older version of DCP Tool. It will be saved in the new format the next time it is saved.</value>
+  </data>
+  <data name="Msg_RecycleDcp" xml:space="preserve">
+    <value>Move the DCP &quot;{0}&quot; to the Recycle Bin?</value>
+  </data>
+  <data name="Msg_RecycleNote" xml:space="preserve">
+    <value>You can restore it from there.</value>
+  </data>
+  <data name="Msg_RecyclePreset" xml:space="preserve">
+    <value>Move the preset &quot;{0}&quot; to the Recycle Bin?</value>
+  </data>
+  <data name="Msg_SaveFailed" xml:space="preserve">
+    <value>The DCP could not be saved: {0}</value>
+  </data>
+  <data name="Msg_SystemBrowser" xml:space="preserve">
+    <value>The built-in browser is not available here, so the page was opened in your system browser. You have to sign in to the RAI portal there yourself.</value>
+  </data>
+  <data name="Msg_UnsavedSession" xml:space="preserve">
+    <value>The DCP from the last session has changes that were never saved to a file. Open &quot;{0}&quot; and discard those changes?</value>
+  </data>
+  <data name="Msg_UpToDate" xml:space="preserve">
+    <value>You have the latest version.</value>
+  </data>
+  <data name="Msg_UpdateDownloaded" xml:space="preserve">
+    <value>Version {0} was downloaded. Use &quot;{1}&quot; in the status bar to install it.</value>
+  </data>
+  <data name="Msg_UpdateFailed" xml:space="preserve">
+    <value>The update check failed: {0}</value>
+  </data>
+  <data name="Msg_UploadAnyway" xml:space="preserve">
+    <value>Upload anyway?</value>
+  </data>
+  <data name="Picker_AddMusicFiles" xml:space="preserve">
+    <value>Add music files</value>
+  </data>
+  <data name="Picker_ChooseLibrary" xml:space="preserve">
+    <value>Choose the library folder for your DCPs</value>
+  </data>
+  <data name="Picker_DcpFile" xml:space="preserve">
+    <value>DCP file</value>
+  </data>
+  <data name="Picker_DcpFiles" xml:space="preserve">
+    <value>DCP files</value>
+  </data>
+  <data name="Picker_MusicAndCueSheets" xml:space="preserve">
+    <value>Music and cue sheets</value>
+  </data>
+  <data name="Picker_OpenDcp" xml:space="preserve">
+    <value>Open DCP</value>
+  </data>
+  <data name="Picker_SaveDcp" xml:space="preserve">
+    <value>Save DCP</value>
+  </data>
+  <data name="Picker_SaveDiagnostics" xml:space="preserve">
+    <value>Save diagnostics to</value>
+  </data>
+  <data name="Picker_WordDocument" xml:space="preserve">
+    <value>Word document</value>
+  </data>
+  <data name="Prompt_PresetLabel" xml:space="preserve">
+    <value>Preset name. The preset keeps the programme information of the open DCP, without lines, episode and dates.</value>
+  </data>
+  <data name="Prompt_Rename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="Prompt_RenameLabel" xml:space="preserve">
+    <value>New name for &quot;{0}&quot;</value>
+  </data>
+  <data name="Prompt_SavePreset" xml:space="preserve">
+    <value>Save preset</value>
+  </data>
+  <data name="Rai_DraftNotFound" xml:space="preserve">
+    <value>The DCP that an earlier upload saved was not found at RAI (it may have been deleted there). Choose &quot;{0}&quot; and upload again to create a new one.</value>
+  </data>
+  <data name="Rai_FormRejected" xml:space="preserve">
+    <value>RAI rejected the DCP.</value>
+  </data>
+  <data name="Rai_InteractiveLoginRequired" xml:space="preserve">
+    <value>The portal asks for more than user name and password (a second factor, a new password or a security check). DCP Tool can&apos;t do that; sign in once in a normal browser, then try again.</value>
+  </data>
+  <data name="Rai_InvalidCredentials" xml:space="preserve">
+    <value>RAI did not accept the user name or password.</value>
+  </data>
+  <data name="Rai_Network" xml:space="preserve">
+    <value>Can&apos;t reach the RAI portal. Is the VPN or network connection up?</value>
+  </data>
+  <data name="Rai_SessionExpired" xml:space="preserve">
+    <value>The session at the RAI portal has expired. Log in again and retry.</value>
+  </data>
+  <data name="Rai_TooManySessions" xml:space="preserve">
+    <value>The portal reports too many open sessions, and they could not be closed automatically. Log out in a browser first.</value>
+  </data>
+  <data name="Rai_UnexpectedPage" xml:space="preserve">
+    <value>The RAI portal showed an unexpected page: the portal or the DCP form has changed, or it is down for maintenance. RAI &gt; {0} collects the details for the developers.</value>
+  </data>
+  <data name="Settings_CheckForUpdates" xml:space="preserve">
+    <value>Check for updates on start</value>
+  </data>
+  <data name="Settings_Company" xml:space="preserve">
+    <value>Company (printed on the Word document)</value>
+  </data>
+  <data name="Settings_DefaultResponsabile" xml:space="preserve">
+    <value>Default Responsabile RAI</value>
+  </data>
+  <data name="Settings_DefaultRete" xml:space="preserve">
+    <value>Default Rete</value>
+  </data>
+  <data name="Settings_DefaultSede" xml:space="preserve">
+    <value>Default Sede</value>
+  </data>
+  <data name="Settings_General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Settings_IncludePrereleases" xml:space="preserve">
+    <value>Include pre-release versions</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Settings_LanguageRestart" xml:space="preserve">
+    <value>The new language takes effect after DCP Tool is restarted.</value>
+  </data>
+  <data name="Settings_LanguageSystem" xml:space="preserve">
+    <value>System language</value>
+  </data>
+  <data name="Settings_LibraryFolder" xml:space="preserve">
+    <value>Library folder</value>
+  </data>
+  <data name="Settings_LibraryFolderNone" xml:space="preserve">
+    <value>(none: DCPs are single files)</value>
+  </data>
+  <data name="Settings_LibraryFolderTip" xml:space="preserve">
+    <value>The folder that holds all your DCPs as .dcp files. DCPs in it are saved automatically.</value>
+  </data>
+  <data name="Settings_NewLines" xml:space="preserve">
+    <value>New lines start with</value>
+  </data>
+  <data name="Settings_NoSede" xml:space="preserve">
+    <value>(none)</value>
+  </data>
+  <data name="Settings_RaiAndUpdates" xml:space="preserve">
+    <value>RAI portal and updates</value>
+  </data>
+  <data name="Settings_RaiUser" xml:space="preserve">
+    <value>RAI user name</value>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Status_CannotOpen" xml:space="preserve">
+    <value>The file could not be opened: {0}</value>
+  </data>
+  <data name="Status_CannotOpenEntry" xml:space="preserve">
+    <value>{0} cannot be opened: {1}</value>
+  </data>
+  <data name="Status_ChangedKept" xml:space="preserve">
+    <value>{0} was changed outside DCP Tool. Your unsaved changes are kept; &quot;{1}&quot; writes them over that version.</value>
+  </data>
+  <data name="Status_ChangedKeptLibrary" xml:space="preserve">
+    <value>{0} was changed outside DCP Tool. Your changes are kept and replace that version.</value>
+  </data>
+  <data name="Status_ChangedUnreadable" xml:space="preserve">
+    <value>{0} was changed outside DCP Tool and cannot be read now: {1}</value>
+  </data>
+  <data name="Status_CheckingForUpdates" xml:space="preserve">
+    <value>Checking for updates...</value>
+  </data>
+  <data name="Status_CopyOfDcp" xml:space="preserve">
+    <value>Copy of the DCP.</value>
+  </data>
+  <data name="Status_Deleted" xml:space="preserve">
+    <value>Deleted {0}.</value>
+  </data>
+  <data name="Status_Duplicated" xml:space="preserve">
+    <value>Duplicated {0} as {1}.</value>
+  </data>
+  <data name="Status_Exported" xml:space="preserve">
+    <value>Exported {0}</value>
+  </data>
+  <data name="Status_FileGone" xml:space="preserve">
+    <value>{0} was moved or deleted outside DCP Tool. The DCP stays open; &quot;{1}&quot; writes it again.</value>
+  </data>
+  <data name="Status_FileGoneLibrary" xml:space="preserve">
+    <value>{0} was moved or deleted outside DCP Tool. The DCP stays open and is written there again when you change it.</value>
+  </data>
+  <data name="Status_FileProblem" xml:space="preserve">
+    <value>File problem: {0}</value>
+  </data>
+  <data name="Status_ImportProgress" xml:space="preserve">
+    <value>Importing {0}/{1}: {2}</value>
+  </data>
+  <data name="Status_Imported" xml:space="preserve">
+    <value>Imported {0} line(s).</value>
+  </data>
+  <data name="Status_ImportedCompleted" xml:space="preserve">
+    <value>Imported {0} line(s), completed {1}.</value>
+  </data>
+  <data name="Status_Importing" xml:space="preserve">
+    <value>Importing...</value>
+  </data>
+  <data name="Status_LibraryFolder" xml:space="preserve">
+    <value>Library folder: {0}</value>
+  </data>
+  <data name="Status_LibraryReadFailed" xml:space="preserve">
+    <value>Could not read the library folder: {0}</value>
+  </data>
+  <data name="Status_LibraryUnusable" xml:space="preserve">
+    <value>The library folder &quot;{0}&quot; cannot be used: {1}</value>
+  </data>
+  <data name="Status_LoggedIn" xml:space="preserve">
+    <value>Logged in.</value>
+  </data>
+  <data name="Status_LoggingIn" xml:space="preserve">
+    <value>Logging in to RAI...</value>
+  </data>
+  <data name="Status_MovedToRecycleBin" xml:space="preserve">
+    <value>Moved {0} to the Recycle Bin.</value>
+  </data>
+  <data name="Status_NewDcp" xml:space="preserve">
+    <value>New DCP. It is saved to the library once it has a Titolo italiano.</value>
+  </data>
+  <data name="Status_NewFromPreset" xml:space="preserve">
+    <value>New DCP from the preset &quot;{0}&quot;.</value>
+  </data>
+  <data name="Status_NextEpisodeCreated" xml:space="preserve">
+    <value>Next episode created.</value>
+  </data>
+  <data name="Status_NextEpisodeOf" xml:space="preserve">
+    <value>Next episode of {0}.</value>
+  </data>
+  <data name="Status_NoEarlierUpload" xml:space="preserve">
+    <value>This DCP has no earlier upload.</value>
+  </data>
+  <data name="Status_NoFileYet" xml:space="preserve">
+    <value>This DCP has no file yet.</value>
+  </data>
+  <data name="Status_NotDeleted" xml:space="preserve">
+    <value>{0} was not deleted: {1}</value>
+  </data>
+  <data name="Status_NotUploadedProblems" xml:space="preserve">
+    <value>Not uploaded: {0} problem(s) to fix first, see the list below.</value>
+  </data>
+  <data name="Status_NotUploadedYet" xml:space="preserve">
+    <value>This DCP has not been uploaded to RAI yet.</value>
+  </data>
+  <data name="Status_OlderFormat" xml:space="preserve">
+    <value>{0}: written by an older version of DCP Tool. It will be saved in the new format the next time it is saved.</value>
+  </data>
+  <data name="Status_OpenAtRai" xml:space="preserve">
+    <value>Open at RAI</value>
+  </data>
+  <data name="Status_PresetReplaced" xml:space="preserve">
+    <value>Replaced the preset &quot;{0}&quot;.</value>
+  </data>
+  <data name="Status_PresetSaved" xml:space="preserve">
+    <value>Saved the preset &quot;{0}&quot;.</value>
+  </data>
+  <data name="Status_RaiDcpPartly" xml:space="preserve">
+    <value>{0}, {1} of {2} lines saved</value>
+  </data>
+  <data name="Status_RecoveryFailed" xml:space="preserve">
+    <value>Could not write the recovery snapshot: {0}</value>
+  </data>
+  <data name="Status_Reloaded" xml:space="preserve">
+    <value>Reloaded {0}: it was changed outside DCP Tool.</value>
+  </data>
+  <data name="Status_Renamed" xml:space="preserve">
+    <value>Renamed {0} to {1}.</value>
+  </data>
+  <data name="Status_RenamedToMatch" xml:space="preserve">
+    <value>Renamed the file to {0} to match the DCP.</value>
+  </data>
+  <data name="Status_Saved" xml:space="preserve">
+    <value>Saved {0}</value>
+  </data>
+  <data name="Status_SavedNewInLibrary" xml:space="preserve">
+    <value>Saved the new DCP in the library as {0}.</value>
+  </data>
+  <data name="Status_SessionSaved" xml:space="preserve">
+    <value>Saved the DCP from the last session as {0}.</value>
+  </data>
+  <data name="Status_SettingsNotSaved" xml:space="preserve">
+    <value>Could not save the settings: {0}</value>
+  </data>
+  <data name="Status_UpdateReady" xml:space="preserve">
+    <value>Update ready - restart</value>
+  </data>
+  <data name="Status_UploadCancelled" xml:space="preserve">
+    <value>Upload cancelled. RAI may already have saved part of the DCP.</value>
+  </data>
+  <data name="Status_UploadFailed" xml:space="preserve">
+    <value>Upload failed, see the list below. RAI &gt; {0} collects the details for the developers.</value>
+  </data>
+  <data name="Status_UploadForgotten" xml:space="preserve">
+    <value>The earlier upload was forgotten.</value>
+  </data>
+  <data name="Status_UploadNotRecorded" xml:space="preserve">
+    <value>The upload could not be recorded in the file: {0}</value>
+  </data>
+  <data name="Status_UploadProgress" xml:space="preserve">
+    <value>Uploading: {0}/{1} lines.</value>
+  </data>
+  <data name="Status_UploadRejectedLines" xml:space="preserve">
+    <value>Upload failed: RAI rejected {0} line(s), see the list below.</value>
+  </data>
+  <data name="Status_UploadVerified" xml:space="preserve">
+    <value>RAI&apos;s page lists every title.</value>
+  </data>
+  <data name="Status_Uploaded" xml:space="preserve">
+    <value>Uploaded {0} line(s) to RAI.</value>
+  </data>
+  <data name="Status_UploadedAs" xml:space="preserve">
+    <value>Uploaded {0} line(s) to RAI as DCP {1}.</value>
+  </data>
+  <data name="Status_Uploading" xml:space="preserve">
+    <value>Uploading...</value>
+  </data>
+</root>

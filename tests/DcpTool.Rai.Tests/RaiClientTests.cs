@@ -187,6 +187,7 @@ public class RaiClientTests
 
         Assert.Equal(RaiErrorKind.UnexpectedPage, e.Kind);
         Assert.Contains("not found", e.Message);
+        Assert.Equal(RaiException.DraftNotFound, e.Code);
         Assert.Equal(posts, portal.FormPosts.Count()); // nothing was sent, so no second DCP
     }
 

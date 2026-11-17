@@ -65,6 +65,12 @@ public sealed class AppSettings
     /// </summary>
     public string? LibraryFolder { get; set; }
 
+    /// <summary>
+    /// Language of the user interface: "" follows the system (German and Italian systems get theirs, all others
+    /// English), "de", "it" or "en". Read at start, so a change takes effect after a restart.
+    /// </summary>
+    public string Language { get; set; } = "";
+
     public bool CheckForUpdates { get; set; } = true;
 
     /// <summary>Also offer pre-release versions.</summary>

@@ -100,7 +100,7 @@ public static class ArtlistCueSheetReader
         {
             // Any .xlsx is offered to this reader, so whatever a foreign workbook makes it throw
             // (zip, XML, number parsing, unsupported compression...) means "not a cue sheet"
-            throw new ImportException($"Not an Artlist cue sheet: {ex.Message}", ex);
+            throw new ImportException($"Not an Artlist cue sheet: {ex.Message}", ex) { Code = "not-a-cue-sheet" };
         }
     }
 
@@ -138,7 +138,7 @@ public static class ArtlistCueSheetReader
         }
 
         var title = Get(song, "song title")
-            ?? throw new ImportException("Not an Artlist cue sheet: no Song Title found.");
+            ?? throw new ImportException("Not an Artlist cue sheet: no Song Title found.") { Code = "not-a-cue-sheet" };
 
         var idMatch = Regex.Match(System.IO.Path.GetFileNameWithoutExtension(path), @"_(\d+)$");
 

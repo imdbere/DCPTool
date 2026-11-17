@@ -93,7 +93,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
             {
                 if (confirmedSessions)
                 {
-                    throw new RaiException(RaiErrorKind.UnexpectedPage, "The portal still reports too many open sessions after closing them.");
+                    throw new RaiException(RaiErrorKind.UnexpectedPage, "The portal still reports too many open sessions after closing them.") { Code = RaiException.TooManySessions };
                 }
 
                 var doc = Parse(body);
@@ -101,7 +101,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
                 var postfix = doc.GetElementbyId("postfixSID_1")?.GetAttributeValue("value", null);
                 if (formData is null || postfix is null)
                 {
-                    throw new RaiException(RaiErrorKind.UnexpectedPage, "The portal reports too many open sessions, but its page has changed and the sessions can't be closed automatically. Log out in a browser first.");
+                    throw new RaiException(RaiErrorKind.UnexpectedPage, "The portal reports too many open sessions, but its page has changed and the sessions can't be closed automatically. Log out in a browser first.") { Code = RaiException.TooManySessions };
                 }
 
                 _redactor.AddSecret(formData);
@@ -260,7 +260,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
             {
                 throw new RaiException(RaiErrorKind.UnexpectedPage,
                     "The DCP that an earlier upload saved was not found at RAI (it may have been deleted there). " +
-                    "Choose \"Forget the earlier upload\" and upload again to create a new one.");
+                    "Choose \"Forget the earlier upload\" and upload again to create a new one.") { Code = RaiException.DraftNotFound };
             }
 
             (codice, stato) = (foundCodice, foundStato);
@@ -306,6 +306,7 @@ public sealed class RaiClient : IRaiClient, IDisposable
                 throw new RaiException(e.Kind,
                     $"{e.Message} RAI has already saved {saved} of {total} lines of this DCP; check it in RAI before uploading again, or a second DCP is created.", e.InnerException)
                 {
+                    Code = e.Code,
                     PortalMessage = e.PortalMessage,
                     PortalMessages = e.PortalMessages,
                     PartialUpload = Record(false),
