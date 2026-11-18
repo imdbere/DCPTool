@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using DcpTool.App.Localisation;
 using DcpTool.App.Services;
 using DcpTool.Core.Export;
+using DcpTool.Core.Library;
 using DcpTool.Core.Model;
 using DcpTool.Core.Persistence;
 using DcpTool.Core.Rai;
@@ -44,7 +45,8 @@ public sealed record UploadFailure(string Text, string Hint, bool CanForget);
 
 /// <summary>
 /// The export page (step 4): RAI (Prüfen, Hochladen, the console) and the documents (Allegato B, its template).
-/// Nothing here saves the DCP: after an upload, what RAI saved is in the DCP and goes into its file with Speichern.
+/// After an upload that RAI saved, the DCP with its upload record is saved at once (the one automatic save, see
+/// <see cref="SaveAfterUploadAsync"/>); nothing else here saves it.
 /// </summary>
 public sealed partial class MainViewModel
 {
@@ -318,6 +320,7 @@ public sealed partial class MainViewModel
         IsBusy = true;
         IsUploading = true;
         var dcp = _dcp;
+        var recordBefore = dcp.Upload;
         var uploaded = false;
         _operation = new CancellationTokenSource();
         try
@@ -350,8 +353,6 @@ public sealed partial class MainViewModel
                 // The client's checks of RAI's answer, in English
                 ReportText(ConsoleLevel.Warning, Loc.Format("Issue_Upload", w), "Upload: " + w, quiet: true);
             }
-
-            Report(ConsoleLevel.Info, "Status_SaveUploadRecord", Loc.Get("Save_Button"));
         }
         catch (OperationCanceledException)
         {
@@ -369,6 +370,12 @@ public sealed partial class MainViewModel
             OnUploadStateChanged();
         }
 
+        // RAI saved something (all of it or a part): the record goes into the file now, see SaveAfterUploadAsync
+        if (!ReferenceEquals(dcp.Upload, recordBefore) && ReferenceEquals(dcp, _dcp))
+        {
+            await SaveAfterUploadAsync();
+        }
+
         // The DCP at RAI, in the app's browser window, as "Bei RAI öffnen" does
         if (uploaded && ReferenceEquals(dcp, _dcp) && dcp.Upload is { Url.Length: > 0 })
         {
@@ -377,14 +384,39 @@ public sealed partial class MainViewModel
     }
 
     /// <summary>
-    /// Right after an upload: what RAI saved is in the DCP, which is unsaved now. The recovery snapshot gets it at
-    /// once, so a crash does not lose it; the file gets it with Speichern.
+    /// Right after an upload: what RAI saved is in the DCP. The recovery snapshot gets it at once, so a crash during
+    /// the rest of the upload does not lose it; the file gets it when the upload ends (<see cref="SaveAfterUploadAsync"/>).
     /// </summary>
     private void RecordUpload(Dcp dcp)
     {
         if (ReferenceEquals(dcp, _dcp))
         {
             WriteRecovery();
+        }
+    }
+
+    /// <summary>
+    /// The one exception to "nothing saves automatically": after an upload that RAI saved, completely or in part, the
+    /// DCP with its upload record is written at once, so the next upload continues it (or warns before a second
+    /// one) and never creates a duplicate at RAI. It goes where Speichern would put it (<see cref="SavePlan.AfterUpload"/>);
+    /// without a library, or when that file cannot be written, the user picks the file with Speichern unter….
+    /// </summary>
+    private async Task SaveAfterUploadAsync()
+    {
+        if (SavePlan.AfterUpload(FilePath, _library, _dcp) is not { } plan)
+        {
+            return;
+        }
+
+        if (plan.Kind != SaveKind.AskForPath && SaveTo(plan.Path!, afterUpload: true))
+        {
+            return;
+        }
+
+        Report(ConsoleLevel.Warning, plan.Kind == SaveKind.AskForPath ? "Status_UploadSaveNoLibrary" : "Status_UploadSaveElsewhere");
+        if (!await SaveAsAsync(afterUpload: true))
+        {
+            Report(ConsoleLevel.Error, "Status_UploadNotSaved", Loc.Get("Save_Button"));
         }
     }
 

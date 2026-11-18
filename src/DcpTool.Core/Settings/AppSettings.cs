@@ -73,6 +73,12 @@ public sealed class AppSettings
 
     public bool CheckForUpdates { get; set; } = true;
 
+    /// <summary>
+    /// The guide with its welcome was shown on the first start. False only for settings that <see cref="SettingsStore"/>
+    /// created because there was no settings file yet; settings written before this existed count as shown.
+    /// </summary>
+    public bool WelcomeShown { get; set; } = true;
+
     /// <summary>Also offer pre-release versions.</summary>
     public bool IncludePrereleases { get; set; }
 

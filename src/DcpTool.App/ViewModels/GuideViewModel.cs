@@ -24,18 +24,23 @@ public sealed partial class GuideQuestion(string question, string answer) : Obse
     private void Toggle() => IsExpanded = !IsExpanded;
 }
 
-/// <summary>One way to add songs, listed in the drawer while the guide is open.</summary>
+/// <summary>
+/// A chapter of the guide, listed in the drawer while the guide is open: one way to add songs, or the welcome above
+/// them (paragraphs instead of conditions, steps and troubleshooting).
+/// </summary>
 public sealed partial class GuideWay : ObservableObject
 {
+    public const string WelcomeId = "welcome";
     public const string TimelineId = "timeline";
     public const string MusicmediaId = "musicmedia";
     public const string ArtlistId = "artlist";
     public const string OtherId = "other";
 
     public GuideWay(string id, string label, string title, string lead, IReadOnlyList<string> prerequisites,
-        IReadOnlyList<GuideStep> steps, IReadOnlyList<GuideQuestion> questions)
+        IReadOnlyList<GuideStep> steps, IReadOnlyList<GuideQuestion> questions, IReadOnlyList<string>? paragraphs = null)
     {
         Id = id;
+        Paragraphs = paragraphs ?? [];
         Label = label;
         Title = title;
         Lead = lead;
@@ -56,12 +61,20 @@ public sealed partial class GuideWay : ObservableObject
     public IReadOnlyList<GuideStep> Steps { get; }
     public IReadOnlyList<GuideQuestion> Questions { get; }
 
+    /// <summary>Plain text below the lead (the welcome).</summary>
+    public IReadOnlyList<string> Paragraphs { get; }
+
+    public bool IsWelcome => Id == WelcomeId;
+    public bool HasPrerequisites => Prerequisites.Count > 0;
+    public bool HasSteps => Steps.Count > 0;
+    public bool HasQuestions => Questions.Count > 0;
+
     [ObservableProperty] private bool _isSelected;
 }
 
 /// <summary>
-/// The guide ("Wie?"): how songs get into the list, one way at a time, with steps, conditions and troubleshooting.
-/// The texts are placeholders until the team writes the final ones.
+/// The guide ("Wie?"): a welcome (opened on the very first start), then how songs get into the list, one way at a
+/// time, with steps, conditions and troubleshooting. The texts are placeholders until the team writes the final ones.
 /// </summary>
 public sealed partial class GuideViewModel : ObservableObject
 {
@@ -69,6 +82,9 @@ public sealed partial class GuideViewModel : ObservableObject
 
     public GuideViewModel()
     {
+        Welcome = new GuideWay(GuideWay.WelcomeId, Loc.Get("Guide_Welcome_Label"), Loc.Get("Guide_Welcome_Title"), Loc.Get("Guide_Welcome_Lead"),
+            [], [], [], [Loc.Get("Guide_Welcome_Ways")]);
+        WelcomeAgain = Loc.Format("Guide_Welcome_Again", Loc.Get("Add_How"), Loc.Get("Add_DropTitle"));
         Ways =
         [
             new GuideWay(GuideWay.TimelineId, Loc.Get("Guide_Timeline_Label"), Loc.Get("Guide_Timeline_Label"), Loc.Get("Guide_Timeline_Lead"),
@@ -108,6 +124,13 @@ public sealed partial class GuideViewModel : ObservableObject
         Select(Ways[0]);
     }
 
+    /// <summary>The first chapter, above the ways.</summary>
+    public GuideWay Welcome { get; }
+
+    /// <summary>The welcome's last paragraph, below the links to the ways: how to open the guide again.</summary>
+    public string WelcomeAgain { get; }
+
+    /// <summary>The ways to add songs, the chapters after the welcome.</summary>
     public IReadOnlyList<GuideWay> Ways { get; }
 
     [ObservableProperty] private GuideWay _selectedWay = null!;
@@ -125,7 +148,7 @@ public sealed partial class GuideViewModel : ObservableObject
             return;
         }
 
-        foreach (var w in Ways)
+        foreach (var w in Ways.Prepend(Welcome))
         {
             w.IsSelected = ReferenceEquals(w, way);
         }
@@ -133,6 +156,9 @@ public sealed partial class GuideViewModel : ObservableObject
         SelectedWay = way;
         ShowImportProblems = false;
     }
+
+    /// <summary>The very first start: the guide opens on its welcome.</summary>
+    public void ShowWelcome() => Select(Welcome);
 
     /// <summary>Remembers what the last import reported and which way's troubleshooting fits it.</summary>
     public void SetImportProblems(IReadOnlyList<string> problems, string wayId)

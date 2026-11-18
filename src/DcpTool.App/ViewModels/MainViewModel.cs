@@ -293,8 +293,23 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             _initialized = true;
+            ShowWelcomeOnFirstStart();
             _ = RefreshLibraryAsync();
         }
+    }
+
+    /// <summary>The very first start opens with the guide on its welcome; later starts open as usual.</summary>
+    private void ShowWelcomeOnFirstStart()
+    {
+        if (_settings.WelcomeShown)
+        {
+            return;
+        }
+
+        Guide.ShowWelcome();
+        Page = AppPage.Guide;
+        _settings.WelcomeShown = true;
+        SaveSettings();
     }
 
     private async Task InitializeDocumentAsync(string[] args)
@@ -552,7 +567,8 @@ public sealed partial class MainViewModel : ObservableObject
         return plan.Kind == SaveKind.AskForPath ? await SaveAsAsync() : SaveTo(plan.Path!);
     }
 
-    private async Task<bool> SaveAsAsync()
+    /// <param name="afterUpload">See <see cref="SaveTo"/>.</param>
+    private async Task<bool> SaveAsAsync(bool afterUpload = false)
     {
         CommitPendingEdits?.Invoke();
         SyncLines();
@@ -570,7 +586,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var path = await _dialogs.PickSave(Loc.Get("Picker_SaveDcp"), name, DcpFile.Extension, Loc.Get("Picker_DcpFile"), folder);
-        return path is not null && SaveTo(path);
+        return path is not null && SaveTo(path, afterUpload);
     }
 
     /// <summary>The suggested folder when it exists already, else the nearest folder above it, up to <paramref name="root"/>.</summary>
@@ -587,7 +603,11 @@ public sealed partial class MainViewModel : ObservableObject
         return root;
     }
 
-    private bool SaveTo(string path)
+    /// <param name="afterUpload">
+    /// The save right after an upload: the console says that the upload record is in the file, and a failure goes to
+    /// the console instead of a message box, because the caller asks for another file next.
+    /// </param>
+    private bool SaveTo(string path, bool afterUpload = false)
     {
         CommitPendingEdits?.Invoke();
         if (!KeepLegacyOriginal(path, out var original))
@@ -605,7 +625,11 @@ public sealed partial class MainViewModel : ObservableObject
             IsDirty = false;
             RememberFile(path);
             WriteRecovery();
-            if (original is null)
+            if (afterUpload)
+            {
+                SetStatus("Status_UploadSaved", RelativeName(path));
+            }
+            else if (original is null)
             {
                 SetStatus("Status_Saved", RelativeName(path));
             }
@@ -615,7 +639,15 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (DcpFileException ex)
         {
-            _ = _dialogs.Message(Loc.Get("Common_Save"), Loc.Format("Msg_SaveFailed", ex.Message));
+            if (afterUpload)
+            {
+                Report(ConsoleLevel.Error, "Msg_SaveFailed", ex.Message);
+            }
+            else
+            {
+                _ = _dialogs.Message(Loc.Get("Common_Save"), Loc.Format("Msg_SaveFailed", ex.Message));
+            }
+
             return false;
         }
     }
@@ -644,9 +676,15 @@ public sealed partial class MainViewModel : ObservableObject
 
     // ---------------------------------------------------------------- songs
 
+    /// <summary>"Hinzufügen…", or a click on the Add area: the file dialog.</summary>
     [RelayCommand]
     private async Task AddMusicFiles()
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         var files = await _dialogs.PickMusicFiles(_settings.LastImportFolder, _importService.FilePatterns);
         if (files.Count > 0)
         {

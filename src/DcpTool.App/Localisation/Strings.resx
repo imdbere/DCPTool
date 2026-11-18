@@ -605,9 +605,6 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   <data name="Add_Incomplete" xml:space="preserve">
     <value>{0} songs added · {1} incomplete</value>
   </data>
-  <data name="Area_ToSongs" xml:space="preserve">
-    <value>To the song list</value>
-  </data>
   <data name="Area_ExportTitle" xml:space="preserve">
     <value>Export or upload</value>
   </data>
@@ -1223,7 +1220,31 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   <data name="Status_Recovered" xml:space="preserve">
     <value>DCP Tool did not close normally last time. The unsaved changes were restored; save them or discard them.</value>
   </data>
-  <data name="Status_SaveUploadRecord" xml:space="preserve">
-    <value>&quot;{0}&quot; records the upload in the DCP file.</value>
+  <data name="Status_UploadSaved" xml:space="preserve">
+    <value>Saved {0} with the upload record: uploading again cannot create a second DCP at RAI by accident.</value>
+  </data>
+  <data name="Status_UploadSaveNoLibrary" xml:space="preserve">
+    <value>No library folder is set, so DCP Tool asks where to save the DCP with its upload record.</value>
+  </data>
+  <data name="Status_UploadSaveElsewhere" xml:space="preserve">
+    <value>The DCP with its upload record could not be saved there; choose another file.</value>
+  </data>
+  <data name="Status_UploadNotSaved" xml:space="preserve">
+    <value>The upload record is not saved yet. Click &quot;{0}&quot; before you upload again, or a second DCP may be created at RAI.</value>
+  </data>
+  <data name="Guide_Welcome_Label" xml:space="preserve">
+    <value>Welcome</value>
+  </data>
+  <data name="Guide_Welcome_Title" xml:space="preserve">
+    <value>Welcome to DCP Tool</value>
+  </data>
+  <data name="Guide_Welcome_Lead" xml:space="preserve">
+    <value>DCP Tool makes the DCP of a programme: the list of the music it uses. When it is complete, you upload it straight to RAI or export it as RAI's paper form.</value>
+  </data>
+  <data name="Guide_Welcome_Ways" xml:space="preserve">
+    <value>Adding the songs is where DCP Tool saves you the most work. The chapters on the left show the ways to do it, depending on where your music comes from. Start with the one that fits your work:</value>
+  </data>
+  <data name="Guide_Welcome_Again" xml:space="preserve">
+    <value>You can open this guide again at any time: click &quot;{0}&quot; in the area &quot;{1}&quot; at the bottom. Click it once more to get back to your songs.</value>
   </data>
 </root>

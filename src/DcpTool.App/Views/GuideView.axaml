@@ -24,6 +24,30 @@
       <TextBlock Margin="0,6,0,8" Text="{Binding SelectedWay.Title}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
       <TextBlock Text="{Binding SelectedWay.Lead}" FontSize="15" LineHeight="23" Foreground="{StaticResource Grey700}" TextWrapping="Wrap" />
 
+      <!-- The welcome: a few paragraphs, and its chapters to go on with -->
+      <ItemsControl ItemsSource="{Binding SelectedWay.Paragraphs}" IsVisible="{Binding SelectedWay.IsWelcome}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="x:String">
+            <TextBlock Margin="0,16,0,0" Text="{Binding}" FontSize="15" LineHeight="23" TextWrapping="Wrap" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding Ways}" IsVisible="{Binding SelectedWay.IsWelcome}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:GuideWay">
+            <Button Classes="link" HorizontalAlignment="Left" Margin="0,6,0,0"
+                    Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).Guide.SelectCommand}" CommandParameter="{Binding}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <c:LineIcon Data="{StaticResource Icon.ArrowRight}" />
+                <TextBlock Text="{Binding Label}" FontSize="15" />
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock Margin="0,20,0,0" Text="{Binding WelcomeAgain}" FontSize="15" LineHeight="23" TextWrapping="Wrap"
+                 IsVisible="{Binding SelectedWay.IsWelcome}" />
+
       <!-- After "Warum?": what the last import left out -->
       <Border Margin="0,20,0,0" Padding="16,12" CornerRadius="8" Background="{StaticResource Grey100}" IsVisible="{Binding ShowImportProblems}">
         <StackPanel Spacing="6">
@@ -38,7 +62,7 @@
         </StackPanel>
       </Border>
 
-      <Border Margin="0,20,0,0" Padding="16,12" CornerRadius="8" Background="{StaticResource Grey100}">
+      <Border Margin="0,20,0,0" Padding="16,12" CornerRadius="8" Background="{StaticResource Grey100}" IsVisible="{Binding SelectedWay.HasPrerequisites}">
         <StackPanel Spacing="6">
           <TextBlock Classes="section" Text="{l:Tr Guide_Prerequisites}" />
           <ItemsControl ItemsSource="{Binding SelectedWay.Prerequisites}">
@@ -54,7 +78,7 @@
         </StackPanel>
       </Border>
 
-      <TextBlock Classes="h3" Margin="0,28,0,14" Text="{l:Tr Guide_Steps}" />
+      <TextBlock Classes="h3" Margin="0,28,0,14" Text="{l:Tr Guide_Steps}" IsVisible="{Binding SelectedWay.HasSteps}" />
       <ItemsControl ItemsSource="{Binding SelectedWay.Steps}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -85,8 +109,8 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <TextBlock Classes="h3" Margin="0,32,0,6" Text="{l:Tr Guide_Trouble}" />
-      <Border BorderBrush="{StaticResource Grey200}" BorderThickness="0,1,0,0">
+      <TextBlock Classes="h3" Margin="0,32,0,6" Text="{l:Tr Guide_Trouble}" IsVisible="{Binding SelectedWay.HasQuestions}" />
+      <Border BorderBrush="{StaticResource Grey200}" BorderThickness="0,1,0,0" IsVisible="{Binding SelectedWay.HasQuestions}">
         <ItemsControl ItemsSource="{Binding SelectedWay.Questions}">
           <ItemsControl.ItemTemplate>
             <DataTemplate x:DataType="vm:GuideQuestion">

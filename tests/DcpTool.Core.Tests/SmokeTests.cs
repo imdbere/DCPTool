@@ -130,4 +130,30 @@ public class SmokeTests
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
     }
+
+    /// <summary>The guide opens with its welcome on the very first start only: no settings file yet.</summary>
+    [Fact]
+    public void WelcomeIsShownOnlyOnTheFirstStart()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "dcptool-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var paths = new DcpTool.Core.Settings.AppPaths(dir);
+            var store = new DcpTool.Core.Settings.SettingsStore(paths);
+
+            // No settings file: the first start
+            var first = store.Load();
+            Assert.False(first.WelcomeShown);
+
+            // Shown once, then remembered
+            first.WelcomeShown = true;
+            store.Save(first);
+            Assert.True(store.Load().WelcomeShown);
+
+            // Settings of a version before the welcome: that user has started the app before
+            File.WriteAllText(paths.SettingsFile, """{ "libraryFolder": "C:\\DCP", "checkForUpdates": false }""");
+            Assert.True(store.Load().WelcomeShown);
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+    }
 }

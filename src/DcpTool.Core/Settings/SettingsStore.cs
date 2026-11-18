@@ -17,15 +17,16 @@ public sealed class SettingsStore(AppPaths paths)
     };
 
     /// <summary>
-    /// Never throws: a missing file gives the defaults. An unreadable file also gives the defaults and is
-    /// kept as <c>settings.json.broken</c>, so nothing is lost silently and the app still starts.
+    /// Never throws: a missing file gives the defaults, as the very first start (<see cref="AppSettings.WelcomeShown"/>
+    /// false). An unreadable file also gives the defaults and is kept as <c>settings.json.broken</c>, so nothing is
+    /// lost silently and the app still starts.
     /// </summary>
     public AppSettings Load()
     {
         var file = paths.SettingsFile;
         if (!File.Exists(file))
         {
-            return new AppSettings();
+            return new AppSettings { WelcomeShown = false };
         }
 
         try

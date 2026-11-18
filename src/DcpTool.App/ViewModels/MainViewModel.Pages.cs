@@ -106,7 +106,7 @@ public sealed partial class MainViewModel
 
     // ---------------------------------------------------------------- navigation
 
-    /// <summary>A click on the Add area: back to the songs.</summary>
+    /// <summary>"Zurück" in the drawer while the guide is open: back to the songs.</summary>
     [RelayCommand]
     private void GoSongs() => Page = AppPage.Songs;
 

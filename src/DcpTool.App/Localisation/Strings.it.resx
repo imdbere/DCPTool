@@ -605,9 +605,6 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Add_Incomplete" xml:space="preserve">
     <value>{0} brani aggiunti · {1} incompleti</value>
   </data>
-  <data name="Area_ToSongs" xml:space="preserve">
-    <value>Vai all'elenco dei brani</value>
-  </data>
   <data name="Area_ExportTitle" xml:space="preserve">
     <value>Esporta o carica</value>
   </data>
@@ -1223,7 +1220,31 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Status_Recovered" xml:space="preserve">
     <value>L&apos;ultima volta DCP Tool non è stato chiuso normalmente. Le modifiche non salvate sono state ripristinate; salvarle o scartarle.</value>
   </data>
-  <data name="Status_SaveUploadRecord" xml:space="preserve">
-    <value>«{0}» registra il caricamento nel file del DCP.</value>
+  <data name="Status_UploadSaved" xml:space="preserve">
+    <value>{0} salvato con la registrazione del caricamento: un nuovo caricamento non può creare per errore un secondo DCP su RAI.</value>
+  </data>
+  <data name="Status_UploadSaveNoLibrary" xml:space="preserve">
+    <value>Nessuna cartella della libreria impostata: scegli dove salvare il DCP con la registrazione del caricamento.</value>
+  </data>
+  <data name="Status_UploadSaveElsewhere" xml:space="preserve">
+    <value>Non è stato possibile salvare lì il DCP con la registrazione del caricamento. Scegli un altro file.</value>
+  </data>
+  <data name="Status_UploadNotSaved" xml:space="preserve">
+    <value>La registrazione del caricamento non è ancora salvata. Fai clic su «{0}» prima di caricare di nuovo, altrimenti su RAI potrebbe nascere un secondo DCP.</value>
+  </data>
+  <data name="Guide_Welcome_Label" xml:space="preserve">
+    <value>Benvenuto</value>
+  </data>
+  <data name="Guide_Welcome_Title" xml:space="preserve">
+    <value>Benvenuto in DCP Tool</value>
+  </data>
+  <data name="Guide_Welcome_Lead" xml:space="preserve">
+    <value>Con DCP Tool crei il DCP di una trasmissione: l'elenco delle musiche utilizzate. Quando è completo, lo carichi direttamente su RAI o lo esporti come modulo cartaceo della RAI.</value>
+  </data>
+  <data name="Guide_Welcome_Ways" xml:space="preserve">
+    <value>Aggiungere i brani è il passaggio in cui DCP Tool ti fa risparmiare più lavoro. I capitoli a sinistra mostrano i modi per farlo, a seconda della provenienza della tua musica. Inizia da quello adatto al tuo lavoro:</value>
+  </data>
+  <data name="Guide_Welcome_Again" xml:space="preserve">
+    <value>Puoi riaprire questa guida in qualsiasi momento: fai clic su «{0}» nell'area «{1}» in basso. Un altro clic ti riporta ai tuoi brani.</value>
   </data>
 </root>

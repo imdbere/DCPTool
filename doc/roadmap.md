@@ -28,7 +28,8 @@ Decided 2026-11-17 (design brief: https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZ
 2. **Add**: drop songs or a timeline onto the Add area, pick files with Add, or learn how in the guide (How?).
 3. **Adjust**: edit the table of songs, like today.
 4. **Export or upload**: the export page with RAI (verify, upload, log) and documents (export, edit template).
-   Speichern writes the DCP; leaving it with unsaved changes asks first (no automatic saving since 2026-11-18).
+   Speichern writes the DCP; leaving it with unsaved changes asks first (no automatic saving since 2026-11-18,
+   except right after an upload, since 2026-11-18).
 
 ## M1: Release v2 as a safe replacement for v1
 
@@ -107,8 +108,8 @@ https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
   never move; the current step's area has a highlighted background, and clicking an area switches step.
 - **Drawer (step 1).** Collapsible lists *Presets* and *Recent*; at the bottom *Open library folder*
   (opens it in Explorer/Finder) and *Settings*. No library browser in the app.
-- **Add area (step 2).** Drop songs or a timeline; *Add* opens the file dialog; *How?* (the prominent
-  button) opens the guide.
+- **Add area (step 2).** Drop songs or a timeline; *Add*, or a click anywhere on the area (Enter / Space
+  when it has the focus), opens the file dialog; *How?* (the prominent button) opens the guide.
 - **Guide.** Takes over the main panel; the drawer lists the ways to add songs (DaVinci timeline,
   musicmedia.it, Artlist with cue sheets, other providers), each with steps, conditions and
   troubleshooting. We write the texts.
@@ -159,6 +160,14 @@ the preset the DCP was started from (stored in the .dcp) or its Titolo italiano;
 file name no longer follows the header. The recovery snapshot only restores after a crash or a killed process. The ▾ of
 Speichern also has "Kopie als neuer DCP" and "Als Sendung speichern"; after an upload the RAI page opens by itself.
 This supersedes "automatic saving" and "Session restore stays" in M2.
+
+Second review round, 2026-11-18: **the one automatic save: right after an upload** that RAI saved, completely or in part,
+the DCP with its new upload record is written to its file (a never-saved DCP to its library path, as Speichern would;
+without a library the app asks with Speichern unter… and says so in the console), so a second upload continues the draft
+or warns, and never creates a duplicate at RAI by accident (`SavePlan.AfterUpload`). The very first start (no settings
+file) opens the guide on a new first chapter, *Welcome*, above the ways to add songs (`AppSettings.WelcomeShown`). The
+whole Add area opens the file dialog. The table has faint column lines (grey 200, grey 300 in the header and below it),
+and the ? of a header stays on the height of its first line when the name wraps.
 
 ## M4: Timeline import
 

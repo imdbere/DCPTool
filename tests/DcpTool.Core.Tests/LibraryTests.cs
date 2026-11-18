@@ -170,6 +170,33 @@ public sealed class LibraryTests : IDisposable
     }
 
     [Fact]
+    public void AfterAnUploadTheRecordIsSavedWhereSpeichernWouldPutIt()
+    {
+        var dcp = Make("ZIPP TV 2026", 33, new DateOnly(2026, 11, 18));
+        dcp.Sendung = "ZIPP TV";
+        var elsewhere = Path.Combine(_dir, "old place", "zipp 33.dcp");
+
+        // RAI saved nothing (the upload failed before the first line): nothing to keep, nothing is written
+        Assert.Null(SavePlan.AfterUpload(elsewhere, _library, dcp));
+        Assert.Null(SavePlan.AfterUpload(null, _library, dcp));
+        Assert.Null(SavePlan.AfterUpload(null, null, dcp));
+
+        // Complete or partial: the record goes to the DCP's file, a new DCP into the library, without a library the app asks
+        foreach (var record in new[]
+                 {
+                     new UploadRecord { Complete = true, Codice = "1788111-00", LinesSaved = 2 },
+                     new UploadRecord { Complete = false, LinesSaved = 4, Url = "https://portal/draft" },
+                 })
+        {
+            dcp.Upload = record;
+            Assert.Equal(new SavePlan(SaveKind.ExistingFile, elsewhere), SavePlan.AfterUpload(elsewhere, _library, dcp));
+            Assert.Equal(new SavePlan(SaveKind.NewInLibrary, Path.Combine(_dir, "ZIPP TV", "2026", "ZIPP TV 33 2026-11-18.dcp")),
+                SavePlan.AfterUpload(null, _library, dcp));
+            Assert.Equal(new SavePlan(SaveKind.AskForPath, null), SavePlan.AfterUpload(null, null, dcp));
+        }
+    }
+
+    [Fact]
     public void PresetKeepsTheProgrammeAndDropsTheEpisode()
     {
         var dcp = Make("Kompass", 7, new DateOnly(2026, 5, 5));

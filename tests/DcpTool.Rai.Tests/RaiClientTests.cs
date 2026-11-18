@@ -1,7 +1,10 @@
 using System.IO.Compression;
 using System.Text;
+using DcpTool.Core.Library;
 using DcpTool.Core.Model;
+using DcpTool.Core.Persistence;
 using DcpTool.Core.Rai;
+using DcpTool.Core.Validation;
 using Xunit;
 
 namespace DcpTool.Rai.Tests;
@@ -170,6 +173,62 @@ public class RaiClientTests
         Assert.Equal(9, result.Record.LinesSaved);
         Assert.Equal("7-00", result.Record.Codice);
         Assert.True(result.Verified);
+    }
+
+    /// <summary>
+    /// The app saves the DCP right after an upload (<see cref="SavePlan.AfterUpload"/>): what is read back from the file
+    /// after a restart continues the partial DCP at RAI, and after the complete upload it warns before a second one.
+    /// </summary>
+    [Fact]
+    public async Task UploadRecordSavedAfterTheUploadPreventsASecondDcpAfterARestart()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "dcptool-upload-save-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var library = new DcpLibrary(folder);
+            var portal = new FakePortal { RejectPost = 2 };
+            var dcp = MakeDcp(9);
+            dcp.Puntata = 12;
+            using (var client = NewClient(portal))
+            {
+                await client.LoginAsync(Good, Ct);
+                dcp.Upload = (await Assert.ThrowsAsync<RaiException>(() => client.UploadAsync(dcp, null, Ct))).PartialUpload;
+            }
+
+            // A DCP that was never saved goes into the library, as Speichern would put it
+            var plan = SavePlan.AfterUpload(null, library, dcp)!;
+            Assert.Equal(SaveKind.NewInLibrary, plan.Kind);
+            DcpFile.Save(plan.Path!, dcp);
+
+            // After a restart: the record comes from the file, and the upload continues the draft instead of a new DCP
+            var reopened = DcpFile.Load(plan.Path!).Dcp;
+            Assert.Equal(4, reopened.Upload!.LinesSaved);
+            var before = portal.Requests.Count;
+            portal.RejectPost = 0;
+            using (var client = NewClient(portal))
+            {
+                await client.LoginAsync(Good, Ct);
+                reopened.Upload = (await client.UploadAsync(reopened, null, Ct)).Record;
+            }
+
+            var formRequests = portal.Requests.Skip(before).Where(r => r.Uri.AbsolutePath.Contains("DettaglioDCP")).ToList();
+            Assert.All(formRequests, r => Assert.Contains("codice_dcp=7", r.Uri.Query));
+
+            // Saved again, now to its file: the next upload is recognised as a second one
+            var again = SavePlan.AfterUpload(plan.Path, library, reopened)!;
+            Assert.Equal(new SavePlan(SaveKind.ExistingFile, plan.Path), again);
+            DcpFile.Save(again.Path!, reopened);
+            var final = DcpFile.Load(plan.Path!).Dcp;
+            Assert.True(final.Upload!.Complete);
+            Assert.Contains(DcpValidator.Validate(final, ValidationPurpose.Upload), i => i.Code == "already-uploaded");
+        }
+        finally
+        {
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, true);
+            }
+        }
     }
 
     [Fact]

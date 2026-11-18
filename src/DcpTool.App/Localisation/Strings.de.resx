@@ -605,9 +605,6 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
   <data name="Add_Incomplete" xml:space="preserve">
     <value>{0} Titel hinzugefügt · {1} unvollständig</value>
   </data>
-  <data name="Area_ToSongs" xml:space="preserve">
-    <value>Zur Songliste</value>
-  </data>
   <data name="Area_ExportTitle" xml:space="preserve">
     <value>Exportieren oder hochladen</value>
   </data>
@@ -1223,7 +1220,31 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
   <data name="Status_Recovered" xml:space="preserve">
     <value>DCP Tool wurde beim letzten Mal nicht normal beendet. Die ungespeicherten Änderungen wurden wiederhergestellt; speichern oder verwerfen Sie sie.</value>
   </data>
-  <data name="Status_SaveUploadRecord" xml:space="preserve">
-    <value>„{0}“ vermerkt den Upload in der DCP-Datei.</value>
+  <data name="Status_UploadSaved" xml:space="preserve">
+    <value>{0} mit dem Upload-Vermerk gespeichert: Erneutes Hochladen legt bei RAI nicht versehentlich einen zweiten DCP an.</value>
+  </data>
+  <data name="Status_UploadSaveNoLibrary" xml:space="preserve">
+    <value>Es ist kein Bibliotheksordner eingerichtet. Wählen Sie, wo der DCP mit dem Upload-Vermerk gespeichert wird.</value>
+  </data>
+  <data name="Status_UploadSaveElsewhere" xml:space="preserve">
+    <value>Der DCP mit dem Upload-Vermerk konnte dort nicht gespeichert werden. Wählen Sie eine andere Datei.</value>
+  </data>
+  <data name="Status_UploadNotSaved" xml:space="preserve">
+    <value>Der Upload-Vermerk ist noch nicht gespeichert. Klicken Sie auf „{0}“, bevor Sie erneut hochladen, sonst entsteht bei RAI womöglich ein zweiter DCP.</value>
+  </data>
+  <data name="Guide_Welcome_Label" xml:space="preserve">
+    <value>Willkommen</value>
+  </data>
+  <data name="Guide_Welcome_Title" xml:space="preserve">
+    <value>Willkommen bei DCP Tool</value>
+  </data>
+  <data name="Guide_Welcome_Lead" xml:space="preserve">
+    <value>Mit DCP Tool erstellen Sie den DCP einer Sendung: die Liste der Musik, die darin läuft. Ist er fertig, laden Sie ihn direkt zu RAI hoch oder exportieren ihn als Papierformular der RAI.</value>
+  </data>
+  <data name="Guide_Welcome_Ways" xml:space="preserve">
+    <value>Die meiste Arbeit nimmt Ihnen DCP Tool beim Hinzufügen der Songs ab. Die Kapitel links zeigen die Wege dazu, je nachdem, woher Ihre Musik kommt. Beginnen Sie mit dem, das zu Ihrer Arbeit passt:</value>
+  </data>
+  <data name="Guide_Welcome_Again" xml:space="preserve">
+    <value>Diese Anleitung öffnen Sie jederzeit wieder: Klicken Sie unten im Bereich „{1}“ auf „{0}“. Ein weiterer Klick bringt Sie zurück zu Ihren Songs.</value>
   </data>
 </root>

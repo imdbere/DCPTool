@@ -160,6 +160,11 @@
                 <TextBlock Text="{l:Tr Guide_Back}" />
               </StackPanel>
             </Button>
+            <!-- The first chapter, above the ways: opened on the very first start -->
+            <Button Classes="plain drawer" Classes.current="{Binding Guide.Welcome.IsSelected}" MinHeight="36" Padding="10,8" Margin="0,12,0,0"
+                    Command="{Binding Guide.SelectCommand}" CommandParameter="{Binding Guide.Welcome}">
+              <TextBlock Text="{Binding Guide.Welcome.Label}" TextWrapping="Wrap" />
+            </Button>
             <TextBlock Classes="section" Margin="8,18,8,6" Text="{l:Tr Guide_Ways}" />
             <ItemsControl ItemsSource="{Binding Guide.Ways}">
               <ItemsControl.ItemTemplate>

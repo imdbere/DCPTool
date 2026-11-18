@@ -15,7 +15,8 @@ namespace DcpTool.App.ViewModels;
 /// The library: all DCPs as .dcp files in one folder the user chooses. The app has no browser for it (Explorer does
 /// that, through "Bibliotheksordner öffnen"); the drawer shows the presets ("Sendungen") and the DCPs edited last.
 /// Nothing is saved automatically: a .dcp file is only written by Speichern, Speichern unter… and the Speichern of the
-/// prompt shown before leaving a DCP with unsaved changes. A new DCP is saved into the library as
+/// prompt shown before leaving a DCP with unsaved changes. The one exception is the save right after an upload that
+/// RAI saved, so the upload record cannot get lost (<see cref="SaveAfterUploadAsync"/>). A new DCP is saved into the library as
 /// <c>&lt;Sendung&gt;/&lt;year&gt;/&lt;Sendung&gt; &lt;Puntata&gt; &lt;date&gt;.dcp</c> (<see cref="DcpLibrary.SuggestPath"/>).
 /// </summary>
 public sealed partial class MainViewModel

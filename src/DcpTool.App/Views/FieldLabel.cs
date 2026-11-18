@@ -94,34 +94,46 @@ public sealed class FieldLabel : Grid
     private void AutomationName() =>
         Avalonia.Automation.AutomationProperties.SetName(_help, Loc.Format("Help_ButtonName", Text));
 
+    // Every property either branch sets is set by both: the constructor applies the field style first, and a column
+    // header must not keep any of it (its ? would otherwise sit in the middle of a two-line name)
     private void ApplyStyle()
     {
+        var icon = (LineIcon)_help.Content!;
+        _label.TextTrimming = TextTrimming.CharacterEllipsis;
         if (IsColumnHeader)
         {
             // Font and colour come from the column header; a narrow column wraps the name to two lines, between words
-            // only (the column's minimum width fits the longest word)
+            // only (the column's minimum width fits the longest word). The ? stays at the height of the first line:
+            // its 15 px icon is centred on that line (15.6 px high), whether the name wraps or not.
+            const double lineHeight = 15.6;
+            const double button = 21;
             ColumnDefinitions = new ColumnDefinitions("*,Auto");
             _label.TextWrapping = TextWrapping.WrapWithOverflow;
-            _label.LineHeight = 15.6;
+            _label.LineHeight = lineHeight;
             _label.MaxLines = 2;
+            _label.VerticalAlignment = VerticalAlignment.Top;
             _label.ClearValue(TextBlock.FontSizeProperty);
             _label.ClearValue(TextBlock.ForegroundProperty);
-            _help.Margin = new Thickness(0, -3, 0, 0);
+            _help.Width = _help.Height = button;
+            _help.CornerRadius = new CornerRadius(button / 2);
+            _help.VerticalAlignment = VerticalAlignment.Top;
+            _help.Margin = new Thickness(0, Math.Round((lineHeight - button) / 2), 0, 0);
+            icon.Width = icon.Height = 15;
         }
         else
         {
+            ColumnDefinitions = new ColumnDefinitions("Auto,Auto");
             _label.TextWrapping = TextWrapping.NoWrap;
-            _label.TextTrimming = TextTrimming.CharacterEllipsis;
+            _label.ClearValue(TextBlock.LineHeightProperty);
+            _label.ClearValue(TextBlock.MaxLinesProperty);
             _label.FontSize = 12;
             _label.Foreground = Res.Brush("Grey600");
             _label.VerticalAlignment = VerticalAlignment.Center;
             _help.Width = _help.Height = 18;
+            _help.CornerRadius = new CornerRadius(9);
             _help.Margin = default;
             _help.VerticalAlignment = VerticalAlignment.Center;
-            if (_help.Content is LineIcon icon)
-            {
-                icon.Width = icon.Height = 13;
-            }
+            icon.Width = icon.Height = 13;
         }
     }
 

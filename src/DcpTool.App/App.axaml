@@ -32,12 +32,15 @@
     <SolidColorBrush x:Key="SystemControlFocusVisualPrimaryBrush" Color="#2563EB" />
     <SolidColorBrush x:Key="SystemControlFocusVisualSecondaryBrush" Color="#FFFFFF" />
 
-    <!-- The songs table: tinted header, grey 200 lines, grey 100 selection, grey 50 hover -->
-    <SolidColorBrush x:Key="DataGridColumnHeaderBackgroundBrush" Color="#F6F8FA" />
-    <SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="#F6F8FA" />
-    <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="#F6F8FA" />
+    <!-- The songs table: tinted header, grey 200 lines between rows and columns (grey 300 in the header and below it),
+         grey 100 selection, grey 50 hover -->
+    <!-- The headers themselves are transparent and the row behind them is tinted: a star column's header may overlap
+         its right neighbour by a pixel after rounding, and an opaque neighbour would hide the line between them -->
+    <SolidColorBrush x:Key="DataGridColumnHeaderBackgroundBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="Transparent" />
     <SolidColorBrush x:Key="DataGridColumnHeaderForegroundBrush" Color="#4B525B" />
-    <SolidColorBrush x:Key="DataGridGridLinesBrush" Color="#DCE0E6" />
+    <SolidColorBrush x:Key="DataGridGridLinesBrush" Color="#BCC1C9" />
     <SolidColorBrush x:Key="DataGridFillerColumnGridLinesBrush" Color="Transparent" />
     <SolidColorBrush x:Key="DataGridRowBackgroundBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="DataGridCellBackgroundBrush" Color="Transparent" />
@@ -77,6 +80,7 @@
     <StreamGeometry x:Key="Icon.Check">M20 6L9 17L4 12</StreamGeometry>
     <StreamGeometry x:Key="Icon.ToExport">M3 5V19 M21 12H7 M15 18L21 12L15 6</StreamGeometry>
     <StreamGeometry x:Key="Icon.ArrowLeft">M12 19L5 12L12 5 M19 12H5</StreamGeometry>
+    <StreamGeometry x:Key="Icon.ArrowRight">M12 5L19 12L12 19 M5 12H19</StreamGeometry>
     <StreamGeometry x:Key="Icon.Image">M5 3H19A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3Z M9 7A2 2 0 1 0 9 11A2 2 0 1 0 9 7Z M21 15L17.9 11.9A2 2 0 0 0 15.1 11.9L6 21</StreamGeometry>
   </Application.Resources>
 
@@ -449,21 +453,26 @@
     <Style Selector="DataGrid">
       <Setter Property="RowHeight" Value="40" />
       <Setter Property="ColumnHeaderHeight" Value="48" />
-      <Setter Property="GridLinesVisibility" Value="Horizontal" />
+      <Setter Property="GridLinesVisibility" Value="All" />
       <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource Grey200}" />
+      <Setter Property="VerticalGridLinesBrush" Value="{StaticResource Grey200}" />
       <Setter Property="Background" Value="{StaticResource Sheet}" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="FontSize" Value="14" />
+    </Style>
+    <Style Selector="DataGridColumnHeadersPresenter">
+      <Setter Property="Background" Value="{StaticResource Grey50}" />
     </Style>
     <Style Selector="DataGridColumnHeader">
       <Setter Property="FontSize" Value="12" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{StaticResource Grey600}" />
-      <Setter Property="Background" Value="{StaticResource Grey50}" />
+      <Setter Property="Background" Value="Transparent" />
       <Setter Property="VerticalContentAlignment" Value="Top" />
       <Setter Property="HorizontalContentAlignment" Value="Stretch" />
       <Setter Property="Padding" Value="8,8,4,0" />
-      <Setter Property="AreSeparatorsVisible" Value="False" />
+      <Setter Property="AreSeparatorsVisible" Value="True" />
+      <Setter Property="SeparatorBrush" Value="{StaticResource Grey300}" />
       <Setter Property="MinHeight" Value="48" />
     </Style>
     <Style Selector="DataGridCell">
