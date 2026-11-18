@@ -705,7 +705,7 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>Modulo cartaceo della RAI</value>
   </data>
   <data name="Docs_MetaCustom" xml:space="preserve">
-    <value>Modulo cartaceo della RAI · modello proprio</value>
+    <value>Modulo cartaceo della RAI · modulo proprio</value>
   </data>
   <data name="Docs_ExportedAt" xml:space="preserve">
     <value>Esportato {0} alle {1}</value>
@@ -717,19 +717,19 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>Mostra nella cartella</value>
   </data>
   <data name="Docs_ReplaceTemplate" xml:space="preserve">
-    <value>Sostituisci modello…</value>
+    <value>Sostituisci modulo…</value>
   </data>
   <data name="Docs_UseOriginal" xml:space="preserve">
-    <value>Usa il modello originale</value>
+    <value>Usa il modulo originale</value>
   </data>
   <data name="Docs_Export" xml:space="preserve">
     <value>Esporta</value>
   </data>
   <data name="Drawer_Presets" xml:space="preserve">
-    <value>Programmi</value>
+    <value>Modelli</value>
   </data>
   <data name="Drawer_NewPreset" xml:space="preserve">
-    <value>Nuovo programma dai dati attuali</value>
+    <value>Nuovo modello dai dati attuali</value>
   </data>
   <data name="Drawer_PresetMore" xml:space="preserve">
     <value>Altre azioni</value>
@@ -753,22 +753,22 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>Elimina…</value>
   </data>
   <data name="Presets_EditorPlaceholder" xml:space="preserve">
-    <value>Nome del programma</value>
+    <value>Nome del modello</value>
   </data>
   <data name="Presets_EditorHint" xml:space="preserve">
     <value>Invio salva, Esc annulla</value>
   </data>
   <data name="Presets_None" xml:space="preserve">
-    <value>Ancora nessun programma. + conserva i dati del DCP aperto per le prossime puntate.</value>
+    <value>Ancora nessun modello. + conserva i dati del DCP aperto per le prossime puntate.</value>
   </data>
   <data name="Presets_NoLibrary" xml:space="preserve">
-    <value>Scegli una cartella per la libreria: DCP Tool vi conserva DCP e programmi.</value>
+    <value>Scegli una cartella per la libreria: DCP Tool vi conserva DCP e modelli.</value>
   </data>
   <data name="Presets_ChooseLibrary" xml:space="preserve">
     <value>Scegli cartella…</value>
   </data>
   <data name="Presets_Blank" xml:space="preserve">
-    <value>Inizia senza programma</value>
+    <value>Inizia senza modello</value>
   </data>
   <data name="Recent_Meta" xml:space="preserve">
     <value>{0} · {1}</value>
@@ -1089,7 +1089,7 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>File di testo</value>
   </data>
   <data name="Picker_Template" xml:space="preserve">
-    <value>Scegli un modello Word per l'Allegato B</value>
+    <value>Scegli un modulo Word per l'Allegato B</value>
   </data>
   <data name="Settings_Library" xml:space="preserve">
     <value>Libreria</value>
@@ -1176,16 +1176,16 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>{0} copiato.</value>
   </data>
   <data name="Status_PresetUpdated" xml:space="preserve">
-    <value>Programma «{0}» aggiornato con i dati attuali.</value>
+    <value>Modello «{0}» aggiornato con i dati attuali.</value>
   </data>
   <data name="Status_TemplateReplaced" xml:space="preserve">
-    <value>L'Allegato B usa ora il modello {0}.</value>
+    <value>L'Allegato B usa ora il modulo {0}.</value>
   </data>
   <data name="Status_TemplateRefused" xml:space="preserve">
-    <value>{0} non può essere usato come modello: {1}</value>
+    <value>{0} non può essere usato come modulo: {1}</value>
   </data>
   <data name="Status_TemplateOriginal" xml:space="preserve">
-    <value>L'Allegato B usa di nuovo il modello originale.</value>
+    <value>L'Allegato B usa di nuovo il modulo originale.</value>
   </data>
   <data name="Songs_MoveUpKey" xml:space="preserve">
     <value>Alt+↑</value>
@@ -1206,7 +1206,7 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>Copia come nuovo DCP</value>
   </data>
   <data name="Save_AsPreset" xml:space="preserve">
-    <value>Salva come programma</value>
+    <value>Salva come modello</value>
   </data>
   <data name="Dlg_DontSave" xml:space="preserve">
     <value>Non salvare</value>

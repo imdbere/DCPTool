@@ -705,7 +705,7 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>RAI's paper form</value>
   </data>
   <data name="Docs_MetaCustom" xml:space="preserve">
-    <value>RAI's paper form · own template</value>
+    <value>RAI's paper form · own form file</value>
   </data>
   <data name="Docs_ExportedAt" xml:space="preserve">
     <value>Exported {0} at {1}</value>
@@ -717,19 +717,19 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Show in folder</value>
   </data>
   <data name="Docs_ReplaceTemplate" xml:space="preserve">
-    <value>Replace template…</value>
+    <value>Replace form file…</value>
   </data>
   <data name="Docs_UseOriginal" xml:space="preserve">
-    <value>Use the original template</value>
+    <value>Use the original form</value>
   </data>
   <data name="Docs_Export" xml:space="preserve">
     <value>Export</value>
   </data>
   <data name="Drawer_Presets" xml:space="preserve">
-    <value>Programmes</value>
+    <value>Presets</value>
   </data>
   <data name="Drawer_NewPreset" xml:space="preserve">
-    <value>New programme from the current details</value>
+    <value>New preset from the current details</value>
   </data>
   <data name="Drawer_PresetMore" xml:space="preserve">
     <value>More actions</value>
@@ -753,22 +753,22 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Delete…</value>
   </data>
   <data name="Presets_EditorPlaceholder" xml:space="preserve">
-    <value>Name of the programme</value>
+    <value>Name of the preset</value>
   </data>
   <data name="Presets_EditorHint" xml:space="preserve">
     <value>Enter saves, Esc cancels</value>
   </data>
   <data name="Presets_None" xml:space="preserve">
-    <value>No programmes yet. + keeps the details of the open DCP for its next episodes.</value>
+    <value>No presets yet. + keeps the details of the open DCP for its next episodes.</value>
   </data>
   <data name="Presets_NoLibrary" xml:space="preserve">
-    <value>Choose a library folder: DCP Tool keeps your DCPs and programmes there.</value>
+    <value>Choose a library folder: DCP Tool keeps your DCPs and presets there.</value>
   </data>
   <data name="Presets_ChooseLibrary" xml:space="preserve">
     <value>Choose folder…</value>
   </data>
   <data name="Presets_Blank" xml:space="preserve">
-    <value>Start without a programme</value>
+    <value>Start without a preset</value>
   </data>
   <data name="Recent_Meta" xml:space="preserve">
     <value>{0} · {1}</value>
@@ -1089,7 +1089,7 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Text file</value>
   </data>
   <data name="Picker_Template" xml:space="preserve">
-    <value>Choose a Word template for Allegato B</value>
+    <value>Choose a Word form file for Allegato B</value>
   </data>
   <data name="Settings_Library" xml:space="preserve">
     <value>Library</value>
@@ -1176,16 +1176,16 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Copied {0}.</value>
   </data>
   <data name="Status_PresetUpdated" xml:space="preserve">
-    <value>Updated the programme "{0}" with the current details.</value>
+    <value>Updated the preset "{0}" with the current details.</value>
   </data>
   <data name="Status_TemplateReplaced" xml:space="preserve">
-    <value>Allegato B now uses the template {0}.</value>
+    <value>Allegato B now uses the form file {0}.</value>
   </data>
   <data name="Status_TemplateRefused" xml:space="preserve">
-    <value>{0} cannot be used as the template: {1}</value>
+    <value>{0} cannot be used as the form file: {1}</value>
   </data>
   <data name="Status_TemplateOriginal" xml:space="preserve">
-    <value>Allegato B uses the original template again.</value>
+    <value>Allegato B uses the original form again.</value>
   </data>
   <data name="Songs_MoveUpKey" xml:space="preserve">
     <value>Alt+↑</value>
@@ -1206,7 +1206,7 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Copy as new DCP</value>
   </data>
   <data name="Save_AsPreset" xml:space="preserve">
-    <value>Save as programme</value>
+    <value>Save as preset</value>
   </data>
   <data name="Dlg_DontSave" xml:space="preserve">
     <value>Don&apos;t save</value>

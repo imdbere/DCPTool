@@ -705,7 +705,7 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
     <value>Papierformular der RAI</value>
   </data>
   <data name="Docs_MetaCustom" xml:space="preserve">
-    <value>Papierformular der RAI · eigene Vorlage</value>
+    <value>Papierformular der RAI · eigenes Formular</value>
   </data>
   <data name="Docs_ExportedAt" xml:space="preserve">
     <value>Exportiert {0} um {1}</value>
@@ -717,19 +717,19 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
     <value>Im Ordner zeigen</value>
   </data>
   <data name="Docs_ReplaceTemplate" xml:space="preserve">
-    <value>Vorlage ersetzen…</value>
+    <value>Formular ersetzen…</value>
   </data>
   <data name="Docs_UseOriginal" xml:space="preserve">
-    <value>Originalvorlage verwenden</value>
+    <value>Originalformular verwenden</value>
   </data>
   <data name="Docs_Export" xml:space="preserve">
     <value>Exportieren</value>
   </data>
   <data name="Drawer_Presets" xml:space="preserve">
-    <value>Sendungen</value>
+    <value>Vorlagen</value>
   </data>
   <data name="Drawer_NewPreset" xml:space="preserve">
-    <value>Neue Sendung aus den aktuellen Angaben</value>
+    <value>Neue Vorlage aus den aktuellen Angaben</value>
   </data>
   <data name="Drawer_PresetMore" xml:space="preserve">
     <value>Weitere Aktionen</value>
@@ -753,22 +753,22 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
     <value>Löschen…</value>
   </data>
   <data name="Presets_EditorPlaceholder" xml:space="preserve">
-    <value>Name der Sendung</value>
+    <value>Name der Vorlage</value>
   </data>
   <data name="Presets_EditorHint" xml:space="preserve">
     <value>Enter speichert, Esc bricht ab</value>
   </data>
   <data name="Presets_None" xml:space="preserve">
-    <value>Noch keine Sendungen. + übernimmt die Angaben des offenen DCP für die nächsten Folgen.</value>
+    <value>Noch keine Vorlagen. + übernimmt die Angaben des offenen DCP für die nächsten Folgen.</value>
   </data>
   <data name="Presets_NoLibrary" xml:space="preserve">
-    <value>Wählen Sie einen Bibliotheksordner: Dort legt DCP Tool Ihre DCPs und Sendungen ab.</value>
+    <value>Wählen Sie einen Bibliotheksordner: Dort legt DCP Tool Ihre DCPs und Vorlagen ab.</value>
   </data>
   <data name="Presets_ChooseLibrary" xml:space="preserve">
     <value>Ordner wählen…</value>
   </data>
   <data name="Presets_Blank" xml:space="preserve">
-    <value>Ohne Sendung beginnen</value>
+    <value>Ohne Vorlage beginnen</value>
   </data>
   <data name="Recent_Meta" xml:space="preserve">
     <value>{0} · {1}</value>
@@ -1089,7 +1089,7 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
     <value>Textdatei</value>
   </data>
   <data name="Picker_Template" xml:space="preserve">
-    <value>Word-Vorlage für Allegato B wählen</value>
+    <value>Word-Formular für Allegato B wählen</value>
   </data>
   <data name="Settings_Library" xml:space="preserve">
     <value>Bibliothek</value>
@@ -1176,16 +1176,16 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
     <value>{0} kopiert.</value>
   </data>
   <data name="Status_PresetUpdated" xml:space="preserve">
-    <value>Sendung „{0}“ mit den aktuellen Angaben aktualisiert.</value>
+    <value>Vorlage „{0}“ mit den aktuellen Angaben aktualisiert.</value>
   </data>
   <data name="Status_TemplateReplaced" xml:space="preserve">
-    <value>Allegato B verwendet jetzt die Vorlage {0}.</value>
+    <value>Allegato B verwendet jetzt das Formular {0}.</value>
   </data>
   <data name="Status_TemplateRefused" xml:space="preserve">
-    <value>{0} kann nicht als Vorlage verwendet werden: {1}</value>
+    <value>{0} kann nicht als Formular verwendet werden: {1}</value>
   </data>
   <data name="Status_TemplateOriginal" xml:space="preserve">
-    <value>Allegato B verwendet wieder die Originalvorlage.</value>
+    <value>Allegato B verwendet wieder das Originalformular.</value>
   </data>
   <data name="Songs_MoveUpKey" xml:space="preserve">
     <value>Alt+↑</value>
@@ -1206,7 +1206,7 @@ Platzhalter – noch zu bestätigen: wo genau sie zu finden sind.</value>
     <value>Kopie als neuer DCP</value>
   </data>
   <data name="Save_AsPreset" xml:space="preserve">
-    <value>Als Sendung speichern</value>
+    <value>Als Vorlage speichern</value>
   </data>
   <data name="Dlg_DontSave" xml:space="preserve">
     <value>Nicht speichern</value>
