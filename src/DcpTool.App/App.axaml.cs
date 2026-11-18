@@ -63,6 +63,7 @@ public partial class App : Application
             {
                 ActivityLogFolder = paths.LogFolder,
                 LegacyBackupFolder = paths.LegacyBackupFolder,
+                TemplateFile = paths.DocumentTemplateFile,
             };
 
             AppDomain.CurrentDomain.UnhandledException += (_, e) => OnUnhandled(e.ExceptionObject as Exception, "domain");

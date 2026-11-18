@@ -1,0 +1,180 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DcpTool.App.ViewModels"
+             xmlns:l="using:DcpTool.App.Localisation"
+             xmlns:c="using:DcpTool.App.Views.Controls"
+             x:Class="DcpTool.App.Views.ExportView"
+             x:DataType="vm:MainViewModel">
+  <UserControl.Styles>
+    <Style Selector="TextBlock.logLevel">
+      <Setter Property="Foreground" Value="{StaticResource Grey500}" />
+    </Style>
+    <Style Selector="TextBlock.logLevel.warning">
+      <Setter Property="Foreground" Value="{StaticResource Grey900}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.logLevel.error, TextBlock.logText.error">
+      <Setter Property="Foreground" Value="{StaticResource ErrorText}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.logText">
+      <Setter Property="Foreground" Value="{StaticResource Grey800}" />
+    </Style>
+    <Style Selector="TextBlock.logText.warning">
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+  </UserControl.Styles>
+
+  <!-- Step 4: RAI and the documents. Validation lives in one place, the console. -->
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,28,32,40" MaxWidth="760" Spacing="28">
+
+      <StackPanel Spacing="16">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="h2" Text="RAI" />
+          <TextBlock FontSize="14" Foreground="{StaticResource Grey600}" Text="{l:Tr Export_RaiSub}" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- Uploaded: RAI's number of the DCP -->
+        <StackPanel Spacing="12" IsVisible="{Binding IsUploaded}">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <c:LineIcon Width="18" Height="18" Foreground="{StaticResource Grey700}" Data="{StaticResource Icon.CheckCircle}" />
+            <TextBlock Text="{Binding UploadedAtText}" FontWeight="Medium" VerticalAlignment="Center" />
+          </StackPanel>
+          <Border Background="{StaticResource Grey100}" BorderBrush="{StaticResource Grey200}" BorderThickness="1" CornerRadius="10" Padding="16,14">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="{Binding RaiNumberLabel}" />
+                <SelectableTextBlock Text="{Binding RaiNumber}" FontSize="22" FontWeight="SemiBold" />
+              </StackPanel>
+              <Button Grid.Column="1" Classes="secondary" Padding="14,0" Command="{Binding CopyRaiNumberCommand}" IsVisible="{Binding HasRaiNumber}"
+                      VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <c:LineIcon Data="{StaticResource Icon.Copy}" />
+                  <TextBlock Text="{l:Tr Export_CopyNumber}" />
+                </StackPanel>
+              </Button>
+            </Grid>
+          </Border>
+        </StackPanel>
+
+        <!-- Failed: the reason in plain words, what was sent, what to do -->
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" IsVisible="{Binding IsUploadFailed}">
+          <c:LineIcon Width="20" Height="20" Margin="0,1,0,0" VerticalAlignment="Top" Foreground="{StaticResource ErrorText}" Data="{StaticResource Icon.Alert}" />
+          <StackPanel Grid.Column="1" Spacing="4">
+            <TextBlock Text="{l:Tr Export_FailTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource ErrorText}" />
+            <TextBlock Text="{Binding UploadFailureText}" TextWrapping="Wrap" LineHeight="21" />
+            <TextBlock Text="{Binding UploadFailureHint}" TextWrapping="Wrap" LineHeight="21" Foreground="{StaticResource Grey600}" />
+          </StackPanel>
+        </Grid>
+
+        <TextBlock Text="{Binding PartialUploadNote}" IsVisible="{Binding HasPartialUploadNote}" TextWrapping="Wrap" Classes="secondary"
+                   Foreground="{StaticResource Grey700}" />
+
+        <WrapPanel ItemSpacing="8" LineSpacing="8">
+          <!-- Before the upload -->
+          <Button Classes="secondary" Content="{l:Tr Export_Check}" Command="{Binding CheckCommand}" IsVisible="{Binding IsUploadReady}"
+                  IsEnabled="{Binding !IsBusy}" />
+          <Button Classes="primary" Padding="14,0,18,0" Command="{Binding UploadCommand}" IsVisible="{Binding IsUploadReady}"
+                  IsEnabled="{Binding CanUpload}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <c:LineIcon Data="{StaticResource Icon.Upload}" />
+              <TextBlock Text="{l:Tr Export_Upload}" />
+            </StackPanel>
+          </Button>
+          <!-- After the upload -->
+          <Button Classes="secondary" Padding="14,0" Command="{Binding OpenRaiDcpCommand}" IsVisible="{Binding IsUploaded}" IsEnabled="{Binding !IsBusy}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="{l:Tr Export_OpenAtRai}" />
+              <c:LineIcon Width="15" Height="15" Data="{StaticResource Icon.External}" />
+            </StackPanel>
+          </Button>
+          <Button Classes="secondary" Padding="14,0" Content="{l:Tr Export_UploadAgain}" Command="{Binding UploadCommand}" IsVisible="{Binding IsUploaded}"
+                  IsEnabled="{Binding CanUpload}" />
+          <!-- Failed -->
+          <Button Classes="primary" Content="{l:Tr Export_Retry}" Command="{Binding UploadCommand}" IsVisible="{Binding IsUploadFailed}"
+                  IsEnabled="{Binding CanUpload}" />
+          <Button Classes="secondary" Padding="14,0" Content="{l:Tr Export_OpenSettings}" Command="{Binding OpenSettingsCommand}"
+                  IsVisible="{Binding IsUploadFailed}" />
+          <Button Classes="ghost" Content="{l:Tr Export_Forget}" Command="{Binding ForgetUploadCommand}" IsVisible="{Binding CanForgetUpload}" />
+          <!-- While uploading -->
+          <Button Classes="secondary" Content="{l:Tr Common_Cancel}" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsUploading}" />
+        </WrapPanel>
+
+        <!-- The console: infos, warnings and upload errors in one list -->
+        <Border BorderBrush="{StaticResource Grey300}" BorderThickness="1" CornerRadius="8" ClipToBounds="True">
+          <DockPanel>
+            <Border DockPanel.Dock="Top" Background="{StaticResource Grey100}" BorderBrush="{StaticResource Grey200}" BorderThickness="0,0,0,1"
+                    Padding="12,4,6,4">
+              <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+                <TextBlock Text="{Binding ConsoleHeader}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Grey600}" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="ghost small" Content="{l:Tr Console_Copy}" Command="{Binding CopyConsoleCommand}" />
+                <Button Grid.Column="2" Classes="ghost small" Content="{l:Tr Console_Save}" Command="{Binding SaveConsoleCommand}"
+                        ToolTip.Tip="{l:Tr Console_SaveTip}" />
+              </Grid>
+            </Border>
+            <ScrollViewer x:Name="ConsoleScroll" MaxHeight="216" Background="{StaticResource Sheet}" HorizontalScrollBarVisibility="Disabled">
+              <Panel Margin="0,8">
+                <TextBlock Text="{l:Tr Console_Empty}" Margin="12,1" FontFamily="{StaticResource MonoFont}" FontSize="12"
+                           Foreground="{StaticResource Grey500}" IsVisible="{Binding IsConsoleEmpty}" />
+                <ItemsControl ItemsSource="{Binding ConsoleLines}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ConsoleLine">
+                      <Grid ColumnDefinitions="64,72,*" ColumnSpacing="8" Margin="12,1">
+                        <TextBlock Text="{Binding Time}" FontFamily="{StaticResource MonoFont}" FontSize="12" LineHeight="19"
+                                   Foreground="{StaticResource Grey500}" />
+                        <TextBlock Grid.Column="1" Text="{Binding LevelText}" FontFamily="{StaticResource MonoFont}" FontSize="12" LineHeight="19"
+                                   Classes="logLevel" Classes.warning="{Binding IsWarning}" Classes.error="{Binding IsError}" />
+                        <SelectableTextBlock Grid.Column="2" Text="{Binding Message}" FontFamily="{StaticResource MonoFont}" FontSize="12" LineHeight="19"
+                                             TextWrapping="Wrap" Classes="logText" Classes.warning="{Binding IsWarning}" Classes.error="{Binding IsError}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Panel>
+            </ScrollViewer>
+          </DockPanel>
+        </Border>
+      </StackPanel>
+
+      <Rectangle Height="1" Fill="{StaticResource Grey200}" />
+
+      <!-- Documents: a fixed set of exports; each template can be replaced -->
+      <StackPanel Spacing="12">
+        <TextBlock Classes="h2" Text="{l:Tr Docs_Title}" />
+        <Border BorderBrush="{StaticResource Grey200}" BorderThickness="0,1" Padding="0,12">
+          <Grid ColumnDefinitions="36,*,Auto,Auto" ColumnSpacing="12">
+            <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource Grey100}">
+              <c:LineIcon Width="18" Height="18" StrokeThickness="1.75" Foreground="{StaticResource Grey700}" Data="{StaticResource Icon.FileText}" />
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+              <TextBlock Text="{l:Tr Docs_Name}" FontSize="15" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+              <WrapPanel>
+                <TextBlock Text="{Binding DocumentMeta}" Classes="secondary" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding IsDocumentExported}">
+                  <TextBlock Text=" · " Classes="secondary" VerticalAlignment="Center" />
+                  <Button Classes="link" Command="{Binding OpenExportedDocumentCommand}">
+                    <TextBlock Text="{l:Tr Docs_Open}" FontSize="13" />
+                  </Button>
+                  <TextBlock Text=" · " Classes="secondary" VerticalAlignment="Center" />
+                  <Button Classes="link" Command="{Binding ShowExportedDocumentCommand}">
+                    <TextBlock Text="{l:Tr Docs_ShowInFolder}" FontSize="13" />
+                  </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" IsVisible="{Binding HasCustomTemplate}">
+                  <TextBlock Text=" · " Classes="secondary" VerticalAlignment="Center" />
+                  <Button Classes="link" Command="{Binding UseOriginalTemplateCommand}">
+                    <TextBlock Text="{l:Tr Docs_UseOriginal}" FontSize="13" />
+                  </Button>
+                </StackPanel>
+              </WrapPanel>
+            </StackPanel>
+            <Button Grid.Column="2" Classes="ghost" Content="{l:Tr Docs_ReplaceTemplate}" Command="{Binding ReplaceTemplateCommand}" VerticalAlignment="Center" />
+            <Button Grid.Column="3" Classes="secondary" Padding="14,0" Content="{l:Tr Docs_Export}" Command="{Binding ExportDocumentCommand}"
+                    VerticalAlignment="Center" IsEnabled="{Binding !IsBusy}" />
+          </Grid>
+        </Border>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

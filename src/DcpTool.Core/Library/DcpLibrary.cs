@@ -13,7 +13,7 @@ public enum LibraryUploadState
     Uploaded,
 }
 
-/// <summary>One .dcp file of the library, with what the browser shows about it.</summary>
+/// <summary>One .dcp file of the library, with what the drawer shows about it.</summary>
 /// <param name="Path">Full path of the file.</param>
 /// <param name="RelativePath">Path below the library folder, with <c>/</c> separators.</param>
 /// <param name="IsPreset">True for files in the <see cref="DcpLibrary.PresetsFolderName"/> folder.</param>
@@ -33,42 +33,27 @@ public sealed record LibraryEntry(
     DateTime Modified,
     string? Error = null)
 {
+    /// <summary>RAI's codes of the programme (organisational unit and programme number), when the DCP has them.</summary>
+    public int? Uorg { get; init; }
+
+    /// <inheritdoc cref="Uorg"/>
+    public int? Matricola { get; init; }
+
     /// <summary>File name without extension.</summary>
     public string Name => System.IO.Path.GetFileNameWithoutExtension(Path);
-
-    /// <summary>Sub-folder below the library, empty for files directly in it.</summary>
-    public string Folder => System.IO.Path.GetDirectoryName(RelativePath)?.Replace('\\', '/') ?? "";
-
-    /// <summary>True when every word of <paramref name="search"/> occurs in the name, titles, episode, date or RAI code.</summary>
-    public bool Matches(string? search)
-    {
-        if (string.IsNullOrWhiteSpace(search))
-        {
-            return true;
-        }
-
-        var haystack = string.Join(' ', RelativePath, Title, Sottotitolo, Puntata?.ToString(), RaiCodice,
-            DataTrasmissione?.ToString("dd.MM.yyyy"), DataTrasmissione?.ToString("yyyy-MM-dd"));
-        return search.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .All(word => haystack.Contains(word, StringComparison.CurrentCultureIgnoreCase));
-    }
 }
 
-/// <summary>What a scan found: the .dcp files and every folder below the library (empty ones too).</summary>
+/// <summary>What a scan found.</summary>
 /// <param name="Entries">All .dcp files, presets included, in no particular order.</param>
-/// <param name="Folders">Every sub-folder, as a path below the library with <c>/</c> separators.</param>
-/// <param name="FolderTimes">Last write time (local) of each folder in <paramref name="Folders"/>.</param>
-public sealed record LibrarySnapshot(
-    IReadOnlyList<LibraryEntry> Entries,
-    IReadOnlyList<string> Folders,
-    IReadOnlyDictionary<string, DateTime> FolderTimes)
+public sealed record LibrarySnapshot(IReadOnlyList<LibraryEntry> Entries)
 {
-    public static readonly LibrarySnapshot Empty = new([], [], new Dictionary<string, DateTime>());
+    public static readonly LibrarySnapshot Empty = new([]);
 }
 
 /// <summary>
 /// The user's DCPs as plain <c>.dcp</c> files in one folder they choose (sub-folders allowed), like a
-/// notes vault: no database, the folder can be copied, synced or edited outside the app at any time.
+/// notes vault: no database, the folder can be copied, synced or edited outside the app at any time. The app has no
+/// browser for it: Explorer is that, the app lists presets and the DCPs changed last.
 /// Presets are ordinary .dcp files without music lines in the <c>Presets</c> sub-folder.
 /// Every scan lists the folder afresh. What was read from a file is kept in memory under its path, last write
 /// time and size, so a re-scan only reads files that are new or changed, also when they were changed outside the app.
@@ -113,15 +98,8 @@ public sealed class DcpLibrary(string folder)
     }
 
     /// <summary>
-    /// All .dcp files, newest broadcast first, presets included (see <see cref="LibraryEntry.IsPreset"/>).
-    /// Never throws: an unreadable file becomes an entry with <see cref="LibraryEntry.Error"/>, a missing
-    /// folder gives an empty list.
-    /// </summary>
-    public IReadOnlyList<LibraryEntry> Scan(CancellationToken cancellationToken = default) =>
-        LibrarySorting.Sort(ScanAll(cancellationToken).Entries, LibrarySort.BroadcastDate).ToList();
-
-    /// <summary>
-    /// All .dcp files and all folders. Never throws for unreadable files or folders; a missing library folder gives
+    /// All .dcp files, presets included (see <see cref="LibraryEntry.IsPreset"/>). Never throws for unreadable files or
+    /// folders: an unreadable file becomes an entry with <see cref="LibraryEntry.Error"/>, a missing library folder gives
     /// an empty snapshot. Only new and changed files are read, see the class summary. Safe to call from any thread.
     /// </summary>
     public LibrarySnapshot ScanAll(CancellationToken cancellationToken = default)
@@ -137,28 +115,20 @@ public sealed class DcpLibrary(string folder)
             return LibrarySnapshot.Empty;
         }
 
-        var folders = new List<string>();
-        var folderTimes = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         var entries = new List<LibraryEntry>();
         var seen = new HashSet<string>(PathComparer);
         var reads = 0;
         try
         {
-            foreach (var info in new DirectoryInfo(Folder).EnumerateFileSystemInfos("*", Enumeration))
+            foreach (var file in new DirectoryInfo(Folder).EnumerateFiles("*", Enumeration))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var relative = Relative(info.FullName);
-                if (relative.Split('/').Any(part => part.StartsWith('.')))
+                if (Relative(file.FullName).Split('/').Any(part => part.StartsWith('.')))
                 {
                     continue; // dot files (temp files of AtomicFile) and anything in dot folders
                 }
 
-                if (info is DirectoryInfo directory)
-                {
-                    folders.Add(relative);
-                    folderTimes[relative] = SafeTime(directory);
-                }
-                else if (info is FileInfo file && file.Extension.Equals(DcpFile.Extension, StringComparison.OrdinalIgnoreCase))
+                if (file.Extension.Equals(DcpFile.Extension, StringComparison.OrdinalIgnoreCase))
                 {
                     seen.Add(file.FullName);
                     entries.Add(GetEntry(file, ref reads));
@@ -179,7 +149,7 @@ public sealed class DcpLibrary(string folder)
         }
 
         LastScanReads = reads;
-        return new LibrarySnapshot(entries, folders, folderTimes);
+        return new LibrarySnapshot(entries);
     }
 
     private LibraryEntry GetEntry(FileInfo file, ref int reads)
@@ -233,7 +203,14 @@ public sealed class DcpLibrary(string folder)
     public LibraryEntry ReadEntry(string file)
     {
         var relative = Relative(file);
-        var isPreset = relative.StartsWith(PresetsFolderName + "/", StringComparison.OrdinalIgnoreCase);
+        return Read(file, relative, relative.StartsWith(PresetsFolderName + "/", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Reads a .dcp file that is not in a library (a file opened from elsewhere). Never throws, like <see cref="ReadEntry"/>.</summary>
+    public static LibraryEntry ReadFile(string file) => Read(Path.GetFullPath(file), Path.GetFileName(file), isPreset: false);
+
+    private static LibraryEntry Read(string file, string relative, bool isPreset)
+    {
         DateTime modified;
         try
         {
@@ -248,88 +225,17 @@ public sealed class DcpLibrary(string folder)
                     { Complete: true } => LibraryUploadState.Uploaded,
                     _ => LibraryUploadState.Partial,
                 },
-                dcp.Upload?.Codice, modified);
+                dcp.Upload?.Codice, modified)
+            {
+                Uorg = dcp.Uorg,
+                Matricola = dcp.Matricola,
+            };
         }
         catch (Exception ex) when (ex is DcpFileException or IOException or UnauthorizedAccessException)
         {
             return new LibraryEntry(file, relative, isPreset, "", "", null, null, 0, LibraryUploadState.NotUploaded, null,
                 SafeTime(new FileInfo(file)), ex.Message);
         }
-    }
-
-    // ---------------------------------------------------------------- folders
-
-    /// <summary>The full path of a folder given as a path below the library ("" = the library itself).</summary>
-    public string FolderPath(string? relativeFolder) =>
-        string.IsNullOrEmpty(relativeFolder)
-            ? Folder
-            : Path.GetFullPath(Path.Combine(Folder, relativeFolder.Replace('/', Path.DirectorySeparatorChar)));
-
-    /// <summary>
-    /// Creates the sub-folder <paramref name="name"/> in <paramref name="parentRelative"/> ("" = the library itself) and
-    /// returns its path below the library. Throws <see cref="DcpFileException"/> when it exists already or cannot be created.
-    /// </summary>
-    public string CreateFolder(string parentRelative, string name)
-    {
-        var parent = FolderPath(parentRelative);
-        if (!Contains(parent))
-        {
-            throw new DcpFileException("The folder is not in the library.");
-        }
-
-        var target = Path.Combine(parent, SafeFileName(name));
-        if (Directory.Exists(target) || File.Exists(target))
-        {
-            throw new DcpFileException($"A folder named \"{Path.GetFileName(target)}\" already exists here.");
-        }
-
-        try
-        {
-            Directory.CreateDirectory(target);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            throw new DcpFileException($"Could not create the folder: {ex.Message}", ex);
-        }
-
-        return Relative(target);
-    }
-
-    /// <summary>
-    /// Moves a file into the library folder <paramref name="targetRelative"/> ("" = the library itself), keeping its
-    /// name, content and modified time. Returns the new path. Throws <see cref="DcpFileException"/> when a file of
-    /// that name is there already or the file cannot be moved.
-    /// </summary>
-    public string Move(string path, string targetRelative)
-    {
-        var directory = FolderPath(targetRelative);
-        if (!Contains(directory))
-        {
-            throw new DcpFileException("The folder is not in the library.");
-        }
-
-        var target = Path.Combine(directory, Path.GetFileName(path));
-        if (PathComparer.Equals(Path.GetFullPath(path), target))
-        {
-            return path;
-        }
-
-        if (File.Exists(target))
-        {
-            throw new DcpFileException($"A DCP named \"{Path.GetFileNameWithoutExtension(target)}\" already exists in that folder.");
-        }
-
-        try
-        {
-            Directory.CreateDirectory(directory);
-            File.Move(path, target);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            throw new DcpFileException($"Could not move the file: {ex.Message}", ex);
-        }
-
-        return target;
     }
 
     // ---------------------------------------------------------------- files written by DCP Tool 0.x
@@ -437,16 +343,6 @@ public sealed class DcpLibrary(string folder)
 
     /// <summary>The next episode of the DCP in <paramref name="path"/>: same header, episode + 1, no lines. Not saved yet.</summary>
     public static Dcp CreateNextEpisode(string path) => DcpFile.Load(path).Dcp.CreateNextEpisode();
-
-    /// <summary>A copy of the file next to it ("name (2).dcp"), as it is, except that it counts as never uploaded.</summary>
-    public string Duplicate(string path)
-    {
-        var dcp = DcpFile.Load(path).Dcp;
-        dcp.Upload = null;
-        var copy = FreePath(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path), startCounterAt: 2);
-        DcpFile.Save(copy, dcp);
-        return copy;
-    }
 
     /// <summary>Renames a file inside its folder. Returns the new path. Throws <see cref="DcpFileException"/> when the name is taken or invalid.</summary>
     public static string Rename(string path, string newName)

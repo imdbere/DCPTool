@@ -3,9 +3,10 @@
         xmlns:vm="using:DcpTool.App.ViewModels"
         xmlns:l="using:DcpTool.App.Localisation"
         xmlns:v="using:DcpTool.App.Views"
+        xmlns:c="using:DcpTool.App.Views.Controls"
         x:Class="DcpTool.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="{Binding WindowTitle}" Width="1280" Height="820" MinWidth="900" MinHeight="560"
+        Title="{Binding WindowTitle}" Width="1366" Height="768" MinWidth="1024" MinHeight="600"
         Icon="avares://DcpTool/icon.ico"
         DragDrop.AllowDrop="True">
   <Window.KeyBindings>
@@ -14,462 +15,315 @@
     <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
     <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
   </Window.KeyBindings>
-  <Window.Resources>
-    <!-- A lower header of the "Programma" expander leaves more room for the lines in a small window -->
-    <x:Double x:Key="ExpanderMinHeight">36</x:Double>
-  </Window.Resources>
+
   <Window.Styles>
-    <Style Selector="Expander /template/ ToggleButton#ExpanderHeader">
-      <Setter Property="MinHeight" Value="36" />
+    <!-- The Add area: a drop target, so its frame is dashed. Open step: accent soft fill and accent dashes. -->
+    <Style Selector="Rectangle.addFrame">
+      <Setter Property="Stroke" Value="{StaticResource Grey400}" />
+      <Setter Property="Fill" Value="{StaticResource Sheet}" />
+      <Setter Property="StrokeThickness" Value="2" />
+      <Setter Property="StrokeDashArray" Value="3,2" />
+      <Setter Property="RadiusX" Value="10" />
+      <Setter Property="RadiusY" Value="10" />
+    </Style>
+    <Style Selector="Panel.addCard:pointerover Rectangle.addFrame">
+      <Setter Property="Stroke" Value="{StaticResource Accent}" />
+      <Setter Property="Fill" Value="{StaticResource Grey50}" />
+    </Style>
+    <Style Selector="Panel.addCard.current Rectangle.addFrame">
+      <Setter Property="Stroke" Value="{StaticResource Accent}" />
+      <Setter Property="Fill" Value="{StaticResource AccentSoft}" />
+    </Style>
+    <Style Selector="Rectangle.dropFrame">
+      <Setter Property="Stroke" Value="{StaticResource Accent}" />
+      <Setter Property="Fill" Value="{StaticResource AccentDrop}" />
+      <Setter Property="StrokeThickness" Value="2" />
+      <Setter Property="RadiusX" Value="10" />
+      <Setter Property="RadiusY" Value="10" />
+    </Style>
+    <Style Selector="Panel.addCard c|LineIcon.areaIcon">
+      <Setter Property="Foreground" Value="{StaticResource Grey600}" />
+    </Style>
+    <Style Selector="Panel.addCard:pointerover c|LineIcon.areaIcon, Panel.addCard.current c|LineIcon.areaIcon">
+      <Setter Property="Foreground" Value="{StaticResource AccentText}" />
+    </Style>
+
+    <!-- The Export area: a place to go, so its frame is solid -->
+    <Style Selector="Button.exportCard">
+      <Setter Property="Background" Value="{StaticResource Sheet}" />
+      <Setter Property="BorderBrush" Value="{StaticResource Grey400}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Foreground" Value="{StaticResource Grey900}" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.exportCard:pointerover">
+      <Setter Property="Background" Value="{StaticResource Grey50}" />
+      <Setter Property="BorderBrush" Value="{StaticResource Grey600}" />
+    </Style>
+    <Style Selector="Button.exportCard.current">
+      <Setter Property="Background" Value="{StaticResource AccentSoft}" />
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+      <Setter Property="BorderThickness" Value="1.5" />
+    </Style>
+    <Style Selector="Button.exportCard c|LineIcon.areaIcon">
+      <Setter Property="Foreground" Value="{StaticResource Grey600}" />
+    </Style>
+    <Style Selector="Button.exportCard:pointerover c|LineIcon.areaIcon, Button.exportCard.current c|LineIcon.areaIcon">
+      <Setter Property="Foreground" Value="{StaticResource AccentText}" />
+    </Style>
+
+    <!-- "Alle Felder": the chevron turns while the fields are folded out -->
+    <Style Selector="Button.stripToggle.expanded /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource Grey100}" />
+    </Style>
+    <Style Selector="Button.stripToggle.expanded c|LineIcon">
+      <Setter Property="RenderTransform" Value="rotate(180deg)" />
+    </Style>
+
+    <!-- The save split button: two secondary buttons that share one outline -->
+    <Style Selector="Button.splitMain">
+      <Setter Property="CornerRadius" Value="6,0,0,6" />
+      <Setter Property="Padding" Value="12,0,14,0" />
+    </Style>
+    <Style Selector="Button.splitMore">
+      <Setter Property="CornerRadius" Value="0,6,6,0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Width" Value="32" />
+      <Setter Property="Margin" Value="-1,0,0,0" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.splitMore:flyout-open /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource Grey100}" />
     </Style>
   </Window.Styles>
 
-  <DockPanel>
-    <Menu DockPanel.Dock="Top" IsEnabled="{Binding !IsBusy}">
-      <MenuItem Header="{l:Tr Menu_File}">
-        <MenuItem Header="{l:Tr Menu_New}" InputGesture="Ctrl+N" Command="{Binding NewDcpCommand}" />
-        <MenuItem Header="{l:Tr Menu_NewNextEpisode}" Command="{Binding NewNextEpisodeCommand}" />
-        <MenuItem Header="{l:Tr Menu_Open}" InputGesture="Ctrl+O" Command="{Binding OpenCommand}" />
-        <MenuItem x:Name="RecentMenu" Header="{l:Tr Menu_OpenRecent}" />
-        <Separator />
-        <MenuItem Header="{l:Tr Menu_Save}" InputGesture="Ctrl+S" Command="{Binding SaveCommand}" />
-        <MenuItem Header="{l:Tr Menu_SaveAs}" InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
-        <Separator />
-        <MenuItem Header="{l:Tr Menu_AddMusicFiles}" Command="{Binding AddMusicFilesCommand}" />
-        <Separator />
-        <MenuItem Header="{l:Tr Menu_Settings}" Command="{Binding ShowSettingsCommand}" />
-        <Separator />
-        <MenuItem Header="{l:Tr Menu_Exit}" Click="Exit_Click" />
-      </MenuItem>
-      <MenuItem Header="{l:Tr Menu_Publish}">
-        <MenuItem Header="{l:Tr Menu_Check}" Command="{Binding CheckCommand}" />
-        <MenuItem Header="{l:Tr Menu_Upload}" Command="{Binding UploadCommand}" />
-        <MenuItem Header="{l:Tr Menu_Export}" Command="{Binding ExportCommand}" />
-        <Separator />
-        <MenuItem Header="{l:Tr Menu_UploadPreview}" Command="{Binding ShowUploadPreviewCommand}" />
-      </MenuItem>
-      <MenuItem Header="_RAI"> <!-- a name, the same in every language -->
-        <MenuItem Header="{l:Tr Menu_LogIn}" Command="{Binding LogInCommand}" />
-        <MenuItem Header="{l:Tr Menu_OpenDcpSearch}" Command="{Binding OpenDcpSearchCommand}" />
-        <Separator />
-        <MenuItem Header="{l:Tr Menu_OpenRaiDcp}" Command="{Binding OpenRaiDcpCommand}" />
-        <MenuItem Header="{l:Tr Menu_ForgetUpload}" Command="{Binding ForgetUploadCommand}" />
-        <MenuItem Header="{l:Tr Menu_SaveDiagnostics}" Command="{Binding SaveDiagnosticsCommand}" />
-      </MenuItem>
-      <MenuItem Header="{l:Tr Menu_Help}">
-        <MenuItem Header="{l:Tr Menu_CheckForUpdates}" Command="{Binding CheckForUpdatesCommand}" />
-        <MenuItem Header="{l:Tr Menu_About}" Command="{Binding AboutCommand}" />
-      </MenuItem>
-    </Menu>
+  <Panel>
+    <Grid ColumnDefinitions="Auto,*">
+      <!-- Step 1: the drawer -->
+      <v:DrawerView Grid.Column="0" Width="256" IsVisible="{Binding ShowDrawer}" />
 
-    <!-- Status bar -->
-    <Border DockPanel.Dock="Bottom" Padding="8,4" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-      <Grid ColumnDefinitions="Auto,16,Auto,16,*,Auto,8,Auto">
-        <TextBlock Text="{Binding FileText}" VerticalAlignment="Center" />
-        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-          <TextBlock Text="{Binding LoginText}" VerticalAlignment="Center" />
-          <TextBlock Text="{Binding RaiDcpText}" FontWeight="SemiBold" VerticalAlignment="Center" IsVisible="{Binding HasRaiDcp}" />
-          <Button Content="{l:Tr Status_OpenAtRai}" Command="{Binding OpenRaiDcpCommand}" IsVisible="{Binding HasRaiDcp}" Padding="8,2" />
-        </StackPanel>
-        <TextBlock Grid.Column="4" Text="{Binding ProgressText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-        <Button Grid.Column="5" Content="{l:Tr Common_Cancel}" Command="{Binding CancelOperationCommand}" IsVisible="{Binding IsBusy}" />
-        <Button Grid.Column="7" Content="{l:Tr Status_UpdateReady}" Command="{Binding RestartForUpdateCommand}" IsVisible="{Binding UpdateReady}" />
-      </Grid>
-    </Border>
+      <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto">
+        <!-- The programme strip: the three fields that change every episode are always editable -->
+        <Border Grid.Row="0" Height="64" Background="{StaticResource Sheet}" BorderBrush="{StaticResource Grey300}" BorderThickness="0,0,0,1"
+                Padding="12,0,16,0">
+          <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="12">
+            <Button Classes="icon" Command="{Binding ToggleDrawerCommand}" ToolTip.Tip="{l:Tr Strip_ToggleDrawer}"
+                    AutomationProperties.Name="{l:Tr Strip_ToggleDrawer}">
+              <c:LineIcon Width="18" Height="18" StrokeThickness="1.75" Data="{StaticResource Icon.PanelLeft}" />
+            </Button>
+            <Rectangle Grid.Column="1" Width="1" Height="32" Fill="{StaticResource Grey300}" />
 
-    <ProgressBar DockPanel.Dock="Bottom" IsIndeterminate="True" Height="3" IsVisible="{Binding IsBusy}" />
-
-    <!-- No library yet: one click to choose it -->
-    <Border DockPanel.Dock="Top" IsVisible="{Binding ShowLibraryBanner}" Padding="10,5" Background="#221E90FF"
-            BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-      <StackPanel Orientation="Horizontal" Spacing="12">
-        <TextBlock VerticalAlignment="Center"
-                   Text="{l:Tr Banner_Text}" />
-        <Button Content="{l:Tr Banner_ChooseFolder}" Command="{Binding ChooseLibraryFolderCommand}" Padding="10,2" />
-      </StackPanel>
-    </Border>
-
-    <Grid x:Name="BodyGrid" ColumnDefinitions="Auto,Auto,*">
-
-    <!-- Library panel -->
-    <Border Grid.Column="0" IsVisible="{Binding ShowLibraryPanel}" MinWidth="220"
-            BorderThickness="0,0,1,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-      <DockPanel Margin="8,6,6,6" IsEnabled="{Binding !IsBusy}">
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
-          <TextBlock Text="{l:Tr Library_Title}" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center"
-                     ToolTip.Tip="{Binding LibraryFolderText}" />
-          <Button Grid.Column="1" Content="{l:Tr Library_Refresh}" Command="{Binding RefreshLibraryCommand}" Padding="6,1" FontSize="12"
-                  ToolTip.Tip="{l:Tr Library_RefreshTip}" />
-          <Button Grid.Column="2" Content="«" Command="{Binding ToggleLibraryPanelCommand}" Padding="7,1" FontSize="12"
-                  ToolTip.Tip="{l:Tr Library_HideTip}" />
-        </Grid>
-
-        <WrapPanel DockPanel.Dock="Top" Margin="0,6,0,0" ItemSpacing="4" LineSpacing="4">
-          <Button Content="{l:Tr Library_New}" Command="{Binding NewDcpCommand}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="{l:Tr Library_NewTip}" />
-          <Button Content="{l:Tr Library_NextEpisode}" Command="{Binding DuplicateNextEpisodeCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="{l:Tr Library_NextEpisodeTip}" />
-          <Button Content="{l:Tr Common_Duplicate}" Command="{Binding DuplicateDcpCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="{l:Tr Library_DuplicateTip}" />
-          <Button Content="{l:Tr Library_SaveAsPreset}" Command="{Binding SaveAsPresetCommand}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="{l:Tr Library_SaveAsPresetTip}" />
-          <Button Content="{l:Tr Library_NewFolder}" Command="{Binding NewFolderCommand}" CommandParameter="{x:Null}" Padding="8,2" FontSize="12"
-                  ToolTip.Tip="{l:Tr Library_NewFolderTip}" />
-        </WrapPanel>
-
-        <!-- Name prompt for rename and save as preset -->
-        <Border DockPanel.Dock="Top" IsVisible="{Binding IsPromptOpen}" Margin="0,6,0,0" Padding="6" CornerRadius="4"
-                Background="#221E90FF">
-          <StackPanel Spacing="4">
-            <TextBlock Text="{Binding PromptLabel}" TextWrapping="Wrap" FontSize="12" />
-            <TextBox x:Name="PromptBox" Text="{Binding PromptValue}" />
-            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right">
-              <Button Content="{Binding PromptAction}" Command="{Binding AcceptPromptCommand}" Padding="8,2" FontSize="12" />
-              <Button Content="{l:Tr Common_Cancel}" Command="{Binding CancelPromptCommand}" Padding="8,2" FontSize="12" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center" ClipToBounds="True"
+                        DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
+              <!-- The RAI form's own terms, the same in every language -->
+              <StackPanel Spacing="2" MaxWidth="320">
+                <TextBlock Classes="label" Text="Programma" />
+                <TextBlock Text="{Binding Programme}" FontSize="16" FontWeight="SemiBold" Height="30" LineHeight="30"
+                           TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding TitoloItaliano}" />
+              </StackPanel>
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Puntata" ToolTip.Tip="{l:Tr Info_Puntata}" />
+                <TextBox Classes="strip" Width="64" Text="{Binding Puntata, UpdateSourceTrigger=LostFocus}"
+                         AutomationProperties.Name="Puntata" />
+              </StackPanel>
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Data trasmissione" ToolTip.Tip="{l:Tr Info_DataTrasmissione}" />
+                <TextBox x:Name="BroadcastDateBox" Classes="strip" Width="124" Text="{Binding DataTrasmissione, UpdateSourceTrigger=LostFocus}"
+                         PlaceholderText="{l:Tr Strip_DatePlaceholder}" AutomationProperties.Name="Data trasmissione" />
+              </StackPanel>
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Durata" ToolTip.Tip="{l:Tr Info_Durata}" />
+                <TextBox Classes="strip" Width="80" Text="{Binding Durata, UpdateSourceTrigger=LostFocus}"
+                         PlaceholderText="{l:Tr Strip_DurationPlaceholder}" AutomationProperties.Name="Durata" />
+              </StackPanel>
+              <Button Classes="ghost stripToggle" Height="30" Padding="8,0,6,0" VerticalAlignment="Bottom" Margin="-4,0,0,0"
+                      Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ToggleStripCommand}"
+                      Classes.expanded="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsStripExpanded}"
+                      Foreground="{StaticResource Grey900}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <Panel>
+                    <TextBlock Text="{l:Tr Strip_AllFields}" IsVisible="{Binding !$parent[Window].((vm:MainViewModel)DataContext).IsStripExpanded}" />
+                    <TextBlock Text="{l:Tr Strip_FewerFields}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsStripExpanded}" />
+                  </Panel>
+                  <c:LineIcon Data="{StaticResource Icon.ChevronDown}" />
+                </StackPanel>
+              </Button>
             </StackPanel>
-          </StackPanel>
+
+            <Button Grid.Column="3" Classes="primary" Height="32" Padding="12,0" IsVisible="{Binding UpdateReady}"
+                    Content="{l:Tr Update_Restart}" Command="{Binding RestartForUpdateCommand}" />
+
+            <!-- Speichern / Speichern unter… as one split button -->
+            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Classes="secondary splitMain" Command="{Binding SaveCommand}" ToolTip.Tip="{l:Tr Save_Tip}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <c:LineIcon Data="{StaticResource Icon.Save}" />
+                  <TextBlock Text="{l:Tr Save_Button}" />
+                </StackPanel>
+              </Button>
+              <Button x:Name="SaveMoreButton" Classes="secondary splitMore" AutomationProperties.Name="{l:Tr Save_More}" ToolTip.Tip="{l:Tr Save_More}">
+                <c:LineIcon Data="{StaticResource Icon.ChevronDown}" />
+              </Button>
+            </StackPanel>
+          </Grid>
         </Border>
 
-        <TextBox DockPanel.Dock="Top" Margin="0,6,0,0" Text="{Binding LibrarySearch}" PlaceholderText="{l:Tr Library_SearchPlaceholder}"
-                 x:Name="SearchBox" />
+        <!-- All fields of the programme, folded out -->
+        <Border Grid.Row="1" IsVisible="{Binding IsStripExpanded}" Background="{StaticResource Grey50}"
+                BorderBrush="{StaticResource Grey300}" BorderThickness="0,0,0,1" Padding="16,14,16,18">
+          <WrapPanel x:Name="FieldsPanel" ItemSpacing="16" LineSpacing="10" DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Titolo italiano" Info="{l:Tr Info_TitoloItaliano}" />
+              <TextBox Classes="field" Text="{Binding TitoloItaliano, UpdateSourceTrigger=LostFocus}" AutomationProperties.Name="Titolo italiano" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Titolo originale" Info="{l:Tr Info_TitoloOriginale}" />
+              <TextBox Classes="field" Text="{Binding TitoloOriginale, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Sottotitolo" Info="{l:Tr Info_Sottotitolo}" />
+              <TextBox Classes="field" Text="{Binding Sottotitolo, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Serie" Info="{l:Tr Info_Serie}" />
+              <TextBox Classes="field" Text="{Binding Serie, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Data registrazione" Info="{l:Tr Info_DataRegistrazione}" />
+              <TextBox Classes="field" Text="{Binding DataRegistrazione, UpdateSourceTrigger=LostFocus}" PlaceholderText="{l:Tr Strip_RegistrazionePlaceholder}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Ora inizio" Info="{l:Tr Info_OraInizio}" />
+              <TextBox Classes="field" Text="{Binding OraInizio, UpdateSourceTrigger=LostFocus}" PlaceholderText="hh:mm:ss" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Sede" Info="{l:Tr Info_Sede}" />
+              <ComboBox ItemsSource="{Binding Sedi}" SelectedItem="{Binding SedeEntry}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Rete" Info="{l:Tr Info_Rete}" />
+              <ComboBox ItemsSource="{Binding Reti}" SelectedItem="{Binding ReteEntry}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Uorg" Info="{l:Tr Info_UorgMatricola}" />
+              <TextBox Classes="field" Text="{Binding Uorg, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Matricola" Info="{l:Tr Info_UorgMatricola}" />
+              <TextBox Classes="field" Text="{Binding Matricola, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Numero contratto" Info="{l:Tr Info_FormOnly}" />
+              <TextBox Classes="field" Text="{Binding NumeroContratto, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Data contratto" Info="{l:Tr Info_FormOnly}" />
+              <TextBox Classes="field" Text="{Binding DataContratto, UpdateSourceTrigger=LostFocus}" PlaceholderText="{l:Tr Strip_DatePlaceholder}" />
+            </StackPanel>
+            <StackPanel Spacing="3">
+              <v:FieldLabel Text="Responsabile RAI" Info="{l:Tr Info_FormOnly}" />
+              <TextBox Classes="field" Text="{Binding ResponsabileRai, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+          </WrapPanel>
+        </Border>
 
-        <Grid DockPanel.Dock="Top" Margin="0,6,0,0" ColumnDefinitions="Auto,*" ColumnSpacing="6">
-          <TextBlock Text="{l:Tr Library_SortLabel}" VerticalAlignment="Center" FontSize="12" Opacity="0.8" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding LibrarySortOptions}" SelectedItem="{Binding SelectedLibrarySort}"
-                    HorizontalAlignment="Stretch" FontSize="12" ToolTip.Tip="{l:Tr Library_SortTip}" />
-        </Grid>
+        <!-- The middle: the songs (step 3), or the guide, the export page or the settings in their place -->
+        <Panel Grid.Row="2">
+          <v:SongsView x:Name="Songs" IsVisible="{Binding IsSongsPage}" />
+          <v:GuideView IsVisible="{Binding IsGuidePage}" />
+          <v:ExportView IsVisible="{Binding IsExportPage}" />
+          <v:SettingsView IsVisible="{Binding IsSettingsPage}" />
+          <ProgressBar IsIndeterminate="True" Height="2" MinHeight="2" VerticalAlignment="Top" IsVisible="{Binding IsBusy}"
+                       Foreground="{StaticResource Accent}" Background="Transparent" />
+        </Panel>
 
-        <TextBlock DockPanel.Dock="Top" Text="{Binding LibraryNotice}" IsVisible="{Binding LibraryNotice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                   TextWrapping="Wrap" Foreground="DarkOrange" Margin="0,4,0,0" FontSize="12" />
-
-        <TextBlock DockPanel.Dock="Bottom" Text="{Binding LibraryFolderText}" Opacity="0.5" FontSize="11" Margin="0,2,0,0"
-                   TextTrimming="PrefixCharacterEllipsis" ToolTip.Tip="{Binding LibraryFolderText}" />
-        <TextBlock DockPanel.Dock="Bottom" Text="{Binding LibraryTargetText}" Opacity="0.7" FontSize="11" Margin="0,4,0,0"
-                   TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LibraryTargetText}" />
-
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,*" Margin="0,6,0,0">
-          <TextBlock Text="{Binding PresetsHeader}" Classes="group" Opacity="0.8" />
-          <ListBox Grid.Row="1" x:Name="PresetList" ItemsSource="{Binding Presets}" MaxHeight="170" Margin="0,2,0,0"
-                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-            <ListBox.ItemTemplate>
-              <DataTemplate x:DataType="vm:LibraryRow">
-                <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowAccent}" BorderThickness="3,0,0,0"
-                        Padding="6,2" Opacity="{Binding RowOpacity}" ToolTip.Tip="{Binding Tip}">
-                  <StackPanel>
-                    <TextBlock Text="{Binding Title}" FontWeight="{Binding TitleWeight}" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding PresetProgramme}" IsVisible="{Binding HasPresetProgramme}" Opacity="0.6" FontSize="11"
-                               TextTrimming="CharacterEllipsis" />
+        <!-- Step 2 and step 4: two fixed areas. The open step is a tab of the white sheet. -->
+        <Grid Grid.Row="3" Height="185">
+          <c:StepSheet OpenStep="{Binding OpenStep}" Ground="{StaticResource Grey150}" Sheet="{StaticResource Sheet}" Line="{StaticResource Grey300}" />
+          <Grid ColumnDefinitions="*,*">
+            <!-- Add -->
+            <Panel Grid.Column="0" Margin="12,13,12,24" Classes="addCard" Classes.current="{Binding IsAddStep}">
+              <Rectangle Classes="addFrame" IsVisible="{Binding !IsDraggingSongs}" />
+              <Rectangle Classes="dropFrame" IsVisible="{Binding IsDraggingSongs}" />
+              <Button Classes="plain" CornerRadius="10" Command="{Binding GoSongsCommand}" Cursor="Hand"
+                      AutomationProperties.Name="{l:Tr Area_ToSongs}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+              <StackPanel HorizontalAlignment="Center" Margin="16,14,16,0">
+                <Panel Width="48" Height="48" HorizontalAlignment="Center" IsHitTestVisible="False">
+                  <c:LineIcon Classes="areaIcon" Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.Plus}"
+                              IsVisible="{Binding IsAddIdle}" />
+                  <c:LineIcon Classes="areaIcon" Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.Plus}"
+                              IsVisible="{Binding IsAddImporting}" />
+                  <c:LineIcon Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.Check}"
+                              Foreground="{StaticResource AccentText}" IsVisible="{Binding IsAddAdded}" />
+                  <c:LineIcon Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.Alert}"
+                              Foreground="{StaticResource Grey900}" IsVisible="{Binding IsAddPartial}" />
+                  <c:LineIcon Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.Download}"
+                              Foreground="{StaticResource AccentText}" IsVisible="{Binding IsDraggingSongs}" />
+                </Panel>
+                <Panel Height="20" Margin="0,6,0,12" HorizontalAlignment="Center">
+                  <TextBlock Text="{l:Tr Add_DropTitle}" FontSize="15" FontWeight="SemiBold" IsVisible="{Binding IsAddIdle}" IsHitTestVisible="False" />
+                  <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" IsVisible="{Binding IsAddImporting}" IsHitTestVisible="False" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAddAdded}">
+                    <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" IsHitTestVisible="False"
+                               TextTrimming="CharacterEllipsis" MaxWidth="440" />
+                    <Button Classes="link" Command="{Binding UndoImportCommand}">
+                      <TextBlock Text="{l:Tr Add_Undo}" FontSize="14" />
+                    </Button>
                   </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
-          <TextBlock Grid.Row="2" Text="{Binding PresetsEmptyText}" IsVisible="{Binding PresetsEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                     TextWrapping="Wrap" Opacity="0.6" FontSize="12" Margin="0,2,0,0" />
-
-          <TextBlock Grid.Row="3" Text="{Binding DcpsHeader}" Classes="group" Opacity="0.8" Margin="0,10,0,0" />
-          <TextBlock Grid.Row="4" Text="{Binding DcpsEmptyText}" IsVisible="{Binding DcpsEmptyText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                     TextWrapping="Wrap" Opacity="0.6" FontSize="12" Margin="0,2,0,0" />
-          <!-- Not searching: the folders with their DCPs -->
-          <TreeView Grid.Row="5" x:Name="LibraryTreeView" ItemsSource="{Binding LibraryTree}" SelectedItem="{Binding SelectedLibraryItem}"
-                    IsVisible="{Binding !IsLibrarySearching}" Margin="0,2,0,0"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-            <TreeView.Styles>
-              <Style Selector="TreeViewItem" x:DataType="vm:LibraryTreeItem">
-                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                <Setter Property="MinHeight" Value="26" />
-              </Style>
-            </TreeView.Styles>
-            <TreeView.DataTemplates>
-              <TreeDataTemplate DataType="vm:LibraryFolderItem" ItemsSource="{Binding Children}">
-                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6" Background="Transparent" ToolTip.Tip="{Binding Tip}">
-                  <PathIcon Width="14" Height="12" Opacity="0.7" VerticalAlignment="Center"
-                            Data="M0,1 L6,1 L8,3 L16,3 L16,14 L0,14 Z" />
-                  <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                             VerticalAlignment="Center" />
-                  <TextBlock Grid.Column="2" Text="{Binding CountText}" FontSize="11" Opacity="0.55" VerticalAlignment="Center"
-                             Margin="0,0,4,0" />
-                </Grid>
-              </TreeDataTemplate>
-              <DataTemplate DataType="vm:LibraryRow">
-                <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowAccent}" BorderThickness="3,0,0,0"
-                        Padding="6,2" Opacity="{Binding RowOpacity}" ToolTip.Tip="{Binding TreeTip}">
-                  <StackPanel Spacing="1">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-                      <TextBlock Text="{Binding Name}" FontWeight="{Binding TitleWeight}" TextTrimming="CharacterEllipsis" />
-                      <TextBlock Grid.Column="1" Text="{Binding DateText}" FontSize="12" Opacity="0.8" VerticalAlignment="Center" />
-                    </Grid>
-                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsReadable}">
-                      <TextBlock Text="{Binding EpisodeText}" FontSize="11"
-                                 IsVisible="{Binding EpisodeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                      <TextBlock Text="{Binding LinesText}" FontSize="11" Opacity="0.7" />
-                      <TextBlock Text="{Binding UploadText}" Foreground="{Binding UploadBrush}" FontSize="11" FontWeight="SemiBold" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAddPartial}">
+                    <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" IsHitTestVisible="False"
+                               TextTrimming="CharacterEllipsis" MaxWidth="440" />
+                    <Button Classes="link" Command="{Binding OpenImportHelpCommand}">
+                      <TextBlock Text="{l:Tr Add_Why}" FontSize="14" />
+                    </Button>
+                  </StackPanel>
+                  <TextBlock Text="{l:Tr Add_Release}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource AccentText}"
+                             IsVisible="{Binding IsDraggingSongs}" IsHitTestVisible="False" />
+                </Panel>
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" IsVisible="{Binding ShowAddButtons}">
+                  <Button Classes="secondary" Content="{l:Tr Add_Pick}" Command="{Binding AddMusicFilesCommand}" />
+                  <Button Classes="howto" Classes.active="{Binding IsGuidePage}" Command="{Binding ToggleGuideCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <c:LineIcon Data="{StaticResource Icon.Help}" />
+                      <TextBlock Text="{l:Tr Add_How}" />
                     </StackPanel>
-                    <TextBlock Text="{l:Tr Library_CannotBeRead}" IsVisible="{Binding !IsReadable}" FontSize="11" FontStyle="Italic" />
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </TreeView.DataTemplates>
-          </TreeView>
+                  </Button>
+                </StackPanel>
+              </StackPanel>
+            </Panel>
 
-          <!-- Searching: the matching DCPs of all folders, each with its folder -->
-          <ListBox Grid.Row="5" x:Name="DcpList" ItemsSource="{Binding LibraryDcps}" Margin="0,2,0,0"
-                   IsVisible="{Binding IsLibrarySearching}"
-                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-            <ListBox.ItemTemplate>
-              <DataTemplate x:DataType="vm:LibraryRow">
-                <Border Background="{Binding RowBackground}" BorderBrush="{Binding RowAccent}" BorderThickness="3,0,0,0"
-                        Padding="6,3" Opacity="{Binding RowOpacity}" ToolTip.Tip="{Binding Tip}">
-                  <StackPanel Spacing="1">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-                      <TextBlock Text="{Binding Title}" FontWeight="{Binding TitleWeight}" TextTrimming="CharacterEllipsis" />
-                      <TextBlock Grid.Column="1" Text="{Binding DateText}" FontSize="12" Opacity="0.8" VerticalAlignment="Center" />
-                    </Grid>
-                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsReadable}">
-                      <TextBlock Text="{Binding EpisodeText}" FontSize="12"
-                                 IsVisible="{Binding EpisodeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                      <TextBlock Text="{Binding LinesText}" FontSize="12" Opacity="0.7" />
-                      <TextBlock Text="{Binding UploadText}" Foreground="{Binding UploadBrush}" FontSize="12" FontWeight="SemiBold" />
-                    </StackPanel>
-                    <TextBlock Text="{l:Tr Library_CannotBeRead}" IsVisible="{Binding !IsReadable}" FontSize="12" FontStyle="Italic" />
-                    <TextBlock Text="{Binding Folder}" IsVisible="{Binding HasFolder}" Opacity="0.5" FontSize="11"
-                               TextTrimming="CharacterEllipsis" />
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+            <!-- Export or upload -->
+            <Button Grid.Column="1" Margin="12,13,12,24" Classes="plain exportCard" Classes.current="{Binding IsExportStep}"
+                    Command="{Binding GoExportCommand}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Top">
+              <StackPanel Margin="16,14,16,0" HorizontalAlignment="Center">
+                <c:LineIcon Classes="areaIcon" Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.ToExport}" />
+                <TextBlock Margin="0,6,0,0" Height="20" Text="{l:Tr Area_ExportTitle}" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                <TextBlock Margin="0,4,0,0" Text="{Binding ExportAreaSubtitle}" FontSize="13" Foreground="{StaticResource Grey600}"
+                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+            </Button>
+          </Grid>
         </Grid>
-      </DockPanel>
-    </Border>
-
-    <!-- Library hidden: a slim strip to bring it back -->
-    <Border Grid.Column="0" IsVisible="{Binding ShowLibraryStrip}" BorderThickness="0,0,1,0"
-            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-      <Button Content="»" Command="{Binding ToggleLibraryPanelCommand}" VerticalAlignment="Top" Margin="2,6"
-              Padding="6,2" ToolTip.Tip="{l:Tr Library_ShowTip}" />
-    </Border>
-
-    <GridSplitter Grid.Column="1" x:Name="LibrarySplitter" Width="5" ResizeDirection="Columns" Background="Transparent"
-                  IsVisible="{Binding ShowLibraryPanel}" />
-
-    <!-- Editor above, issues and log below; the splitter between them resizes the issues area -->
-    <Grid Grid.Column="2" x:Name="MainArea">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="*" MinHeight="230" />
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="130" MinHeight="56" />
-      </Grid.RowDefinitions>
-
-    <Grid x:Name="EditorGrid" Margin="8" IsEnabled="{Binding !IsBusy}">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="*" MinHeight="110" />
-      </Grid.RowDefinitions>
-      <!-- Header form. The labels here and the line column headers below are the RAI form's own terms
-           (Titolo italiano, Sede, Durata ...) and stay as they are in every language: not in the resources.
-           The info icons explain them in the UI language. In a small window the form scrolls instead of being cut off. -->
-
-      <Expander Header="Programma" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                Padding="12,6">
-        <ScrollViewer x:Name="HeaderScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <Grid x:Name="HeaderForm" ColumnDefinitions="*,*,*,*" ColumnSpacing="16" MinWidth="700" Margin="0,0,0,4"
-              DataContext="{Binding Header}" x:DataType="vm:DcpHeader">
-          <StackPanel>
-            <TextBlock Classes="group" Text="Programma" />
-            <v:FieldLabel Text="Titolo italiano" Info="{l:Tr Info_TitoloItaliano}" />
-            <TextBox Text="{Binding TitoloItaliano}" />
-            <v:FieldLabel Text="Titolo originale" Info="{l:Tr Info_TitoloOriginale}" />
-            <TextBox Text="{Binding TitoloOriginale}" />
-            <v:FieldLabel Text="Sottotitolo" Info="{l:Tr Info_Sottotitolo}" />
-            <TextBox Text="{Binding Sottotitolo}" />
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-              <StackPanel>
-                <v:FieldLabel Text="Puntata" Info="{l:Tr Info_Puntata}" />
-                <TextBox Text="{Binding Puntata, UpdateSourceTrigger=LostFocus}" />
-              </StackPanel>
-              <StackPanel Grid.Column="1">
-                <v:FieldLabel Text="Serie" Info="{l:Tr Info_Serie}" />
-                <TextBox Text="{Binding Serie, UpdateSourceTrigger=LostFocus}" />
-              </StackPanel>
-            </Grid>
-          </StackPanel>
-
-          <StackPanel Grid.Column="1">
-            <TextBlock Classes="group" Text="Trasmissione" />
-            <v:FieldLabel Text="Data trasmissione" Info="{l:Tr Info_DataTrasmissione}" />
-            <DatePicker SelectedDate="{Binding DataTrasmissione}" HorizontalAlignment="Stretch" MinWidth="0" />
-            <v:FieldLabel Text="{l:Tr Header_DataRegistrazione}" Info="{l:Tr Info_DataRegistrazione}" />
-            <DatePicker SelectedDate="{Binding DataRegistrazione}" HorizontalAlignment="Stretch" MinWidth="0" />
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-              <StackPanel>
-                <v:FieldLabel Text="Ora inizio" Info="{l:Tr Info_OraInizio}" />
-                <TextBox Text="{Binding OraInizio, UpdateSourceTrigger=LostFocus}" PlaceholderText="hh:mm:ss" />
-              </StackPanel>
-              <StackPanel Grid.Column="1">
-                <v:FieldLabel Text="Durata programma" Info="{l:Tr Info_Durata}" />
-                <TextBox Text="{Binding Durata, UpdateSourceTrigger=LostFocus}" PlaceholderText="hh:mm:ss" />
-              </StackPanel>
-            </Grid>
-            <TextBlock Classes="lbl">
-              <Run Text="Ora fine " /><Run Text="{Binding OraFine}" /><Run Text="   Musica " /><Run Text="{Binding DurataMusica}" />
-            </TextBlock>
-          </StackPanel>
-
-          <StackPanel Grid.Column="2">
-            <TextBlock Classes="group" Text="RAI" />
-            <v:FieldLabel Text="Sede" Info="{l:Tr Info_Sede}" />
-            <ComboBox ItemsSource="{Binding Sedi}" SelectedItem="{Binding SedeEntry}" HorizontalAlignment="Stretch" />
-            <v:FieldLabel Text="Rete" Info="{l:Tr Info_Rete}" />
-            <ComboBox ItemsSource="{Binding Reti}" SelectedItem="{Binding ReteEntry}" HorizontalAlignment="Stretch" />
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-              <StackPanel>
-                <v:FieldLabel Text="Uorg" Info="{l:Tr Info_UorgMatricola}" />
-                <TextBox Text="{Binding Uorg, UpdateSourceTrigger=LostFocus}" />
-              </StackPanel>
-              <StackPanel Grid.Column="1">
-                <v:FieldLabel Text="Matricola" Info="{l:Tr Info_UorgMatricola}" />
-                <TextBox Text="{Binding Matricola, UpdateSourceTrigger=LostFocus}" />
-              </StackPanel>
-            </Grid>
-          </StackPanel>
-
-          <StackPanel Grid.Column="3">
-            <TextBlock Classes="group" Text="Contratto" />
-            <v:FieldLabel Text="Numero contratto" Info="{l:Tr Info_FormOnly}" />
-            <TextBox Text="{Binding NumeroContratto}" />
-            <v:FieldLabel Text="Data contratto" Info="{l:Tr Info_FormOnly}" />
-            <DatePicker SelectedDate="{Binding DataContratto}" HorizontalAlignment="Stretch" MinWidth="0" />
-            <v:FieldLabel Text="Responsabile RAI del programma" Info="{l:Tr Info_FormOnly}" />
-            <TextBox Text="{Binding ResponsabileRai}" />
-          </StackPanel>
-        </Grid>
-        </ScrollViewer>
-      </Expander>
-
-      <!-- Line toolbar: the buttons wrap in a narrow window; the hint takes the room they leave -->
-      <DockPanel Grid.Row="1" Margin="0,8" x:Name="LinesToolbar">
-        <WrapPanel DockPanel.Dock="Left" ItemSpacing="6" LineSpacing="6">
-          <Button Content="{l:Tr Lines_AddMusicFiles}" Command="{Binding AddMusicFilesCommand}" />
-          <Button Content="{l:Tr Lines_AddLine}" Command="{Binding AddLineCommand}" />
-          <Button Content="{l:Tr Common_Duplicate}" Command="{Binding DuplicateLineCommand}" />
-          <Button Content="{l:Tr Lines_Delete}" Command="{Binding DeleteLineCommand}" />
-          <Button Content="{l:Tr Lines_MoveUp}" Command="{Binding MoveUpCommand}" />
-          <Button Content="{l:Tr Lines_MoveDown}" Command="{Binding MoveDownCommand}" />
-        </WrapPanel>
-        <TextBlock Text="{l:Tr Lines_DropHint}" ToolTip.Tip="{l:Tr Lines_DropHint}" VerticalAlignment="Center" Opacity="0.6"
-                   Margin="12,0,0,0" TextTrimming="CharacterEllipsis" />
-      </DockPanel>
-
-      <!-- Lines -->
-      <DataGrid Grid.Row="2" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}"
-                x:Name="LinesGrid" AutoGenerateColumns="False" CanUserSortColumns="False"
-                CanUserReorderColumns="True" CanUserResizeColumns="True" SelectionMode="Single"
-                GridLinesVisibility="All" IsReadOnly="False">
-        <DataGrid.Columns>
-          <DataGridTemplateColumn Header="!" Width="32">
-            <DataGridTemplateColumn.CellTemplate>
-              <DataTemplate x:DataType="vm:LineRow">
-                <TextBlock Text="{Binding IssueMark}" Foreground="{Binding IssueBrush}" HorizontalAlignment="Center"
-                           VerticalAlignment="Center" ToolTip.Tip="{Binding IssueTip}" />
-              </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-          </DataGridTemplateColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="#" Binding="{Binding Number}" IsReadOnly="True" Width="44" />
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Titolo}" Width="220">
-            <DataGridTextColumn.Header>
-              <v:FieldLabel Text="Titolo" Info="{l:Tr Info_LineTitolo}" IsColumnHeader="True" />
-            </DataGridTextColumn.Header>
-          </DataGridTextColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="240">
-            <DataGridTextColumn.Header>
-              <v:FieldLabel Text="Autori" Info="{l:Tr Info_Autori}" IsColumnHeader="True" />
-            </DataGridTextColumn.Header>
-          </DataGridTextColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Esecutori}" Width="160">
-            <DataGridTextColumn.Header>
-              <v:FieldLabel Text="Esecutori" Info="{l:Tr Info_Esecutori}" IsColumnHeader="True" />
-            </DataGridTextColumn.Header>
-          </DataGridTextColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding DurataText}" Width="110">
-            <DataGridTextColumn.Header>
-              <v:FieldLabel Text="Durata" Info="{l:Tr Info_LineDurata}" IsColumnHeader="True" />
-            </DataGridTextColumn.Header>
-          </DataGridTextColumn>
-          <DataGridTemplateColumn Width="170">
-            <DataGridTemplateColumn.Header>
-              <v:FieldLabel Text="Genere" Info="{l:Tr Info_Genere}" IsColumnHeader="True" />
-            </DataGridTemplateColumn.Header>
-            <DataGridTemplateColumn.CellTemplate>
-              <DataTemplate x:DataType="vm:LineRow">
-                <ComboBox ItemsSource="{Binding Generi}" SelectedItem="{Binding GenereEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
-              </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-          </DataGridTemplateColumn>
-          <DataGridTemplateColumn Width="140">
-            <DataGridTemplateColumn.Header>
-              <v:FieldLabel Text="Ruolo" Info="{l:Tr Info_Ruolo}" IsColumnHeader="True" />
-            </DataGridTemplateColumn.Header>
-            <DataGridTemplateColumn.CellTemplate>
-              <DataTemplate x:DataType="vm:LineRow">
-                <ComboBox ItemsSource="{Binding Ruoli}" SelectedItem="{Binding RuoloEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
-              </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-          </DataGridTemplateColumn>
-          <DataGridTemplateColumn Width="150">
-            <DataGridTemplateColumn.Header>
-              <v:FieldLabel Text="Tipo gen." Info="{l:Tr Info_TipoGenerazione}" IsColumnHeader="True" />
-            </DataGridTemplateColumn.Header>
-            <DataGridTemplateColumn.CellTemplate>
-              <DataTemplate x:DataType="vm:LineRow">
-                <ComboBox ItemsSource="{Binding Tipi}" SelectedItem="{Binding TipoEntry}" HorizontalAlignment="Stretch" BorderThickness="0" />
-              </DataTemplate>
-            </DataGridTemplateColumn.CellTemplate>
-          </DataGridTemplateColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Marca}" Width="120">
-            <DataGridTextColumn.Header>
-              <v:FieldLabel Text="Marca" Info="{l:Tr Info_Marca}" IsColumnHeader="True" />
-            </DataGridTextColumn.Header>
-          </DataGridTextColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding SiglaNum}" Width="120">
-            <DataGridTextColumn.Header>
-              <v:FieldLabel Text="Sigla/num" Info="{l:Tr Info_SiglaNum}" IsColumnHeader="True" />
-            </DataGridTextColumn.Header>
-          </DataGridTextColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Edizione}" Width="120">
-            <DataGridTextColumn.Header>
-              <v:FieldLabel Text="Edizione" Info="{l:Tr Info_Edizione}" IsColumnHeader="True" />
-            </DataGridTextColumn.Header>
-          </DataGridTextColumn>
-          <DataGridTextColumn x:DataType="vm:LineRow" Header="{l:Tr Lines_Source}" Binding="{Binding SourceId, Mode=OneWay}" IsReadOnly="True" Width="90" />
-        </DataGrid.Columns>
-      </DataGrid>
+      </Grid>
     </Grid>
 
-    <GridSplitter Grid.Row="1" Height="5" ResizeDirection="Rows" Background="Transparent" />
-
-    <!-- Issues -->
-    <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-      <TabControl Margin="8,0" Padding="0">
-        <TabItem Header="{Binding IssuesHeader}" FontSize="13">
-        <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}">
-          <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:IssueItem">
-              <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="{Binding KindText}" Foreground="{Binding Brush}" FontWeight="SemiBold" Width="70" />
-                <TextBlock Text="{Binding Message}" />
-              </StackPanel>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-        </TabItem>
-        <TabItem Header="{l:Tr Log_Tab}" FontSize="13">
-          <ListBox ItemsSource="{Binding Activity}" FontFamily="Consolas,Menlo,monospace" FontSize="12" />
-        </TabItem>
-      </TabControl>
+    <!-- A .dcp dragged over the window: release to open it -->
+    <Border IsVisible="{Binding IsDraggingDcp}" Background="#E6F6F8FA" Padding="24">
+      <Border Width="440" HorizontalAlignment="Center" VerticalAlignment="Center" Background="{StaticResource Sheet}" CornerRadius="14"
+              BoxShadow="0 16 40 0 #2414171D">
+        <Panel>
+          <Rectangle Stroke="{StaticResource Accent}" StrokeThickness="2" StrokeDashArray="3,2" RadiusX="14" RadiusY="14" />
+          <StackPanel Margin="32,36" Spacing="10" HorizontalAlignment="Center">
+            <c:LineIcon Width="32" Height="32" StrokeThickness="1.75" Data="{StaticResource Icon.File}" Foreground="{StaticResource AccentText}"
+                        HorizontalAlignment="Center" />
+            <TextBlock Text="{l:Tr Open_Release}" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource AccentText}" HorizontalAlignment="Center" />
+            <TextBlock Text="{Binding DraggedDcpName}" FontSize="14" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{l:Tr Open_Note}" Classes="secondary" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+          </StackPanel>
+        </Panel>
+      </Border>
     </Border>
-    </Grid>
-    </Grid>
-  </DockPanel>
+  </Panel>
 </Window>

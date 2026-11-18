@@ -1,0 +1,158 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DcpTool.App.ViewModels"
+             xmlns:l="using:DcpTool.App.Localisation"
+             xmlns:v="using:DcpTool.App.Views"
+             xmlns:c="using:DcpTool.App.Views.Controls"
+             x:Class="DcpTool.App.Views.SongsView"
+             x:DataType="vm:MainViewModel">
+  <UserControl.Styles>
+    <!-- The row number is the handle to drag a song to another place -->
+    <Style Selector="Border.dragHandle">
+      <Setter Property="Cursor" Value="SizeNorthSouth" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="TextBlock.problem">
+      <Setter Property="Foreground" Value="{StaticResource Grey900}" />
+      <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="*,Auto">
+    <!-- Step 3: the songs. Field help from the ? next to some headers; no validation marks in the table. -->
+    <DataGrid x:Name="SongsGrid" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}" IsEnabled="{Binding !IsBusy}"
+              AutoGenerateColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="True"
+              SelectionMode="Single" HeadersVisibility="Column" IsReadOnly="False">
+      <DataGrid.Columns>
+        <DataGridTemplateColumn Header="#" Width="44" IsReadOnly="True" CanUserResize="False">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <Border Classes="dragHandle" ToolTip.Tip="{l:Tr Songs_DragTip}" ToolTip.ShowDelay="900">
+                <TextBlock Text="{Binding Number}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{StaticResource Grey500}" />
+              </Border>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <!-- The headers are the RAI form's own terms, the same in every language; the ? explains them -->
+        <DataGridTextColumn x:DataType="vm:LineRow" Header="Titolo" Binding="{Binding Titolo}" Width="1.5*" MinWidth="136" />
+        <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="1.5*" MinWidth="136">
+          <DataGridTextColumn.Header>
+            <v:FieldLabel Text="Autori" Info="{l:Tr Info_Autori}" IsColumnHeader="True" />
+          </DataGridTextColumn.Header>
+        </DataGridTextColumn>
+        <DataGridTextColumn x:DataType="vm:LineRow" Header="Esecutori" Binding="{Binding Esecutori}" Width="1.1*" MinWidth="104" />
+        <DataGridTemplateColumn Width="76" MinWidth="64">
+          <DataGridTemplateColumn.Header>
+            <v:FieldLabel Text="Durata" Info="{l:Tr Info_LineDurata}" IsColumnHeader="True" />
+          </DataGridTemplateColumn.Header>
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <TextBlock Text="{Binding DurataText}" TextAlignment="Right" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+          <DataGridTemplateColumn.CellEditingTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <TextBox Text="{Binding DurataText}" TextAlignment="Right" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellEditingTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Marca}" Width="0.8*" MinWidth="88">
+          <DataGridTextColumn.Header>
+            <v:FieldLabel Text="Marca" Info="{l:Tr Info_Marca}" IsColumnHeader="True" />
+          </DataGridTextColumn.Header>
+        </DataGridTextColumn>
+        <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding SiglaNum}" Width="0.9*" MinWidth="96">
+          <DataGridTextColumn.Header>
+            <v:FieldLabel Text="Sigla / numero" Info="{l:Tr Info_SiglaNum}" IsColumnHeader="True" />
+          </DataGridTextColumn.Header>
+        </DataGridTextColumn>
+        <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding Edizione}" Width="1*" MinWidth="96">
+          <DataGridTextColumn.Header>
+            <v:FieldLabel Text="Edizione" Info="{l:Tr Info_Edizione}" IsColumnHeader="True" />
+          </DataGridTextColumn.Header>
+        </DataGridTextColumn>
+        <DataGridTemplateColumn Width="88">
+          <DataGridTemplateColumn.Header>
+            <v:FieldLabel Text="Genere SIAE" Info="{l:Tr Info_Genere}" IsColumnHeader="True" />
+          </DataGridTemplateColumn.Header>
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <TextBlock Text="{Binding GenereCode}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+          <DataGridTemplateColumn.CellEditingTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <ComboBox ItemsSource="{Binding Generi}" SelectedItem="{Binding GenereEntry}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellEditingTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Width="76">
+          <DataGridTemplateColumn.Header>
+            <v:FieldLabel Text="Ruolo" Info="{l:Tr Info_Ruolo}" IsColumnHeader="True" />
+          </DataGridTemplateColumn.Header>
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <TextBlock Text="{Binding RuoloCode}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+          <DataGridTemplateColumn.CellEditingTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <ComboBox ItemsSource="{Binding Ruoli}" SelectedItem="{Binding RuoloEntry}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellEditingTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTemplateColumn Width="120">
+          <DataGridTemplateColumn.Header>
+            <v:FieldLabel Text="Tipo generazione" Info="{l:Tr Info_TipoGenerazione}" IsColumnHeader="True" />
+          </DataGridTemplateColumn.Header>
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <TextBlock Text="{Binding TipoCode}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+          <DataGridTemplateColumn.CellEditingTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <ComboBox ItemsSource="{Binding Tipi}" SelectedItem="{Binding TipoEntry}" />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellEditingTemplate>
+        </DataGridTemplateColumn>
+        <!-- ⋯ on the selected row: move up/down, duplicate, delete -->
+        <DataGridTemplateColumn Width="40" IsReadOnly="True" CanUserResize="False">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate x:DataType="vm:LineRow">
+              <Button Classes="mini rowMore" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      IsVisible="{Binding $parent[DataGridRow].IsSelected}"
+                      AutomationProperties.Name="{l:Tr Songs_RowMenu}" ToolTip.Tip="{l:Tr Songs_RowMenu}">
+                <c:LineIcon Data="{StaticResource Icon.More}" />
+              </Button>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+      </DataGrid.Columns>
+    </DataGrid>
+
+    <!-- No songs yet: the header stays, the hint sits below it -->
+    <StackPanel IsVisible="{Binding !HasLines}" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="24,128,24,0" Spacing="6" MaxWidth="460">
+      <TextBlock Text="{l:Tr Songs_EmptyTitle}" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" />
+      <TextBlock Text="{l:Tr Songs_EmptyText}" Foreground="{StaticResource Grey600}" TextWrapping="Wrap" TextAlignment="Center" />
+    </StackPanel>
+
+    <!-- 8 Titel · Musik gesamt 09:36, and the last thing that happened -->
+    <Border Grid.Row="1" Height="36" BorderBrush="{StaticResource Grey200}" BorderThickness="0,1,0,0" Padding="24,0,12,0">
+      <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+        <TextBlock Text="{Binding SongsSummary}" Classes="secondary" VerticalAlignment="Center" IsVisible="{Binding HasLines}" />
+        <TextBlock Grid.Column="1" Text="{Binding StatusText}" Classes="secondary" VerticalAlignment="Center" HorizontalAlignment="Right"
+                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding StatusText}"
+                   Classes.problem="{Binding StatusIsProblem}" />
+        <Button Grid.Column="2" Classes="ghost small" Command="{Binding AddLineCommand}" ToolTip.Tip="{l:Tr Songs_AddLineTip}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <c:LineIcon Width="14" Height="14" Data="{StaticResource Icon.Plus}" />
+            <TextBlock Text="{l:Tr Songs_AddLine}" />
+          </StackPanel>
+        </Button>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

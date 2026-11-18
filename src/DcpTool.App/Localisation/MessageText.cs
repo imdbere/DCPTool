@@ -92,14 +92,14 @@ public static class MessageText
     public static string Rai(RaiException ex) => ex.Code switch
     {
         RaiException.TooManySessions => Loc.Get("Rai_TooManySessions"),
-        RaiException.DraftNotFound => Loc.Format("Rai_DraftNotFound", Loc.MenuName("Menu_ForgetUpload")),
+        RaiException.DraftNotFound => Loc.Format("Rai_DraftNotFound", Loc.Get("Export_Forget")),
         RaiException.FormChanged => Loc.Get("Rai_FormChanged"),
         _ => ex.Kind switch
         {
             RaiErrorKind.InvalidCredentials => Loc.Get("Rai_InvalidCredentials"),
             RaiErrorKind.InteractiveLoginRequired => Loc.Get("Rai_InteractiveLoginRequired"),
             RaiErrorKind.SessionExpired => Loc.Get("Rai_SessionExpired"),
-            RaiErrorKind.UnexpectedPage => Loc.Format("Rai_UnexpectedPage", Loc.MenuName("Menu_SaveDiagnostics")),
+            RaiErrorKind.UnexpectedPage => Loc.Format("Rai_UnexpectedPage", Loc.Get("Console_Save")),
             RaiErrorKind.FormRejected => Loc.Get("Rai_FormRejected"),
             RaiErrorKind.Network => Loc.Get("Rai_Network"),
             _ => ex.Message,

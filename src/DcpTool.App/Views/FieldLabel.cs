@@ -3,72 +3,54 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using DcpTool.App.Localisation;
+using DcpTool.App.Views.Controls;
 
 namespace DcpTool.App.Views;
 
 /// <summary>
-/// The label of a RAI field (its Italian name, the same in every language) with a small info icon. Hovering the
-/// icon shows <see cref="Info"/>, the explanation in the UI language; clicking it shows the same in a popup that
-/// stays open until the user clicks elsewhere.
+/// The label of a RAI field (its Italian name, the same in every language) with a question mark when there is an
+/// explanation. A click on the question mark opens a small popup with the explanation in the UI language
+/// (board "Field help": a simple popup from the ? next to a column header).
 /// </summary>
 public sealed class FieldLabel : Grid
 {
     public static readonly StyledProperty<string?> TextProperty = AvaloniaProperty.Register<FieldLabel, string?>(nameof(Text));
     public static readonly StyledProperty<string?> InfoProperty = AvaloniaProperty.Register<FieldLabel, string?>(nameof(Info));
 
-    /// <summary>True in a grid column header: the label in the header's own style instead of the small form label.</summary>
+    /// <summary>True in a column header of the songs table: the header's own type, wrapping to two lines.</summary>
     public static readonly StyledProperty<bool> IsColumnHeaderProperty = AvaloniaProperty.Register<FieldLabel, bool>(nameof(IsColumnHeader));
 
-    private readonly TextBlock _label = new() { VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
-    private readonly Button _icon;
+    private readonly TextBlock _label = new() { VerticalAlignment = VerticalAlignment.Top };
+    private readonly Button _help;
 
     public FieldLabel()
     {
-        // Label, then the icon right after it; in a narrow column the label is shortened, the icon stays
-        ColumnDefinitions = new ColumnDefinitions("*,Auto");
-        ColumnSpacing = 4;
+        ColumnDefinitions = new ColumnDefinitions("Auto,Auto");
+        ColumnSpacing = 2;
         HorizontalAlignment = HorizontalAlignment.Left;
-        Margin = new Thickness(0, 4, 0, 0);
-        _icon = new Button
+        _help = new Button
         {
-            Padding = new Thickness(0),
-            Margin = new Thickness(0),
+            Classes = { "icon" },
+            Width = 22,
+            Height = 22,
             MinWidth = 0,
             MinHeight = 0,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Help),
-            Focusable = false,
-            Opacity = 0.55,
-            Content = new Border
+            CornerRadius = new CornerRadius(11),
+            VerticalAlignment = VerticalAlignment.Top,
+            Foreground = Res.Brush("Grey500"),
+            Focusable = true,
+            Content = new LineIcon
             {
-                Width = 13,
-                Height = 13,
-                CornerRadius = new CornerRadius(6.5),
-                BorderThickness = new Thickness(1),
-                [!Border.BorderBrushProperty] = _label[!TextBlock.ForegroundProperty],
-                Child = new TextBlock
-                {
-                    Text = "i",
-                    FontSize = 9,
-                    FontWeight = FontWeight.Bold,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                },
+                Width = 15,
+                Height = 15,
+                Data = Res.Geometry("Icon.Help"),
             },
         };
-        _icon.Click += (_, _) =>
-        {
-            var flyout = new Flyout { Content = Explanation(), Placement = PlacementMode.Bottom };
-            flyout.ShowAt(_icon);
-        };
-        _icon.PointerEntered += (_, _) => _icon.Opacity = 1;
-        _icon.PointerExited += (_, _) => _icon.Opacity = 0.55;
-        ToolTip.SetShowDelay(_icon, 250);
+        _help.Click += (_, _) => ShowHelp();
         Children.Add(_label);
-        Children.Add(_icon);
-        SetColumn(_icon, 1);
+        Children.Add(_help);
+        SetColumn(_help, 1);
         ApplyStyle();
     }
 
@@ -96,11 +78,12 @@ public sealed class FieldLabel : Grid
         if (change.Property == TextProperty)
         {
             _label.Text = Text;
-            UpdateTip();
+            AutomationName();
         }
         else if (change.Property == InfoProperty)
         {
-            UpdateTip();
+            _help.IsVisible = !string.IsNullOrWhiteSpace(Info);
+            AutomationName();
         }
         else if (change.Property == IsColumnHeaderProperty)
         {
@@ -108,38 +91,86 @@ public sealed class FieldLabel : Grid
         }
     }
 
+    private void AutomationName() =>
+        Avalonia.Automation.AutomationProperties.SetName(_help, Loc.Format("Help_ButtonName", Text));
+
     private void ApplyStyle()
     {
         if (IsColumnHeader)
         {
-            Margin = default;
+            // Font and colour come from the column header; a narrow column wraps the name to two lines
+            ColumnDefinitions = new ColumnDefinitions("*,Auto");
+            _label.TextWrapping = TextWrapping.Wrap;
+            _label.LineHeight = 15.6;
+            _label.MaxLines = 2;
             _label.ClearValue(TextBlock.FontSizeProperty);
-            _label.Opacity = 1;
+            _label.ClearValue(TextBlock.ForegroundProperty);
+            _help.Margin = new Thickness(0, -3, 0, 0);
         }
         else
         {
-            // As TextBlock.lbl in App.axaml
-            Margin = new Thickness(0, 4, 0, 0);
-            _label.FontSize = 11;
-            _label.Opacity = 0.7;
+            _label.TextWrapping = TextWrapping.NoWrap;
+            _label.TextTrimming = TextTrimming.CharacterEllipsis;
+            _label.FontSize = 12;
+            _label.Foreground = Res.Brush("Grey600");
+            _label.VerticalAlignment = VerticalAlignment.Center;
+            _help.Width = _help.Height = 18;
+            _help.Margin = default;
+            _help.VerticalAlignment = VerticalAlignment.Center;
+            if (_help.Content is LineIcon icon)
+            {
+                icon.Width = icon.Height = 13;
+            }
         }
     }
 
-    private void UpdateTip()
+    private void ShowHelp()
     {
-        _icon.IsVisible = !string.IsNullOrWhiteSpace(Info);
-        ToolTip.SetTip(_icon, string.IsNullOrWhiteSpace(Info) ? null : Explanation());
-    }
-
-    /// <summary>The field name and its explanation. A new control each time: a control can only be shown in one place.</summary>
-    private Control Explanation() => new StackPanel
-    {
-        Spacing = 4,
-        MaxWidth = 380,
-        Children =
+        // Columns on the right half open their help to the left, so it stays inside the window
+        var onRight = TopLevel.GetTopLevel(this) is { } top && _help.TranslatePoint(default, top) is { } at && at.X > top.Bounds.Width / 2;
+        var flyout = new Flyout
         {
-            new TextBlock { Text = Text, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap },
-            new TextBlock { Text = Info, TextWrapping = TextWrapping.Wrap },
-        },
-    };
+            Placement = onRight ? PlacementMode.BottomEdgeAlignedRight : PlacementMode.BottomEdgeAlignedLeft,
+            ShowMode = FlyoutShowMode.Standard,
+        };
+        flyout.FlyoutPresenterClasses.Add("popup");
+        var close = new Button
+        {
+            Classes = { "icon" },
+            Width = 28,
+            Height = 28,
+            Content = new LineIcon { Data = Res.Geometry("Icon.Close") },
+        };
+        Avalonia.Automation.AutomationProperties.SetName(close, Loc.Get("Common_Close"));
+        close.Click += (_, _) => flyout.Hide();
+        var title = new TextBlock
+        {
+            Text = Text,
+            FontSize = 14,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        var head = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { title, close } };
+        SetColumn(close, 1);
+        flyout.Content = new StackPanel
+        {
+            Width = 300,
+            Spacing = 4,
+            Children =
+            {
+                head,
+                new TextBlock
+                {
+                    Text = Info,
+                    FontSize = 13,
+                    FontWeight = FontWeight.Normal,
+                    LineHeight = 19.5,
+                    TextWrapping = TextWrapping.Wrap,
+                    Foreground = Res.Brush("Grey700"),
+                },
+            },
+        };
+        flyout.ShowAt(_help);
+    }
 }

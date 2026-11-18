@@ -285,4 +285,22 @@ public class DocxExporterTests
         Assert.Equal("docx", e.Id);
         Assert.Equal(".docx", e.FileExtension);
     }
+
+    [Fact]
+    public void AReplacementTemplateIsFilledAndAFileThatIsNoWordDocumentIsRefused()
+    {
+        var dcp = MakeDcp(3);
+        using (var template = typeof(DocxExporter).Assembly.GetManifestResourceStream("DcpTool.Export.dcp-template.docx")!)
+        using (var output = new MemoryStream())
+        {
+            new DocxExporter().Export(dcp, Company, output, template);
+            var replaced = Tables(output.ToArray());
+            var builtIn = Tables(Export(dcp));
+            Assert.Equal(builtIn.Count, replaced.Count);
+            Assert.Equal(MusicRows(builtIn[0]), MusicRows(replaced[0]));
+        }
+
+        using var notWord = new MemoryStream("this is not a Word document"u8.ToArray());
+        Assert.Throws<ExportException>(() => new DocxExporter().Export(dcp, Company, new MemoryStream(), notWord));
+    }
 }

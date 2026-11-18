@@ -31,6 +31,9 @@ public sealed class AppPaths
 
     public string LogFolder => Path.Combine(Root, "logs");
 
+    /// <summary>The user's replacement for the built-in Word template of Allegato B; absent when the built-in one is used.</summary>
+    public string DocumentTemplateFile => Path.Combine(Root, "templates", "allegato-b.docx");
+
     /// <summary>Protected password file of the Windows credential store.</summary>
     public string CredentialsFile => Path.Combine(Root, "credentials.bin");
 }

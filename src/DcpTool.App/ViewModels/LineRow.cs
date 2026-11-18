@@ -1,12 +1,9 @@
-using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DcpTool.App.Localisation;
 using DcpTool.Core.Model;
-using DcpTool.Core.Validation;
 
 namespace DcpTool.App.ViewModels;
 
-/// <summary>One row of the lines grid. Writes straight through to its <see cref="DcpLine"/>.</summary>
+/// <summary>One row of the songs table. Writes straight through to its <see cref="DcpLine"/>.</summary>
 public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
 {
     public DcpLine Line { get; } = line;
@@ -49,7 +46,7 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
 
     public string DurataText
     {
-        get => TimeText.Format(Line.Durata);
+        get => TimeText.FormatDuration(Line.Durata);
         set
         {
             if (TimeText.TryParse(value, out var t))
@@ -63,6 +60,9 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
         }
     }
 
+    /// <summary>The plain code, as the table shows it.</summary>
+    public string GenereCode => Line.GenereSiae;
+
     public CodeEntry? GenereEntry
     {
         get => RaiCodeTables.Find(Generi, Line.GenereSiae);
@@ -71,9 +71,13 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
             if (value is not null)
             {
                 Edit(() => Line.GenereSiae = value.Code, nameof(GenereEntry));
+                OnPropertyChanged(nameof(GenereCode));
             }
         }
     }
+
+    /// <summary>The plain code, as the table shows it.</summary>
+    public string RuoloCode => Line.Ruolo;
 
     public CodeEntry? RuoloEntry
     {
@@ -83,9 +87,13 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
             if (value is not null)
             {
                 Edit(() => Line.Ruolo = value.Code, nameof(RuoloEntry));
+                OnPropertyChanged(nameof(RuoloCode));
             }
         }
     }
+
+    /// <summary>The plain code, as the table shows it.</summary>
+    public string TipoCode => Line.TipoGenerazione;
 
     public CodeEntry? TipoEntry
     {
@@ -95,6 +103,7 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
             if (value is not null)
             {
                 Edit(() => Line.TipoGenerazione = value.Code, nameof(TipoEntry));
+                OnPropertyChanged(nameof(TipoCode));
             }
         }
     }
@@ -116,61 +125,4 @@ public sealed class LineRow(DcpLine line, Action changed) : ObservableObject
         get => Line.Edizione;
         set => Edit(() => Line.Edizione = value ?? "", nameof(Edizione));
     }
-
-    public string SourceId => Line.Origin?.SourceId ?? "";
-
-    private string _issueMark = "";
-    public string IssueMark
-    {
-        get => _issueMark;
-        private set => SetProperty(ref _issueMark, value);
-    }
-
-    private IBrush _issueBrush = Brushes.Transparent;
-    public IBrush IssueBrush
-    {
-        get => _issueBrush;
-        private set => SetProperty(ref _issueBrush, value);
-    }
-
-    private string? _issueTip;
-    public string? IssueTip
-    {
-        get => _issueTip;
-        private set => SetProperty(ref _issueTip, value);
-    }
-
-    /// <param name="text">Words an issue in the UI language.</param>
-    public void SetIssues(IReadOnlyList<ValidationIssue> issues, Func<ValidationIssue, string> text)
-    {
-        if (issues.Count == 0)
-        {
-            IssueMark = "";
-            IssueTip = null;
-            return;
-        }
-
-        var error = issues.Any(i => i.IsError);
-        IssueMark = error ? "●" : "▲";
-        IssueBrush = error ? Brushes.Crimson : Brushes.DarkOrange;
-        IssueTip = string.Join(Environment.NewLine, issues.Select(text));
-    }
-}
-
-public enum IssueLevel
-{
-    Info,
-    Warning,
-    Error,
-}
-
-/// <summary>A row of the issues panel.</summary>
-public sealed record IssueItem(IssueLevel Level, IBrush Brush, string Message, Guid? LineId)
-{
-    public string KindText => Level switch
-    {
-        IssueLevel.Error => Loc.Get("Kind_Error"),
-        IssueLevel.Warning => Loc.Get("Kind_Warning"),
-        _ => Loc.Get("Kind_Info"),
-    };
 }

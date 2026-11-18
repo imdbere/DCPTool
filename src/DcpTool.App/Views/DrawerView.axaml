@@ -1,0 +1,179 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DcpTool.App.ViewModels"
+             xmlns:l="using:DcpTool.App.Localisation"
+             xmlns:c="using:DcpTool.App.Views.Controls"
+             x:Class="DcpTool.App.Views.DrawerView"
+             x:DataType="vm:MainViewModel">
+  <UserControl.Styles>
+    <!-- The ⋯ and + of a row appear on hover (and stay while their menu is open or they have the focus) -->
+    <Style Selector="Panel.row Button.reveal">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+    <Style Selector="Panel.row:pointerover Button.reveal, Panel.row Button.reveal:flyout-open, Panel.row Button.reveal:focus-visible">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="Panel.row:pointerover > Button.drawer">
+      <Setter Property="Background" Value="{StaticResource Grey100}" />
+    </Style>
+    <Style Selector="Panel.row:pointerover > Button.drawer.current">
+      <Setter Property="Background" Value="{StaticResource Sheet}" />
+    </Style>
+    <Style Selector="Button.chevron c|LineIcon">
+      <Setter Property="RenderTransform" Value="rotate(-90deg)" />
+    </Style>
+    <Style Selector="Button.chevron.expanded c|LineIcon">
+      <Setter Property="RenderTransform" Value="none" />
+    </Style>
+    <Style Selector="TextBlock.itemMeta">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="Normal" />
+      <Setter Property="Foreground" Value="{StaticResource Grey500}" />
+    </Style>
+  </UserControl.Styles>
+
+  <Border Background="{StaticResource Grey150}" BorderBrush="{StaticResource Grey300}" BorderThickness="0,0,1,0">
+    <DockPanel>
+      <!-- Always at the bottom: Explorer finds the older DCPs; the settings -->
+      <StackPanel DockPanel.Dock="Bottom" Margin="8,8,8,12" Spacing="2">
+        <Button Classes="plain drawer" Height="36" Padding="10,0" Command="{Binding OpenLibraryFolderCommand}" ToolTip.Tip="{Binding LibraryFolderText}">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <c:LineIcon Width="18" Height="18" StrokeThickness="1.75" Foreground="{StaticResource Grey700}" Data="{StaticResource Icon.FolderOpen}" />
+            <TextBlock Text="{l:Tr Drawer_OpenLibrary}" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+        <Button Classes="plain drawer" Classes.current="{Binding IsSettingsPage}" Height="36" Padding="10,0" Command="{Binding OpenSettingsCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <c:LineIcon Width="18" Height="18" StrokeThickness="1.75" Foreground="{StaticResource Grey700}" Data="{StaticResource Icon.Settings}" />
+            <TextBlock Text="{l:Tr Drawer_Settings}" VerticalAlignment="Center" FontWeight="Normal" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+
+      <Panel>
+        <!-- Step 1: start from a programme or from a recent DCP -->
+        <ScrollViewer IsVisible="{Binding ShowDrawerLists}" HorizontalScrollBarVisibility="Disabled" IsEnabled="{Binding !IsBusy}">
+          <StackPanel Margin="8,12,8,12">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4">
+              <Button Classes="plain drawer header chevron" Classes.expanded="{Binding ArePresetsExpanded}" Height="36" Padding="8,0"
+                      Command="{Binding TogglePresetsCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <c:LineIcon Data="{StaticResource Icon.ChevronDown}" />
+                  <TextBlock Text="{l:Tr Drawer_Presets}" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Button Grid.Column="1" Classes="mini" Width="32" Height="32" Command="{Binding BeginNewPresetCommand}"
+                      IsEnabled="{Binding HasLibrary}" ToolTip.Tip="{l:Tr Drawer_NewPreset}" AutomationProperties.Name="{l:Tr Drawer_NewPreset}">
+                <c:LineIcon Data="{StaticResource Icon.Plus}" />
+              </Button>
+            </Grid>
+
+            <StackPanel IsVisible="{Binding ArePresetsExpanded}" Spacing="1" Margin="0,0,0,10">
+              <ItemsControl ItemsSource="{Binding Presets}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:PresetItem">
+                    <Panel Classes="row" Margin="0,0,0,1">
+                      <Button Classes="plain drawer" Height="34" Padding="30,0,40,0" ToolTip.Tip="{Binding Tip}"
+                              Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).StartFromPresetCommand}"
+                              CommandParameter="{Binding}">
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      </Button>
+                      <Button Classes="mini reveal presetMore" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"
+                              AutomationProperties.Name="{l:Tr Drawer_PresetMore}" ToolTip.Tip="{l:Tr Drawer_PresetMore}">
+                        <c:LineIcon Data="{StaticResource Icon.More}" />
+                      </Button>
+                    </Panel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <!-- Naming a new preset, or renaming one -->
+              <StackPanel IsVisible="{Binding IsPresetEditorOpen}" Margin="26,4,4,2" Spacing="4">
+                <TextBox x:Name="PresetEditorBox" Classes="field" Text="{Binding PresetEditorText}" PlaceholderText="{l:Tr Presets_EditorPlaceholder}">
+                  <TextBox.KeyBindings>
+                    <KeyBinding Gesture="Enter" Command="{Binding CommitPresetEditorCommand}" />
+                    <KeyBinding Gesture="Escape" Command="{Binding CancelPresetEditorCommand}" />
+                  </TextBox.KeyBindings>
+                </TextBox>
+                <TextBlock Classes="itemMeta" Text="{Binding PresetEditorHint}" TextWrapping="Wrap" />
+              </StackPanel>
+
+              <TextBlock Classes="itemMeta" Margin="30,4,8,4" Text="{l:Tr Presets_None}" TextWrapping="Wrap" IsVisible="{Binding HasNoPresets}" />
+              <StackPanel Margin="30,4,8,6" Spacing="6" IsVisible="{Binding HasNoLibrary}">
+                <TextBlock Classes="itemMeta" Text="{l:Tr Presets_NoLibrary}" TextWrapping="Wrap" />
+                <Button Classes="secondary" Height="32" Padding="12,0" Content="{l:Tr Presets_ChooseLibrary}" Command="{Binding ChooseLibraryFolderCommand}" />
+              </StackPanel>
+
+              <Button Classes="plain drawer" Height="34" Padding="30,0,8,0" Command="{Binding NewDcpCommand}" Foreground="{StaticResource Grey500}">
+                <TextBlock Text="{l:Tr Presets_Blank}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              </Button>
+            </StackPanel>
+
+            <Button Classes="plain drawer header chevron" Classes.expanded="{Binding IsRecentExpanded}" Height="36" Padding="8,0"
+                    Command="{Binding ToggleRecentCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <c:LineIcon Data="{StaticResource Icon.ChevronDown}" />
+                <TextBlock Text="{l:Tr Drawer_Recent}" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+
+            <ItemsControl ItemsSource="{Binding Recent}" IsVisible="{Binding IsRecentExpanded}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:RecentItem">
+                  <Panel Classes="row" Margin="0,0,0,1">
+                    <Button Classes="plain drawer" Classes.current="{Binding IsCurrent}" MinHeight="48" Padding="30,6,40,6"
+                            Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenRecentCommand}"
+                            CommandParameter="{Binding}">
+                      <StackPanel Spacing="1" VerticalAlignment="Center">
+                        <!-- A long title is shortened, the episode stays readable -->
+                        <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Left" ToolTip.Tip="{Binding Label}">
+                          <TextBlock Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Grid.Column="1" Text="{Binding EpisodeText}" />
+                        </Grid>
+                        <TextBlock Classes="itemMeta" Text="{Binding Meta}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Button>
+                    <Button Classes="mini boxed reveal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,6,0"
+                            IsVisible="{Binding CanStartNext}"
+                            Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).StartNextEpisodeCommand}"
+                            CommandParameter="{Binding}"
+                            ToolTip.Tip="{Binding NextEpisodeTip}" ToolTip.Placement="Right" ToolTip.ShowDelay="150"
+                            AutomationProperties.Name="{Binding NextEpisodeTip}">
+                      <c:LineIcon Data="{StaticResource Icon.Plus}" />
+                    </Button>
+                  </Panel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Classes="itemMeta" Margin="8,8" Text="{Binding LibraryNotice}" TextWrapping="Wrap"
+                       IsVisible="{Binding LibraryNotice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          </StackPanel>
+        </ScrollViewer>
+
+        <!-- While the guide is open: its ways -->
+        <ScrollViewer IsVisible="{Binding IsGuidePage}" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Margin="8,12" Spacing="1">
+            <Button Classes="secondary" HorizontalAlignment="Left" Padding="8,0,12,0" Command="{Binding GoSongsCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <c:LineIcon Data="{StaticResource Icon.ArrowLeft}" />
+                <TextBlock Text="{l:Tr Guide_Back}" />
+              </StackPanel>
+            </Button>
+            <TextBlock Classes="section" Margin="8,18,8,6" Text="{l:Tr Guide_Ways}" />
+            <ItemsControl ItemsSource="{Binding Guide.Ways}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:GuideWay">
+                  <Button Classes="plain drawer" Classes.current="{Binding IsSelected}" MinHeight="36" Padding="10,8" Margin="0,0,0,1"
+                          Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).Guide.SelectCommand}" CommandParameter="{Binding}">
+                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap" />
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </ScrollViewer>
+      </Panel>
+    </DockPanel>
+  </Border>
+</UserControl>

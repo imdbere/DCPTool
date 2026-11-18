@@ -12,44 +12,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>  <!-- Italian. RAI form terms stay as they are. Keys are used as literal strings in the app (see ResourceTests). -->
-  <data name="About_Text" xml:space="preserve">
-    <value>Crea le distinte musicali per RAI (DCP).</value>
-  </data>
-  <data name="About_UnknownVersion" xml:space="preserve">
-    <value>sconosciuta</value>
-  </data>
-  <data name="About_Version" xml:space="preserve">
-    <value>Versione {0}</value>
-  </data>
-  <data name="Banner_ChooseFolder" xml:space="preserve">
-    <value>Scegli la cartella dell&apos;archivio</value>
-  </data>
-  <data name="Banner_Text" xml:space="preserve">
-    <value>Tenere tutti i DCP in una cartella: DCP Tool li elenca, li salva automaticamente e crea le nuove puntate dai modelli.</value>
-  </data>
   <data name="Browser_Title" xml:space="preserve">
     <value>Portale RAI</value>
-  </data>
-  <data name="Check_ForDocument" xml:space="preserve">
-    <value>Per il documento Word:</value>
-  </data>
-  <data name="Check_ForUpload" xml:space="preserve">
-    <value>Per il caricamento su RAI:</value>
-  </data>
-  <data name="Check_Title" xml:space="preserve">
-    <value>Verifica</value>
-  </data>
-  <data name="Common_Browse" xml:space="preserve">
-    <value>Sfoglia...</value>
   </data>
   <data name="Common_Cancel" xml:space="preserve">
     <value>Annulla</value>
   </data>
   <data name="Common_Close" xml:space="preserve">
     <value>Chiudi</value>
-  </data>
-  <data name="Common_Duplicate" xml:space="preserve">
-    <value>Duplica</value>
   </data>
   <data name="Common_Ok" xml:space="preserve">
     <value>OK</value>
@@ -63,26 +33,11 @@
   <data name="Dlg_AlreadyUploaded" xml:space="preserve">
     <value>Già caricato</value>
   </data>
-  <data name="Dlg_CannotExport" xml:space="preserve">
-    <value>Esportazione non ancora possibile</value>
-  </data>
-  <data name="Dlg_DeleteDcp" xml:space="preserve">
-    <value>Elimina DCP</value>
-  </data>
   <data name="Dlg_DeletePermanently" xml:space="preserve">
     <value>Elimina definitivamente</value>
   </data>
   <data name="Dlg_DeletePreset" xml:space="preserve">
     <value>Elimina modello</value>
-  </data>
-  <data name="Dlg_DiagnosticsSaved" xml:space="preserve">
-    <value>Diagnostica salvata</value>
-  </data>
-  <data name="Dlg_Export" xml:space="preserve">
-    <value>Esportazione</value>
-  </data>
-  <data name="Dlg_ExportedWithWarnings" xml:space="preserve">
-    <value>Esportato con avvisi</value>
   </data>
   <data name="Dlg_Forget" xml:space="preserve">
     <value>Dimentica</value>
@@ -102,9 +57,6 @@
   <data name="Dlg_OpenFile" xml:space="preserve">
     <value>Apri file</value>
   </data>
-  <data name="Dlg_RaiLogin" xml:space="preserve">
-    <value>Accesso RAI</value>
-  </data>
   <data name="Dlg_Replace" xml:space="preserve">
     <value>Sostituisci</value>
   </data>
@@ -117,29 +69,11 @@
   <data name="Dlg_UnsavedChanges" xml:space="preserve">
     <value>Modifiche non salvate</value>
   </data>
-  <data name="Dlg_Update" xml:space="preserve">
-    <value>Aggiornamento</value>
-  </data>
   <data name="Dlg_UploadAgain" xml:space="preserve">
     <value>Carica di nuovo</value>
   </data>
-  <data name="Dlg_UploadPreview" xml:space="preserve">
-    <value>Cosa verrebbe caricato</value>
-  </data>
-  <data name="Doc_InLibrary" xml:space="preserve">
-    <value>{0}  • archivio, salvato automaticamente</value>
-  </data>
-  <data name="Doc_Modified" xml:space="preserve">
-    <value>{0}  • modificato</value>
-  </data>
-  <data name="Doc_PendingLibrary" xml:space="preserve">
-    <value>{0}  • salvato nell&apos;archivio appena ha un Titolo italiano</value>
-  </data>
   <data name="Doc_Untitled" xml:space="preserve">
     <value>Senza titolo</value>
-  </data>
-  <data name="Header_DataRegistrazione" xml:space="preserve">
-    <value>Data registrazione (vuota = 5 giorni prima)</value>
   </data>
   <data name="Import_ArtlistCueSheetMissing" xml:space="preserve">
     <value>Nessun cue sheet Artlist trovato, quindi mancano gli autori. Scaricarlo (Artlist &gt; Downloads &gt; Song License &gt; Cue sheet) e trascinarlo sull&apos;elenco.</value>
@@ -184,9 +118,6 @@ Scrivere «Nome Cognome; Nome Cognome» oppure «Cognome, Nome; Cognome, Nome».
   <data name="Info_Edizione" xml:space="preserve">
     <value>Editore musicale. La RAI accetta solo editori che conosce: nel dubbio lasciare vuoto. Vuoto per musicmedia e Artlist.</value>
   </data>
-  <data name="Info_Esecutori" xml:space="preserve">
-    <value>Esecutori della registrazione.</value>
-  </data>
   <data name="Info_FormOnly" xml:space="preserve">
     <value>Viene solo stampato sul modulo Word, non caricato in RAI.</value>
   </data>
@@ -202,9 +133,6 @@ Segnaposto – da confermare: se il modulo web della RAI li accetta tutti.</valu
   </data>
   <data name="Info_LineDurata" xml:space="preserve">
     <value>Durata effettivamente usata in onda, hh:mm:ss. Deve essere coerente con la Durata del programma.</value>
-  </data>
-  <data name="Info_LineTitolo" xml:space="preserve">
-    <value>Titolo del brano.</value>
   </data>
   <data name="Info_Marca" xml:space="preserve">
     <value>Etichetta della registrazione. La RAI accetta solo etichette del proprio elenco; per le altre il programma avvisa.
@@ -359,290 +287,11 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Issue_Upload" xml:space="preserve">
     <value>Caricamento: {0}</value>
   </data>
-  <data name="Issues_Counts" xml:space="preserve">
-    <value>Errori: {0}, avvisi: {1}, note: {2}</value>
-  </data>
-  <data name="Issues_None" xml:space="preserve">
-    <value>Nessun problema trovato.</value>
-  </data>
-  <data name="Issues_Tab" xml:space="preserve">
-    <value>Segnalazioni: {0}</value>
-  </data>
-  <data name="Kind_Error" xml:space="preserve">
-    <value>Errore</value>
-  </data>
-  <data name="Kind_Info" xml:space="preserve">
-    <value>Info</value>
-  </data>
-  <data name="Kind_Warning" xml:space="preserve">
-    <value>Avviso</value>
-  </data>
-  <data name="Library_CannotBeRead" xml:space="preserve">
-    <value>Non leggibile</value>
-  </data>
-  <data name="Library_CannotBeReadTip" xml:space="preserve">
-    <value>Questo file non è leggibile: {0}</value>
-  </data>
-  <data name="Library_DcpsHeader" xml:space="preserve">
-    <value>DCP ({0})</value>
-  </data>
-  <data name="Library_DcpsHeaderFiltered" xml:space="preserve">
-    <value>DCP ({0} di {1})</value>
-  </data>
-  <data name="Library_Delete" xml:space="preserve">
-    <value>Elimina...</value>
-  </data>
-  <data name="Library_DuplicateNextEpisode" xml:space="preserve">
-    <value>Duplica come puntata successiva</value>
-  </data>
-  <data name="Library_DuplicateTip" xml:space="preserve">
-    <value>Una copia esatta del DCP aperto, come se non fosse mai stato caricato</value>
-  </data>
-  <data name="Library_EditPreset" xml:space="preserve">
-    <value>Modifica modello</value>
-  </data>
   <data name="Library_FolderMissing" xml:space="preserve">
     <value>La cartella dell&apos;archivio non esiste (più). Sceglierne un&apos;altra nelle Impostazioni, altrimenti verrà creata al salvataggio di un DCP.</value>
   </data>
-  <data name="Library_HideTip" xml:space="preserve">
-    <value>Nascondi l&apos;archivio</value>
-  </data>
-  <data name="Library_Lines" xml:space="preserve">
-    <value>{0} righe</value>
-  </data>
-  <data name="Library_MoveTo" xml:space="preserve">
-    <value>Sposta in</value>
-  </data>
-  <data name="Library_New" xml:space="preserve">
-    <value>Nuovo</value>
-  </data>
-  <data name="Library_NewFolder" xml:space="preserve">
-    <value>Nuova cartella</value>
-  </data>
-  <data name="Library_NewFolderTip" xml:space="preserve">
-    <value>Una nuova sottocartella nella cartella selezionata</value>
-  </data>
-  <data name="Library_NewFromPreset" xml:space="preserve">
-    <value>Nuovo DCP da questo modello</value>
-  </data>
-  <data name="Library_NewSubfolder" xml:space="preserve">
-    <value>Nuova sottocartella...</value>
-  </data>
-  <data name="Library_NewTip" xml:space="preserve">
-    <value>Un nuovo DCP vuoto</value>
-  </data>
-  <data name="Library_NextEpisode" xml:space="preserve">
-    <value>Puntata successiva</value>
-  </data>
-  <data name="Library_NextEpisodeTip" xml:space="preserve">
-    <value>Un nuovo DCP per la puntata successiva di quello aperto: stessi dati del programma, Puntata + 1, nessuna riga</value>
-  </data>
-  <data name="Library_NoDcpMatch" xml:space="preserve">
-    <value>Nessun DCP corrisponde alla ricerca.</value>
-  </data>
-  <data name="Library_NoDcps" xml:space="preserve">
-    <value>Nessun DCP nell&apos;archivio. Iniziarne uno con «{0}» o facendo clic su un modello.</value>
-  </data>
-  <data name="Library_NoPresetMatch" xml:space="preserve">
-    <value>Nessun modello corrisponde alla ricerca.</value>
-  </data>
-  <data name="Library_NoPresets" xml:space="preserve">
-    <value>Nessun modello. «{0}» conserva i dati del programma del DCP aperto per le puntate successive.</value>
-  </data>
-  <data name="Library_NotUploaded" xml:space="preserve">
-    <value>Non caricato</value>
-  </data>
-  <data name="Library_OneLine" xml:space="preserve">
-    <value>1 riga</value>
-  </data>
-  <data name="Library_OpenInFileManager" xml:space="preserve">
-    <value>Apri in Esplora file</value>
-  </data>
-  <data name="Library_OpenInFinder" xml:space="preserve">
-    <value>Apri nel Finder</value>
-  </data>
-  <data name="Library_PartlyUploaded" xml:space="preserve">
-    <value>Caricato in parte</value>
-  </data>
-  <data name="Library_PresetsHeader" xml:space="preserve">
-    <value>Modelli ({0})</value>
-  </data>
-  <data name="Library_PresetsHeaderFiltered" xml:space="preserve">
-    <value>Modelli ({0} di {1})</value>
-  </data>
-  <data name="Library_Refresh" xml:space="preserve">
-    <value>Aggiorna</value>
-  </data>
-  <data name="Library_RefreshTip" xml:space="preserve">
-    <value>Rileggi la cartella dell&apos;archivio</value>
-  </data>
-  <data name="Library_Rename" xml:space="preserve">
-    <value>Rinomina...</value>
-  </data>
-  <data name="Library_SaveAsPreset" xml:space="preserve">
-    <value>Salva come modello</value>
-  </data>
-  <data name="Library_SaveAsPresetTip" xml:space="preserve">
-    <value>Salva i dati del programma del DCP aperto come modello per le nuove puntate</value>
-  </data>
-  <data name="Library_SearchPlaceholder" xml:space="preserve">
-    <value>Cerca titolo, puntata, data, codice RAI</value>
-  </data>
-  <data name="Library_ShowInFileManager" xml:space="preserve">
-    <value>Mostra in Esplora file</value>
-  </data>
-  <data name="Library_ShowInFinder" xml:space="preserve">
-    <value>Mostra nel Finder</value>
-  </data>
-  <data name="Library_ShowTip" xml:space="preserve">
-    <value>Mostra l&apos;archivio</value>
-  </data>
-  <data name="Library_SortBroadcast" xml:space="preserve">
-    <value>Data di trasmissione</value>
-  </data>
-  <data name="Library_SortLabel" xml:space="preserve">
-    <value>Ordina:</value>
-  </data>
-  <data name="Library_SortName" xml:space="preserve">
-    <value>Nome del file</value>
-  </data>
-  <data name="Library_SortRecent" xml:space="preserve">
-    <value>Modificati di recente</value>
-  </data>
-  <data name="Library_SortTip" xml:space="preserve">
-    <value>Ordine dei DCP e delle cartelle</value>
-  </data>
-  <data name="Library_SortTitle" xml:space="preserve">
-    <value>Titolo</value>
-  </data>
-  <data name="Library_TargetFolder" xml:space="preserve">
-    <value>I nuovi DCP vanno in: {0}</value>
-  </data>
-  <data name="Library_Title" xml:space="preserve">
-    <value>Archivio</value>
-  </data>
-  <data name="Library_TopLevel" xml:space="preserve">
-    <value>Archivio (livello principale)</value>
-  </data>
-  <data name="Library_Uploaded" xml:space="preserve">
-    <value>Caricato</value>
-  </data>
-  <data name="Lines_AddLine" xml:space="preserve">
-    <value>Aggiungi riga</value>
-  </data>
-  <data name="Lines_AddMusicFiles" xml:space="preserve">
-    <value>Aggiungi file musicali...</value>
-  </data>
-  <data name="Lines_Delete" xml:space="preserve">
-    <value>Elimina</value>
-  </data>
-  <data name="Lines_DropHint" xml:space="preserve">
-    <value>Trascinare file audio, cue sheet o cartelle in un punto qualsiasi della finestra.</value>
-  </data>
-  <data name="Lines_MoveDown" xml:space="preserve">
-    <value>Sposta giù</value>
-  </data>
-  <data name="Lines_MoveUp" xml:space="preserve">
-    <value>Sposta su</value>
-  </data>
-  <data name="Lines_Source" xml:space="preserve">
-    <value>Fonte</value>
-  </data>
-  <data name="Log_Tab" xml:space="preserve">
-    <value>Registro</value>
-  </data>
-  <data name="Login_LogIn" xml:space="preserve">
-    <value>Accedi</value>
-  </data>
-  <data name="Login_LoggedInAs" xml:space="preserve">
-    <value>RAI: connesso come {0}</value>
-  </data>
-  <data name="Login_NotLoggedIn" xml:space="preserve">
-    <value>RAI: non connesso</value>
-  </data>
-  <data name="Login_Password" xml:space="preserve">
-    <value>Password</value>
-  </data>
-  <data name="Login_Remember" xml:space="preserve">
-    <value>Ricorda la password su questo computer</value>
-  </data>
-  <data name="Login_Title" xml:space="preserve">
-    <value>Accesso a RAI</value>
-  </data>
-  <data name="Login_User" xml:space="preserve">
-    <value>Nome utente</value>
-  </data>
-  <data name="Menu_About" xml:space="preserve">
-    <value>_Informazioni su DCP Tool</value>
-  </data>
-  <data name="Menu_AddMusicFiles" xml:space="preserve">
-    <value>Aggiungi file _musicali...</value>
-  </data>
-  <data name="Menu_Check" xml:space="preserve">
-    <value>_Verifica</value>
-  </data>
-  <data name="Menu_CheckForUpdates" xml:space="preserve">
-    <value>Cerca _aggiornamenti</value>
-  </data>
-  <data name="Menu_Exit" xml:space="preserve">
-    <value>_Esci</value>
-  </data>
-  <data name="Menu_Export" xml:space="preserve">
-    <value>_Esporta documento Word...</value>
-  </data>
   <data name="Menu_File" xml:space="preserve">
     <value>_File</value>
-  </data>
-  <data name="Menu_ForgetUpload" xml:space="preserve">
-    <value>Dimentica il caricamento _precedente...</value>
-  </data>
-  <data name="Menu_Help" xml:space="preserve">
-    <value>_Aiuto</value>
-  </data>
-  <data name="Menu_LogIn" xml:space="preserve">
-    <value>_Accedi...</value>
-  </data>
-  <data name="Menu_New" xml:space="preserve">
-    <value>_Nuovo</value>
-  </data>
-  <data name="Menu_NewNextEpisode" xml:space="preserve">
-    <value>Nuova _puntata successiva</value>
-  </data>
-  <data name="Menu_Open" xml:space="preserve">
-    <value>_Apri...</value>
-  </data>
-  <data name="Menu_OpenDcpSearch" xml:space="preserve">
-    <value>Apri la _ricerca DCP nel browser</value>
-  </data>
-  <data name="Menu_OpenRaiDcp" xml:space="preserve">
-    <value>Apri questo DCP su RA_I</value>
-  </data>
-  <data name="Menu_OpenRecent" xml:space="preserve">
-    <value>Apri _recenti</value>
-  </data>
-  <data name="Menu_Publish" xml:space="preserve">
-    <value>_Consegna</value>
-  </data>
-  <data name="Menu_RecentNone" xml:space="preserve">
-    <value>(nessuno)</value>
-  </data>
-  <data name="Menu_Save" xml:space="preserve">
-    <value>_Salva</value>
-  </data>
-  <data name="Menu_SaveAs" xml:space="preserve">
-    <value>Salva _con nome...</value>
-  </data>
-  <data name="Menu_SaveDiagnostics" xml:space="preserve">
-    <value>Salva _diagnostica...</value>
-  </data>
-  <data name="Menu_Settings" xml:space="preserve">
-    <value>_Impostazioni...</value>
-  </data>
-  <data name="Menu_Upload" xml:space="preserve">
-    <value>_Carica su RAI...</value>
-  </data>
-  <data name="Menu_UploadPreview" xml:space="preserve">
-    <value>Ante_prima del caricamento</value>
   </data>
   <data name="Msg_Crash" xml:space="preserve">
     <value>Si è verificato un problema: {0}</value>
@@ -653,35 +302,17 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Msg_CrashKept" xml:space="preserve">
     <value>Il lavoro è conservato e verrà ripristinato al prossimo avvio.</value>
   </data>
-  <data name="Msg_DeleteDcp" xml:space="preserve">
-    <value>Eliminare definitivamente il DCP «{0}»?</value>
-  </data>
   <data name="Msg_DeleteNote" xml:space="preserve">
     <value>L&apos;operazione non può essere annullata.</value>
   </data>
-  <data name="Msg_DeleteOpenNote" xml:space="preserve">
-    <value>È il DCP aperto in questo momento e verrà chiuso.</value>
-  </data>
   <data name="Msg_DeletePreset" xml:space="preserve">
     <value>Eliminare definitivamente il modello «{0}»?</value>
-  </data>
-  <data name="Msg_DiagnosticsSaved" xml:space="preserve">
-    <value>Salvato {0}</value>
-  </data>
-  <data name="Msg_DiagnosticsSend" xml:space="preserve">
-    <value>Inviare questo file agli sviluppatori. Password, cookie e token di sessione ne sono stati rimossi.</value>
   </data>
   <data name="Msg_DiscardChanges" xml:space="preserve">
     <value>Il DCP attuale ha modifiche non salvate in un file. Sostituirlo comunque?</value>
   </data>
   <data name="Msg_ExportFailed" xml:space="preserve">
     <value>Impossibile scrivere il documento: {0}</value>
-  </data>
-  <data name="Msg_ExportWarnings" xml:space="preserve">
-    <value>Il documento è stato creato, ma verificare:</value>
-  </data>
-  <data name="Msg_FixFirst" xml:space="preserve">
-    <value>Correggere prima questi problemi:</value>
   </data>
   <data name="Msg_ForgetUpload" xml:space="preserve">
     <value>Il prossimo caricamento creerà un nuovo DCP su RAI. Il DCP salvato lì in precedenza non viene eliminato; se non serve, eliminarlo nella ricerca DCP di RAI.</value>
@@ -692,17 +323,11 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Msg_ImportFailed" xml:space="preserve">
     <value>Importazione non riuscita: {0}</value>
   </data>
-  <data name="Msg_LoggedIn" xml:space="preserve">
-    <value>Accesso al portale RAI eseguito.</value>
-  </data>
   <data name="Msg_NotInstalled" xml:space="preserve">
     <value>Questa copia non è stata installata con il programma di installazione e quindi non può aggiornarsi da sola.</value>
   </data>
   <data name="Msg_OlderFormat" xml:space="preserve">
     <value>Questo file è stato scritto da una versione precedente di DCP Tool. Al prossimo salvataggio verrà salvato nel nuovo formato.</value>
-  </data>
-  <data name="Msg_RecycleDcp" xml:space="preserve">
-    <value>Spostare il DCP «{0}» nel Cestino?</value>
   </data>
   <data name="Msg_RecycleNote" xml:space="preserve">
     <value>Da lì è possibile ripristinarlo.</value>
@@ -723,7 +348,7 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>È installata la versione più recente.</value>
   </data>
   <data name="Msg_UpdateDownloaded" xml:space="preserve">
-    <value>La versione {0} è stata scaricata. Per installarla usare «{1}» nella barra di stato.</value>
+    <value>La versione {0} è stata scaricata. «{1}» in alto a destra la installa.</value>
   </data>
   <data name="Msg_UpdateFailed" xml:space="preserve">
     <value>Ricerca aggiornamenti non riuscita: {0}</value>
@@ -752,32 +377,11 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Picker_SaveDcp" xml:space="preserve">
     <value>Salva DCP</value>
   </data>
-  <data name="Picker_SaveDiagnostics" xml:space="preserve">
-    <value>Salva la diagnostica in</value>
-  </data>
   <data name="Picker_WordDocument" xml:space="preserve">
     <value>Documento Word</value>
   </data>
-  <data name="Prompt_Create" xml:space="preserve">
-    <value>Crea</value>
-  </data>
-  <data name="Prompt_NewFolderLabel" xml:space="preserve">
-    <value>Nuova cartella in {0}</value>
-  </data>
-  <data name="Prompt_PresetLabel" xml:space="preserve">
-    <value>Nome del modello. Il modello conserva i dati del programma del DCP aperto, senza righe, puntata e date.</value>
-  </data>
-  <data name="Prompt_Rename" xml:space="preserve">
-    <value>Rinomina</value>
-  </data>
-  <data name="Prompt_RenameLabel" xml:space="preserve">
-    <value>Nuovo nome per «{0}»</value>
-  </data>
-  <data name="Prompt_SavePreset" xml:space="preserve">
-    <value>Salva modello</value>
-  </data>
   <data name="Rai_FormChanged" xml:space="preserve">
-    <value>Il modulo DCP di RAI è cambiato, quindi DCP Tool non ha inviato nulla. Serve un aggiornamento di DCP Tool: salvare la diagnostica (menu RAI) e inviarla agli sviluppatori.</value>
+    <value>Il modulo DCP di RAI è cambiato, quindi DCP Tool non ha inviato nulla. Serve un aggiornamento di DCP Tool: salvare il log («Salva…» nel log) e inviarlo agli sviluppatori.</value>
   </data>
   <data name="Rai_DraftNotFound" xml:space="preserve">
     <value>Il DCP salvato da un caricamento precedente non è stato trovato su RAI (forse è stato eliminato). Scegliere «{0}» e caricare di nuovo per crearne uno nuovo.</value>
@@ -801,13 +405,13 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>Il portale segnala troppe sessioni aperte, che non è stato possibile chiudere automaticamente. Uscire prima dal portale in un browser.</value>
   </data>
   <data name="Rai_UnexpectedPage" xml:space="preserve">
-    <value>Il portale RAI ha mostrato una pagina inattesa: il portale o il modulo DCP sono cambiati, oppure è in manutenzione. RAI &gt; {0} raccoglie i dettagli per gli sviluppatori.</value>
+    <value>Il portale RAI ha mostrato una pagina inattesa: il portale o il modulo DCP sono cambiati, oppure è in manutenzione. «{0}» nel log salva i dettagli per gli sviluppatori.</value>
   </data>
   <data name="Settings_CheckForUpdates" xml:space="preserve">
     <value>Cerca aggiornamenti all&apos;avvio</value>
   </data>
   <data name="Settings_Company" xml:space="preserve">
-    <value>Società (riportata sul documento Word)</value>
+    <value>Azienda</value>
   </data>
   <data name="Settings_DefaultResponsabile" xml:space="preserve">
     <value>Responsabile RAI predefinito</value>
@@ -818,9 +422,6 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Settings_DefaultSede" xml:space="preserve">
     <value>Sede predefinita</value>
   </data>
-  <data name="Settings_General" xml:space="preserve">
-    <value>Generale</value>
-  </data>
   <data name="Settings_IncludePrereleases" xml:space="preserve">
     <value>Includi le versioni preliminari</value>
   </data>
@@ -830,38 +431,23 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Settings_LanguageRestart" xml:space="preserve">
     <value>La nuova lingua sarà attiva dopo il riavvio di DCP Tool.</value>
   </data>
-  <data name="Settings_LanguageSystem" xml:space="preserve">
-    <value>Lingua di sistema</value>
-  </data>
   <data name="Settings_LibraryFolder" xml:space="preserve">
     <value>Cartella dell&apos;archivio</value>
   </data>
   <data name="Settings_LibraryFolderNone" xml:space="preserve">
     <value>(nessuna: i DCP sono file singoli)</value>
   </data>
-  <data name="Settings_LibraryFolderTip" xml:space="preserve">
-    <value>La cartella che contiene tutti i DCP come file .dcp. I DCP al suo interno vengono salvati automaticamente.</value>
-  </data>
   <data name="Settings_NewLines" xml:space="preserve">
-    <value>Le nuove righe iniziano con</value>
+    <value>I nuovi brani iniziano con</value>
   </data>
   <data name="Settings_NoSede" xml:space="preserve">
     <value>(nessuna)</value>
-  </data>
-  <data name="Settings_RaiAndUpdates" xml:space="preserve">
-    <value>Portale RAI e aggiornamenti</value>
-  </data>
-  <data name="Settings_RaiUser" xml:space="preserve">
-    <value>Nome utente RAI</value>
   </data>
   <data name="Settings_Title" xml:space="preserve">
     <value>Impostazioni</value>
   </data>
   <data name="Status_CannotOpen" xml:space="preserve">
     <value>Impossibile aprire il file: {0}</value>
-  </data>
-  <data name="Status_CannotOpenEntry" xml:space="preserve">
-    <value>Impossibile aprire {0}: {1}</value>
   </data>
   <data name="Status_ChangedKept" xml:space="preserve">
     <value>{0} è stato modificato fuori da DCP Tool. Le modifiche non salvate vengono mantenute; «{1}» le scrive sopra quella versione.</value>
@@ -875,14 +461,8 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Status_CheckingForUpdates" xml:space="preserve">
     <value>Ricerca aggiornamenti...</value>
   </data>
-  <data name="Status_CopyOfDcp" xml:space="preserve">
-    <value>Copia del DCP.</value>
-  </data>
   <data name="Status_Deleted" xml:space="preserve">
     <value>{0} eliminato.</value>
-  </data>
-  <data name="Status_Duplicated" xml:space="preserve">
-    <value>{0} duplicato come {1}.</value>
   </data>
   <data name="Status_Exported" xml:space="preserve">
     <value>{0} esportato</value>
@@ -896,20 +476,11 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Status_FileProblem" xml:space="preserve">
     <value>Problema con il file: {0}</value>
   </data>
-  <data name="Status_FolderCreated" xml:space="preserve">
-    <value>Cartella {0} creata.</value>
-  </data>
-  <data name="Status_ImportProgress" xml:space="preserve">
-    <value>Importazione {0}/{1}: {2}</value>
-  </data>
   <data name="Status_Imported" xml:space="preserve">
     <value>Righe importate: {0}.</value>
   </data>
   <data name="Status_ImportedCompleted" xml:space="preserve">
     <value>Righe importate: {0}, completate: {1}.</value>
-  </data>
-  <data name="Status_Importing" xml:space="preserve">
-    <value>Importazione in corso...</value>
   </data>
   <data name="Status_LegacyBackupFailed" xml:space="preserve">
     <value>{0} non è stato salvato: il file è nel formato di DCP Tool 0.x e non è stato possibile conservare una copia dell&apos;originale ({1}).</value>
@@ -927,13 +498,10 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
     <value>La cartella dell&apos;archivio «{0}» non può essere usata: {1}</value>
   </data>
   <data name="Status_LoggedIn" xml:space="preserve">
-    <value>Accesso eseguito.</value>
+    <value>Accesso eseguito come {0}.</value>
   </data>
   <data name="Status_LoggingIn" xml:space="preserve">
-    <value>Accesso a RAI in corso...</value>
-  </data>
-  <data name="Status_Moved" xml:space="preserve">
-    <value>{0} spostato in {1}.</value>
+    <value>Connessione all'intranet RAI come {0}…</value>
   </data>
   <data name="Status_MovedToRecycleBin" xml:space="preserve">
     <value>{0} spostato nel Cestino.</value>
@@ -944,23 +512,14 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Status_NewFromPreset" xml:space="preserve">
     <value>Nuovo DCP dal modello «{0}».</value>
   </data>
-  <data name="Status_NextEpisodeCreated" xml:space="preserve">
-    <value>Puntata successiva creata.</value>
-  </data>
   <data name="Status_NextEpisodeOf" xml:space="preserve">
     <value>Puntata successiva di {0}.</value>
-  </data>
-  <data name="Status_NoEarlierUpload" xml:space="preserve">
-    <value>Questo DCP non è ancora stato caricato.</value>
-  </data>
-  <data name="Status_NoFileYet" xml:space="preserve">
-    <value>Questo DCP non ha ancora un file.</value>
   </data>
   <data name="Status_NotDeleted" xml:space="preserve">
     <value>{0} non è stato eliminato: {1}</value>
   </data>
   <data name="Status_NotUploadedProblems" xml:space="preserve">
-    <value>Non caricato: prima correggere i problemi ({0}), vedi l&apos;elenco sotto.</value>
+    <value>Non caricato: prima correggere i problemi ({0}), vedi il log.</value>
   </data>
   <data name="Status_NotUploadedYet" xml:space="preserve">
     <value>Questo DCP non è ancora stato caricato su RAI.</value>
@@ -968,17 +527,11 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Status_OlderFormat" xml:space="preserve">
     <value>{0}: scritto da una versione precedente di DCP Tool. Al prossimo salvataggio verrà salvato nel nuovo formato.</value>
   </data>
-  <data name="Status_OpenAtRai" xml:space="preserve">
-    <value>Apri su RAI</value>
-  </data>
   <data name="Status_PresetReplaced" xml:space="preserve">
     <value>Modello «{0}» sostituito.</value>
   </data>
   <data name="Status_PresetSaved" xml:space="preserve">
     <value>Modello «{0}» salvato.</value>
-  </data>
-  <data name="Status_RaiDcpPartly" xml:space="preserve">
-    <value>{0}, {1} di {2} righe salvate</value>
   </data>
   <data name="Status_RecoveryFailed" xml:space="preserve">
     <value>Impossibile scrivere la copia di ripristino: {0}</value>
@@ -1004,14 +557,11 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   <data name="Status_SettingsNotSaved" xml:space="preserve">
     <value>Impossibile salvare le impostazioni: {0}</value>
   </data>
-  <data name="Status_UpdateReady" xml:space="preserve">
-    <value>Aggiornamento pronto – riavvia</value>
-  </data>
   <data name="Status_UploadCancelled" xml:space="preserve">
     <value>Caricamento annullato. RAI potrebbe aver già salvato parte del DCP.</value>
   </data>
   <data name="Status_UploadFailed" xml:space="preserve">
-    <value>Caricamento non riuscito, vedi l&apos;elenco sotto. RAI &gt; {0} raccoglie i dettagli per gli sviluppatori.</value>
+    <value>Caricamento non riuscito: il motivo è indicato sopra, i dettagli nel log.</value>
   </data>
   <data name="Status_UploadForgotten" xml:space="preserve">
     <value>Il caricamento precedente è stato dimenticato.</value>
@@ -1021,9 +571,6 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   </data>
   <data name="Status_UploadProgress" xml:space="preserve">
     <value>Caricamento: {0}/{1} righe.</value>
-  </data>
-  <data name="Status_UploadRejectedLines" xml:space="preserve">
-    <value>Caricamento non riuscito: RAI ha rifiutato delle righe ({0}), vedi l&apos;elenco sotto.</value>
   </data>
   <data name="Status_UploadVerified" xml:space="preserve">
     <value>La pagina di RAI elenca tutti i titoli.</value>
@@ -1036,5 +583,647 @@ Segnaposto – da confermare: dove trovarli esattamente.</value>
   </data>
   <data name="Status_Uploading" xml:space="preserve">
     <value>Caricamento in corso...</value>
+  </data>
+  <data name="Add_DropTitle" xml:space="preserve">
+    <value>Trascina qui brani o una timeline</value>
+  </data>
+  <data name="Add_Pick" xml:space="preserve">
+    <value>Aggiungi…</value>
+  </data>
+  <data name="Add_How" xml:space="preserve">
+    <value>Come?</value>
+  </data>
+  <data name="Add_Release" xml:space="preserve">
+    <value>Rilascia per aggiungere</value>
+  </data>
+  <data name="Add_Undo" xml:space="preserve">
+    <value>Annulla</value>
+  </data>
+  <data name="Add_Why" xml:space="preserve">
+    <value>Perché?</value>
+  </data>
+  <data name="Add_Importing" xml:space="preserve">
+    <value>Aggiunta in corso…</value>
+  </data>
+  <data name="Add_ImportProgress" xml:space="preserve">
+    <value>Letti {0} di {1}…</value>
+  </data>
+  <data name="Add_AddedOne" xml:space="preserve">
+    <value>1 brano aggiunto</value>
+  </data>
+  <data name="Add_Added" xml:space="preserve">
+    <value>{0} brani aggiunti</value>
+  </data>
+  <data name="Add_AddedOneFrom" xml:space="preserve">
+    <value>1 brano aggiunto da «{1}»</value>
+  </data>
+  <data name="Add_AddedFrom" xml:space="preserve">
+    <value>{0} brani aggiunti da «{1}»</value>
+  </data>
+  <data name="Add_AddedCompleted" xml:space="preserve">
+    <value>{0} brani aggiunti, {1} completati</value>
+  </data>
+  <data name="Add_Partial" xml:space="preserve">
+    <value>{0} di {1} brani aggiunti · {2} non riconosciuti</value>
+  </data>
+  <data name="Add_Incomplete" xml:space="preserve">
+    <value>{0} brani aggiunti · {1} incompleti</value>
+  </data>
+  <data name="Area_ToSongs" xml:space="preserve">
+    <value>Vai all'elenco dei brani</value>
+  </data>
+  <data name="Area_ExportTitle" xml:space="preserve">
+    <value>Esporta o carica</value>
+  </data>
+  <data name="Area_ExportSub" xml:space="preserve">
+    <value>RAI · Documenti</value>
+  </data>
+  <data name="Area_ExportUploaded" xml:space="preserve">
+    <value>Caricato</value>
+  </data>
+  <data name="Area_ExportUploadedAs" xml:space="preserve">
+    <value>Caricato · DCP {0}</value>
+  </data>
+  <data name="Area_ExportChanged" xml:space="preserve">
+    <value>Modificato dopo il caricamento</value>
+  </data>
+  <data name="Area_ExportPartly" xml:space="preserve">
+    <value>Caricato in parte</value>
+  </data>
+  <data name="Area_ExportFailed" xml:space="preserve">
+    <value>Caricamento non riuscito</value>
+  </data>
+  <data name="Area_ExportCheckedOk" xml:space="preserve">
+    <value>Verificato · nessun problema</value>
+  </data>
+  <data name="Area_ExportCheckedWarning" xml:space="preserve">
+    <value>Verificato · 1 avviso</value>
+  </data>
+  <data name="Area_ExportCheckedWarnings" xml:space="preserve">
+    <value>Verificato · {0} avvisi</value>
+  </data>
+  <data name="Area_ExportCheckedError" xml:space="preserve">
+    <value>Verificato · 1 errore</value>
+  </data>
+  <data name="Area_ExportCheckedErrors" xml:space="preserve">
+    <value>Verificato · {0} errori</value>
+  </data>
+  <data name="Check_Songs" xml:space="preserve">
+    <value>{0} brani controllati, musica totale {1}</value>
+  </data>
+  <data name="Check_SongsOne" xml:space="preserve">
+    <value>1 brano controllato, musica totale {1}</value>
+  </data>
+  <data name="Check_DoneOk" xml:space="preserve">
+    <value>Verifica conclusa: nessun problema</value>
+  </data>
+  <data name="Check_DoneWarnings" xml:space="preserve">
+    <value>Verifica conclusa, avvisi: {0}</value>
+  </data>
+  <data name="Check_DoneErrors" xml:space="preserve">
+    <value>Verifica conclusa: da correggere prima del caricamento: {0}, avvisi: {1}</value>
+  </data>
+  <data name="Console_Title" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="Console_OneError" xml:space="preserve">
+    <value>1 errore</value>
+  </data>
+  <data name="Console_Errors" xml:space="preserve">
+    <value>{0} errori</value>
+  </data>
+  <data name="Console_OneWarning" xml:space="preserve">
+    <value>1 avviso</value>
+  </data>
+  <data name="Console_Warnings" xml:space="preserve">
+    <value>{0} avvisi</value>
+  </data>
+  <data name="Console_Copy" xml:space="preserve">
+    <value>Copia</value>
+  </data>
+  <data name="Console_Save" xml:space="preserve">
+    <value>Salva…</value>
+  </data>
+  <data name="Console_SaveTip" xml:space="preserve">
+    <value>Salva il log come file di testo, con i dettagli dello scambio con la RAI per gli sviluppatori</value>
+  </data>
+  <data name="Console_Empty" xml:space="preserve">
+    <value>Ancora nessuna verifica o caricamento.</value>
+  </data>
+  <data name="Console_LevelInfo" xml:space="preserve">
+    <value>INFO</value>
+  </data>
+  <data name="Console_LevelWarning" xml:space="preserve">
+    <value>AVVISO</value>
+  </data>
+  <data name="Console_LevelError" xml:space="preserve">
+    <value>ERRORE</value>
+  </data>
+  <data name="Docs_Title" xml:space="preserve">
+    <value>Documenti</value>
+  </data>
+  <data name="Docs_Name" xml:space="preserve">
+    <value>Elenco musiche (Allegato B)</value>
+  </data>
+  <data name="Docs_Meta" xml:space="preserve">
+    <value>Modulo cartaceo della RAI</value>
+  </data>
+  <data name="Docs_MetaCustom" xml:space="preserve">
+    <value>Modulo cartaceo della RAI · modello proprio</value>
+  </data>
+  <data name="Docs_ExportedAt" xml:space="preserve">
+    <value>Esportato {0} alle {1}</value>
+  </data>
+  <data name="Docs_Open" xml:space="preserve">
+    <value>Apri</value>
+  </data>
+  <data name="Docs_ShowInFolder" xml:space="preserve">
+    <value>Mostra nella cartella</value>
+  </data>
+  <data name="Docs_ReplaceTemplate" xml:space="preserve">
+    <value>Sostituisci modello…</value>
+  </data>
+  <data name="Docs_UseOriginal" xml:space="preserve">
+    <value>Usa il modello originale</value>
+  </data>
+  <data name="Docs_Export" xml:space="preserve">
+    <value>Esporta</value>
+  </data>
+  <data name="Drawer_Presets" xml:space="preserve">
+    <value>Programmi</value>
+  </data>
+  <data name="Drawer_NewPreset" xml:space="preserve">
+    <value>Nuovo programma dai dati attuali</value>
+  </data>
+  <data name="Drawer_PresetMore" xml:space="preserve">
+    <value>Altre azioni</value>
+  </data>
+  <data name="Drawer_Recent" xml:space="preserve">
+    <value>Recenti</value>
+  </data>
+  <data name="Drawer_OpenLibrary" xml:space="preserve">
+    <value>Apri cartella della libreria</value>
+  </data>
+  <data name="Drawer_Settings" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="Presets_Update" xml:space="preserve">
+    <value>Aggiorna con i dati attuali</value>
+  </data>
+  <data name="Presets_Rename" xml:space="preserve">
+    <value>Rinomina</value>
+  </data>
+  <data name="Presets_Delete" xml:space="preserve">
+    <value>Elimina…</value>
+  </data>
+  <data name="Presets_EditorPlaceholder" xml:space="preserve">
+    <value>Nome del programma</value>
+  </data>
+  <data name="Presets_EditorHint" xml:space="preserve">
+    <value>Invio salva, Esc annulla</value>
+  </data>
+  <data name="Presets_None" xml:space="preserve">
+    <value>Ancora nessun programma. + conserva i dati del DCP aperto per le prossime puntate.</value>
+  </data>
+  <data name="Presets_NoLibrary" xml:space="preserve">
+    <value>Scegli una cartella per la libreria: DCP Tool vi conserva DCP e programmi e li salva automaticamente.</value>
+  </data>
+  <data name="Presets_ChooseLibrary" xml:space="preserve">
+    <value>Scegli cartella…</value>
+  </data>
+  <data name="Presets_Blank" xml:space="preserve">
+    <value>Inizia senza programma</value>
+  </data>
+  <data name="Recent_Meta" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Recent_Today" xml:space="preserve">
+    <value>oggi</value>
+  </data>
+  <data name="Recent_Yesterday" xml:space="preserve">
+    <value>ieri</value>
+  </data>
+  <data name="Recent_New" xml:space="preserve">
+    <value>nuovo</value>
+  </data>
+  <data name="Recent_Working" xml:space="preserve">
+    <value>in corso</value>
+  </data>
+  <data name="Recent_Uploaded" xml:space="preserve">
+    <value>caricato</value>
+  </data>
+  <data name="Recent_PartlyUploaded" xml:space="preserve">
+    <value>caricato in parte</value>
+  </data>
+  <data name="Recent_Unreadable" xml:space="preserve">
+    <value>non leggibile</value>
+  </data>
+  <data name="Recent_NextEpisode" xml:space="preserve">
+    <value>Crea la prossima puntata</value>
+  </data>
+  <data name="Recent_NextEpisodeNumber" xml:space="preserve">
+    <value>Crea la prossima puntata (Puntata {0})</value>
+  </data>
+  <data name="Save_Button" xml:space="preserve">
+    <value>Salva</value>
+  </data>
+  <data name="Save_Tip" xml:space="preserve">
+    <value>Salva (Ctrl+S). I DCP nella libreria vengono salvati anche automaticamente.</value>
+  </data>
+  <data name="Save_More" xml:space="preserve">
+    <value>Altre opzioni di salvataggio</value>
+  </data>
+  <data name="Save_As" xml:space="preserve">
+    <value>Salva con nome…</value>
+  </data>
+  <data name="Strip_ToggleDrawer" xml:space="preserve">
+    <value>Mostra o nascondi la barra laterale</value>
+  </data>
+  <data name="Strip_AllFields" xml:space="preserve">
+    <value>Tutti i campi</value>
+  </data>
+  <data name="Strip_FewerFields" xml:space="preserve">
+    <value>Meno campi</value>
+  </data>
+  <data name="Strip_DatePlaceholder" xml:space="preserve">
+    <value>GG.MM.AAAA</value>
+  </data>
+  <data name="Strip_DurationPlaceholder" xml:space="preserve">
+    <value>mm:ss</value>
+  </data>
+  <data name="Strip_RegistrazionePlaceholder" xml:space="preserve">
+    <value>vuoto = 5 giorni prima</value>
+  </data>
+  <data name="Update_Restart" xml:space="preserve">
+    <value>Aggiornamento pronto – riavvia</value>
+  </data>
+  <data name="Help_ButtonName" xml:space="preserve">
+    <value>Spiegazione: {0}</value>
+  </data>
+  <data name="Open_Release" xml:space="preserve">
+    <value>Rilascia per aprire</value>
+  </data>
+  <data name="Open_Note" xml:space="preserve">
+    <value>Il DCP attuale viene salvato prima.</value>
+  </data>
+  <data name="Songs_EmptyTitle" xml:space="preserve">
+    <value>Ancora nessun brano</value>
+  </data>
+  <data name="Songs_EmptyText" xml:space="preserve">
+    <value>Trascina qui brani o una timeline, oppure clicca su «Aggiungi…» qui sotto.</value>
+  </data>
+  <data name="Songs_Summary" xml:space="preserve">
+    <value>{0} brani · musica totale {1}</value>
+  </data>
+  <data name="Songs_SummaryOne" xml:space="preserve">
+    <value>1 brano · musica totale {1}</value>
+  </data>
+  <data name="Songs_AddLine" xml:space="preserve">
+    <value>Riga vuota</value>
+  </data>
+  <data name="Songs_AddLineTip" xml:space="preserve">
+    <value>Aggiunge una riga vuota, per musica senza file</value>
+  </data>
+  <data name="Songs_DragTip" xml:space="preserve">
+    <value>Trascina per spostare il brano</value>
+  </data>
+  <data name="Songs_RowMenu" xml:space="preserve">
+    <value>Altre azioni</value>
+  </data>
+  <data name="Songs_MoveUp" xml:space="preserve">
+    <value>Sposta su</value>
+  </data>
+  <data name="Songs_MoveDown" xml:space="preserve">
+    <value>Sposta giù</value>
+  </data>
+  <data name="Songs_Duplicate" xml:space="preserve">
+    <value>Duplica</value>
+  </data>
+  <data name="Songs_Delete" xml:space="preserve">
+    <value>Elimina</value>
+  </data>
+  <data name="Export_RaiSub" xml:space="preserve">
+    <value>Trasferisce l'elenco nel modulo intranet della RAI.</value>
+  </data>
+  <data name="Export_Check" xml:space="preserve">
+    <value>Verifica</value>
+  </data>
+  <data name="Export_Upload" xml:space="preserve">
+    <value>Carica</value>
+  </data>
+  <data name="Export_UploadAgain" xml:space="preserve">
+    <value>Carica di nuovo</value>
+  </data>
+  <data name="Export_Retry" xml:space="preserve">
+    <value>Riprova</value>
+  </data>
+  <data name="Export_OpenAtRai" xml:space="preserve">
+    <value>Apri in RAI</value>
+  </data>
+  <data name="Export_OpenSettings" xml:space="preserve">
+    <value>Apri impostazioni</value>
+  </data>
+  <data name="Export_UploadedAt" xml:space="preserve">
+    <value>Caricato il {0} alle {1}</value>
+  </data>
+  <data name="Export_DcpNumber" xml:space="preserve">
+    <value>Numero DCP della RAI</value>
+  </data>
+  <data name="Export_CopyNumber" xml:space="preserve">
+    <value>Copia numero</value>
+  </data>
+  <data name="Export_FailTitle" xml:space="preserve">
+    <value>Caricamento non riuscito</value>
+  </data>
+  <data name="Export_NothingSent" xml:space="preserve">
+    <value>Non è stato trasferito nulla.</value>
+  </data>
+  <data name="Export_PartlySent" xml:space="preserve">
+    <value>La RAI ha salvato {0} di {1} righe; il prossimo caricamento continua quel DCP.</value>
+  </data>
+  <data name="Export_PartialNote" xml:space="preserve">
+    <value>Un caricamento precedente si è fermato dopo {0} di {1} righe. Il caricamento continua quel DCP{2} presso la RAI.</value>
+  </data>
+  <data name="Export_NoLogin" xml:space="preserve">
+    <value>Non sono ancora salvati nome utente e password RAI.</value>
+  </data>
+  <data name="Export_HintCredentials" xml:space="preserve">
+    <value>Controlla nome utente e password nelle impostazioni, poi riprova.</value>
+  </data>
+  <data name="Export_HintNetwork" xml:space="preserve">
+    <value>Controlla la connessione all'intranet RAI (VPN), poi riprova.</value>
+  </data>
+  <data name="Export_HintRejected" xml:space="preserve">
+    <value>Correggi le righe indicate dalla RAI nel log, poi riprova.</value>
+  </data>
+  <data name="Export_HintRetry" xml:space="preserve">
+    <value>Riprova tra poco.</value>
+  </data>
+  <data name="Export_HintDiagnostics" xml:space="preserve">
+    <value>Salva il log («Salva…» nel log) e invialo agli sviluppatori.</value>
+  </data>
+  <data name="Export_HintDraftNotFound" xml:space="preserve">
+    <value>Scegli «Dimentica il caricamento»: il prossimo caricamento crea allora un nuovo DCP.</value>
+  </data>
+  <data name="Export_Forget" xml:space="preserve">
+    <value>Dimentica il caricamento…</value>
+  </data>
+  <data name="Guide_Kicker" xml:space="preserve">
+    <value>GUIDA</value>
+  </data>
+  <data name="Guide_Back" xml:space="preserve">
+    <value>Indietro</value>
+  </data>
+  <data name="Guide_Ways" xml:space="preserve">
+    <value>Modi per aggiungere</value>
+  </data>
+  <data name="Guide_Prerequisites" xml:space="preserve">
+    <value>Perché funzioni</value>
+  </data>
+  <data name="Guide_Steps" xml:space="preserve">
+    <value>Passaggi</value>
+  </data>
+  <data name="Guide_Trouble" xml:space="preserve">
+    <value>Se non funziona</value>
+  </data>
+  <data name="Guide_Shot" xml:space="preserve">
+    <value>Screenshot: {0}</value>
+  </data>
+  <data name="Guide_LastImport" xml:space="preserve">
+    <value>Cosa ha segnalato l'ultima aggiunta</value>
+  </data>
+  <data name="Guide_Timeline_Label" xml:space="preserve">
+    <value>Timeline di DaVinci Resolve</value>
+  </data>
+  <data name="Guide_Timeline_Lead" xml:space="preserve">
+    <value>Il modo più rapido: tutti i brani della timeline vengono ripresi con i loro dati.</value>
+  </data>
+  <data name="Guide_Timeline_Pre1" xml:space="preserve">
+    <value>I file musicali della timeline sono raggiungibili da questo PC.</value>
+  </data>
+  <data name="Guide_Timeline_Step1" xml:space="preserve">
+    <value>In DaVinci Resolve esporta la timeline: File › Esporta › Timeline…, formato .drt.</value>
+  </data>
+  <data name="Guide_Timeline_Shot1" xml:space="preserve">
+    <value>Finestra di esportazione di DaVinci Resolve</value>
+  </data>
+  <data name="Guide_Timeline_Step2" xml:space="preserve">
+    <value>Trascina il file .drt su «Trascina qui brani o una timeline» qui sotto.</value>
+  </data>
+  <data name="Guide_Timeline_Shot2" xml:space="preserve">
+    <value>Il file viene trascinato sull'area</value>
+  </data>
+  <data name="Guide_Timeline_Step3" xml:space="preserve">
+    <value>La tabella si compila da sola. Controlla Durata e Autori.</value>
+  </data>
+  <data name="Guide_Timeline_Q1" xml:space="preserve">
+    <value>Mancano dei brani</value>
+  </data>
+  <data name="Guide_Timeline_A1" xml:space="preserve">
+    <value>Alcuni file musicali si trovano su un'unità che questo PC non raggiunge. Collega l'unità e trascina di nuovo la timeline.</value>
+  </data>
+  <data name="Guide_Timeline_Q2" xml:space="preserve">
+    <value>Il file non viene accettato</value>
+  </data>
+  <data name="Guide_Timeline_A2" xml:space="preserve">
+    <value>Funzionano solo le timeline in formato .drt, non i file di progetto (.drp).</value>
+  </data>
+  <data name="Guide_Timeline_Q3" xml:space="preserve">
+    <value>I campi restano vuoti</value>
+  </data>
+  <data name="Guide_Timeline_A3" xml:space="preserve">
+    <value>Il file musicale non contiene dati. Scarica di nuovo il brano dal fornitore o compila i campi nella tabella.</value>
+  </data>
+  <data name="Guide_Musicmedia_Label" xml:space="preserve">
+    <value>musicmedia.it</value>
+  </data>
+  <data name="Guide_Musicmedia_Lead" xml:space="preserve">
+    <value>I brani di musicmedia.it contengono già i loro dati nel file.</value>
+  </data>
+  <data name="Guide_Musicmedia_Pre1" xml:space="preserve">
+    <value>File originali di musicmedia.it, non convertiti.</value>
+  </data>
+  <data name="Guide_Musicmedia_Step1" xml:space="preserve">
+    <value>Scarica i brani da musicmedia.it.</value>
+  </data>
+  <data name="Guide_Musicmedia_Step2" xml:space="preserve">
+    <value>Trascina i file su «Trascina qui brani o una timeline» qui sotto.</value>
+  </data>
+  <data name="Guide_Musicmedia_Shot2" xml:space="preserve">
+    <value>I file vengono trascinati sull'area</value>
+  </data>
+  <data name="Guide_Musicmedia_Q1" xml:space="preserve">
+    <value>I campi restano vuoti</value>
+  </data>
+  <data name="Guide_Musicmedia_A1" xml:space="preserve">
+    <value>Il file è stato convertito o rinominato. Scarica di nuovo il brano.</value>
+  </data>
+  <data name="Guide_Artlist_Label" xml:space="preserve">
+    <value>Artlist con cue sheet</value>
+  </data>
+  <data name="Guide_Artlist_Title" xml:space="preserve">
+    <value>Artlist</value>
+  </data>
+  <data name="Guide_Artlist_Lead" xml:space="preserve">
+    <value>Artlist fornisce i dati come cue sheet del brano.</value>
+  </data>
+  <data name="Guide_Artlist_Pre1" xml:space="preserve">
+    <value>Il cue sheet si trova accanto al brano o viene trascinato insieme a esso.</value>
+  </data>
+  <data name="Guide_Artlist_Step1" xml:space="preserve">
+    <value>Scarica brano e cue sheet da Artlist.</value>
+  </data>
+  <data name="Guide_Artlist_Step2" xml:space="preserve">
+    <value>Trascina entrambi i file insieme qui sotto.</value>
+  </data>
+  <data name="Guide_Artlist_Shot2" xml:space="preserve">
+    <value>Brano e cue sheet trascinati insieme</value>
+  </data>
+  <data name="Guide_Artlist_Q1" xml:space="preserve">
+    <value>Viene ripreso solo il titolo</value>
+  </data>
+  <data name="Guide_Artlist_A1" xml:space="preserve">
+    <value>Manca il cue sheet. Mettilo accanto al brano o trascinalo insieme a esso.</value>
+  </data>
+  <data name="Guide_Other_Label" xml:space="preserve">
+    <value>Altri fornitori</value>
+  </data>
+  <data name="Guide_Other_Lead" xml:space="preserve">
+    <value>I brani di altri fornitori vengono aggiunti; i dati mancanti si completano nella tabella.</value>
+  </data>
+  <data name="Guide_Other_Pre1" xml:space="preserve">
+    <value>File musicali in formato MP3 o WAV.</value>
+  </data>
+  <data name="Guide_Other_Step1" xml:space="preserve">
+    <value>Trascina i file qui sotto o scegli «Aggiungi…».</value>
+  </data>
+  <data name="Guide_Other_Step2" xml:space="preserve">
+    <value>Compila i campi mancanti nella tabella.</value>
+  </data>
+  <data name="Guide_Other_Q1" xml:space="preserve">
+    <value>I campi restano vuoti</value>
+  </data>
+  <data name="Guide_Other_A1" xml:space="preserve">
+    <value>Il file non contiene dati. Compila i campi nella tabella.</value>
+  </data>
+  <data name="Picker_SaveConsole" xml:space="preserve">
+    <value>Salva il log</value>
+  </data>
+  <data name="Picker_TextFile" xml:space="preserve">
+    <value>File di testo</value>
+  </data>
+  <data name="Picker_Template" xml:space="preserve">
+    <value>Scegli un modello Word per l'Allegato B</value>
+  </data>
+  <data name="Settings_Library" xml:space="preserve">
+    <value>Libreria</value>
+  </data>
+  <data name="Settings_Change" xml:space="preserve">
+    <value>Cambia…</value>
+  </data>
+  <data name="Settings_LibraryHint" xml:space="preserve">
+    <value>Qui DCP Tool conserva tutti i DCP come file .dcp e li salva automaticamente. I DCP più vecchi si trovano con Esplora file.</value>
+  </data>
+  <data name="Settings_Rai" xml:space="preserve">
+    <value>Accesso RAI</value>
+  </data>
+  <data name="Settings_User" xml:space="preserve">
+    <value>Nome utente</value>
+  </data>
+  <data name="Settings_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Settings_Test" xml:space="preserve">
+    <value>Prova connessione</value>
+  </data>
+  <data name="Settings_Testing" xml:space="preserve">
+    <value>Verifica in corso…</value>
+  </data>
+  <data name="Settings_TestOk" xml:space="preserve">
+    <value>Ultima verifica oggi alle {0} · accesso riuscito</value>
+  </data>
+  <data name="Settings_TestMissing" xml:space="preserve">
+    <value>Inserisci prima nome utente e password.</value>
+  </data>
+  <data name="Settings_PasswordStored" xml:space="preserve">
+    <value>La password viene conservata protetta su questo computer.</value>
+  </data>
+  <data name="Settings_PasswordSession" xml:space="preserve">
+    <value>La password viene conservata solo fino alla chiusura di DCP Tool.</value>
+  </data>
+  <data name="Settings_LanguageHint" xml:space="preserve">
+    <value>I nomi dei campi RAI restano in italiano in tutte le lingue.</value>
+  </data>
+  <data name="Settings_CompanyHint" xml:space="preserve">
+    <value>Stampati sull'Allegato B. I nuovi DCP iniziano con la Sede, la Rete e il Responsabile indicati qui.</value>
+  </data>
+  <data name="Settings_Updates" xml:space="preserve">
+    <value>Aggiornamenti</value>
+  </data>
+  <data name="Settings_CheckNow" xml:space="preserve">
+    <value>Cerca ora</value>
+  </data>
+  <data name="Settings_Version" xml:space="preserve">
+    <value>Versione {0}</value>
+  </data>
+  <data name="Settings_UnknownVersion" xml:space="preserve">
+    <value>sconosciuta</value>
+  </data>
+  <data name="Status_ConsoleCopied" xml:space="preserve">
+    <value>Log copiato.</value>
+  </data>
+  <data name="Status_ConsoleSaved" xml:space="preserve">
+    <value>Log salvato come {0}.</value>
+  </data>
+  <data name="Status_ConsoleSavedWithDiagnostics" xml:space="preserve">
+    <value>Log salvato come {0} e i dettagli per gli sviluppatori come {1}.</value>
+  </data>
+  <data name="Status_ImportUndone" xml:space="preserve">
+    <value>I brani dell'ultima aggiunta sono stati rimossi.</value>
+  </data>
+  <data name="Status_ImportedIncomplete" xml:space="preserve">
+    <value>Aggiunti {0} brani; {1} file incompleti, vedi il log.</value>
+  </data>
+  <data name="Status_ImportedNothing" xml:space="preserve">
+    <value>Non è stato aggiunto nulla: nessun file riconosciuto.</value>
+  </data>
+  <data name="Status_ImportedPartly" xml:space="preserve">
+    <value>Aggiunti {0} di {1} brani, vedi il log.</value>
+  </data>
+  <data name="Status_NoLogin" xml:space="preserve">
+    <value>Non caricato: nessun nome utente e password RAI nelle impostazioni.</value>
+  </data>
+  <data name="Status_NotExportedProblems" xml:space="preserve">
+    <value>Non esportato: prima correggere i problemi ({0}), vedi il log.</value>
+  </data>
+  <data name="Status_NumberCopied" xml:space="preserve">
+    <value>{0} copiato.</value>
+  </data>
+  <data name="Status_PresetUpdated" xml:space="preserve">
+    <value>Programma «{0}» aggiornato con i dati attuali.</value>
+  </data>
+  <data name="Status_TemplateReplaced" xml:space="preserve">
+    <value>L'Allegato B usa ora il modello {0}.</value>
+  </data>
+  <data name="Status_TemplateRefused" xml:space="preserve">
+    <value>{0} non può essere usato come modello: {1}</value>
+  </data>
+  <data name="Status_TemplateOriginal" xml:space="preserve">
+    <value>L'Allegato B usa di nuovo il modello originale.</value>
+  </data>
+  <data name="Songs_MoveUpKey" xml:space="preserve">
+    <value>Alt+↑</value>
+  </data>
+  <data name="Songs_MoveDownKey" xml:space="preserve">
+    <value>Alt+↓</value>
+  </data>
+  <data name="Songs_DuplicateKey" xml:space="preserve">
+    <value>Ctrl+D</value>
+  </data>
+  <data name="Songs_DeleteKey" xml:space="preserve">
+    <value>Canc</value>
+  </data>
+  <data name="Save_AsKey" xml:space="preserve">
+    <value>Ctrl+Maiusc+S</value>
   </data>
 </root>

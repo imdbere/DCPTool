@@ -29,7 +29,7 @@ public sealed class LibraryTests : IDisposable
     };
 
     [Fact]
-    public void ScanListsFilesNewestFirstAndSurvivesBrokenOnes()
+    public void ScanListsFilesAndSurvivesBrokenOnes()
     {
         DcpFile.Save(_library.SuggestPath(Make("Kompass", 3, new DateOnly(2026, 10, 1))), Make("Kompass", 3, new DateOnly(2026, 10, 1)));
         var newer = Make("Kompass", 4, new DateOnly(2026, 11, 5));
@@ -38,25 +38,16 @@ public sealed class LibraryTests : IDisposable
         File.WriteAllText(Path.Combine(_dir, "broken.dcp"), "{ not json");
         File.WriteAllText(Path.Combine(_dir, "notes.txt"), "ignored");
 
-        var entries = _library.Scan();
+        var entries = _library.ScanAll().Entries;
 
         Assert.Equal(3, entries.Count);
-        Assert.Equal("2026/Kompass 04 2026-11-05.dcp", entries[0].RelativePath);
-        Assert.Equal(LibraryUploadState.Uploaded, entries[0].UploadState);
-        Assert.Equal("1788111-00", entries[0].RaiCodice);
-        Assert.Equal("2026", entries[0].Folder);
-        Assert.Equal(2, entries[1].LineCount);
+        var uploaded = entries.Single(e => e.Puntata == 4);
+        Assert.Equal("2026/Kompass 04 2026-11-05.dcp", uploaded.RelativePath);
+        Assert.Equal(LibraryUploadState.Uploaded, uploaded.UploadState);
+        Assert.Equal("1788111-00", uploaded.RaiCodice);
+        Assert.Equal(9016, uploaded.Uorg);
+        Assert.Equal(2, entries.Single(e => e.Puntata == 3).LineCount);
         Assert.NotNull(entries.Single(e => e.Name == "broken").Error);
-    }
-
-    [Fact]
-    public void SearchMatchesEveryWord()
-    {
-        var entry = _library.ReadEntry(Save(Make("Gedanken zur Stille", 12, new DateOnly(2026, 11, 5))));
-        Assert.True(entry.Matches("stille 12"));
-        Assert.True(entry.Matches("05.11.2026"));
-        Assert.True(entry.Matches(""));
-        Assert.False(entry.Matches("stille kompass"));
     }
 
     [Fact]
@@ -77,7 +68,7 @@ public sealed class LibraryTests : IDisposable
         dcp.Upload = new UploadRecord { Complete = true };
 
         var path = _library.SavePreset(dcp, "Kompass");
-        var entry = _library.Scan().Single();
+        var entry = _library.ScanAll().Entries.Single();
         var fresh = DcpLibrary.CreateFromPreset(path);
 
         Assert.True(entry.IsPreset);
@@ -93,7 +84,7 @@ public sealed class LibraryTests : IDisposable
     }
 
     [Fact]
-    public void NextEpisodeAndDuplicate()
+    public void NextEpisode()
     {
         var dcp = Make("Kompass", 7, new DateOnly(2026, 5, 5));
         dcp.Upload = new UploadRecord { Complete = true };
@@ -103,12 +94,6 @@ public sealed class LibraryTests : IDisposable
         Assert.Equal(8, next.Puntata);
         Assert.Empty(next.Lines);
         Assert.Null(next.Upload);
-
-        var copy = _library.Duplicate(path);
-        Assert.EndsWith("(2).dcp", copy);
-        var copied = DcpFile.Load(copy).Dcp;
-        Assert.Equal(2, copied.Lines.Count);
-        Assert.Null(copied.Upload);
     }
 
     [Fact]
@@ -120,6 +105,28 @@ public sealed class LibraryTests : IDisposable
         Assert.Equal("Neu Name.dcp", Path.GetFileName(renamed));
         Assert.True(File.Exists(renamed));
         Assert.Throws<DcpFileException>(() => DcpLibrary.Rename(b, "Neu Name"));
+    }
+
+    [Fact]
+    public void AFileOutsideTheLibraryIsReadLikeOneInIt()
+    {
+        var outside = Path.Combine(Path.GetTempPath(), "dcptool-outside-" + Guid.NewGuid().ToString("N") + ".dcp");
+        try
+        {
+            DcpFile.Save(outside, Make("Kompass", 9, new DateOnly(2026, 3, 3)));
+            var entry = DcpLibrary.ReadFile(outside);
+            Assert.Null(entry.Error);
+            Assert.False(entry.IsPreset);
+            Assert.Equal((9, 9016), (entry.Puntata, entry.Uorg));
+            Assert.Equal(Path.GetFileName(outside), entry.RelativePath);
+
+            File.WriteAllText(outside, "{ broken");
+            Assert.NotNull(DcpLibrary.ReadFile(outside).Error);
+        }
+        finally
+        {
+            File.Delete(outside);
+        }
     }
 
     [Fact]

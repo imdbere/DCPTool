@@ -19,7 +19,8 @@ public interface IDocumentExporter
     /// Writes the document. Every line of the DCP must appear in it, however many there are.
     /// Throws <see cref="ExportException"/> when the document can't be produced.
     /// </summary>
-    void Export(Dcp dcp, CompanyProfile company, Stream output);
+    /// <param name="template">A replacement for the built-in template (the user's own version of the form); null for the built-in one.</param>
+    void Export(Dcp dcp, CompanyProfile company, Stream output, Stream? template = null);
 }
 
 /// <summary>A document could not be produced. The message is meant for the user.</summary>

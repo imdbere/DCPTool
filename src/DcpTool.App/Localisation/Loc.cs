@@ -24,8 +24,4 @@ public static class Loc
     /// <summary>The English text, for the activity log file.</summary>
     public static string English(string key, params object?[] args) =>
         string.Format(CultureInfo.InvariantCulture, Get(key, CultureInfo.InvariantCulture), args);
-
-    /// <summary>A menu text without its access-key underscore, for naming the command in a message.</summary>
-    public static string MenuName(string key, CultureInfo? culture = null) =>
-        Get(key, culture ?? CultureInfo.CurrentUICulture).Replace("_", "", StringComparison.Ordinal).TrimEnd('.');
 }

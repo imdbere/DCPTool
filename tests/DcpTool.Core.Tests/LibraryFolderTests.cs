@@ -5,7 +5,7 @@ using Xunit;
 
 namespace DcpTool.Core.Tests;
 
-/// <summary>Sub-folders, sorting, moving, the scan cache and the safety copy of files written by DCP Tool 0.x.</summary>
+/// <summary>Sub-folders, natural order, the scan cache and the safety copy of files written by DCP Tool 0.x.</summary>
 public sealed class LibraryFolderTests : IDisposable
 {
     // A file as DCP Tool 0.x wrote it (DataContractJsonSerializer, no envelope)
@@ -52,84 +52,21 @@ public sealed class LibraryFolderTests : IDisposable
     }
 
     [Fact]
-    public void SortModes()
+    public void ScanFindsEveryDcpBelowTheFolderAndNothingElse()
     {
-        var now = DateTime.Now;
-        Write("zipp 10_20.dcp", "Zipp", 10, new DateOnly(2020, 3, 10), now.AddDays(-3));
-        Write("zipp 2_20.dcp", "Zipp", 2, new DateOnly(2020, 1, 14), now.AddDays(-1));
-        Write("Kompass.dcp", "Kompass", 1, new DateOnly(2021, 5, 5), now.AddDays(-2));
-        var entries = _library.ScanAll().Entries;
-
-        string[] Names(LibrarySort sort) => LibrarySorting.Sort(entries, sort).Select(e => e.Name).ToArray();
-
-        Assert.Equal(["zipp 2_20", "Kompass", "zipp 10_20"], Names(LibrarySort.RecentlyChanged));
-        Assert.Equal(["Kompass", "zipp 10_20", "zipp 2_20"], Names(LibrarySort.BroadcastDate));
-        Assert.Equal(["Kompass", "zipp 2_20", "zipp 10_20"], Names(LibrarySort.Title));
-        Assert.Equal(["Kompass", "zipp 2_20", "zipp 10_20"], Names(LibrarySort.Name));
-
-        Assert.Equal(LibrarySort.RecentlyChanged, LibrarySorting.FromSetting(null));
-        Assert.Equal(LibrarySort.RecentlyChanged, LibrarySorting.FromSetting("nonsense"));
-        foreach (var sort in Enum.GetValues<LibrarySort>())
-        {
-            Assert.Equal(sort, LibrarySorting.FromSetting(LibrarySorting.ToSetting(sort)));
-        }
-    }
-
-    [Fact]
-    public void TreeHasEveryFolderAndSortsThem()
-    {
-        var now = DateTime.Now;
-        Write("DCP 2024/zipp 1_24.dcp", "Zipp", 1, new DateOnly(2024, 1, 1), now.AddDays(-10));
-        Write("DCP 2024/Deboriada 2024/Deboriada 1_24.dcp", "Deboriada", 1, new DateOnly(2024, 2, 1), now.AddDays(-1));
-        Write("DCP 10/old.dcp", "Old", 1, new DateOnly(2010, 2, 1), now.AddDays(-100));
-        Write("top.dcp", "Top", 1, new DateOnly(2026, 2, 1), now);
+        Write("DCP 2024/zipp 1_24.dcp", "Zipp", 1, new DateOnly(2024, 1, 1));
+        Write("DCP 2024/Deboriada 2024/Deboriada 1_24.dcp", "Deboriada", 1, new DateOnly(2024, 2, 1));
+        Write("top.dcp", "Top", 1, new DateOnly(2026, 2, 1));
         Write("Presets/Preset.dcp", "Preset", null, new DateOnly(2026, 2, 1));
+        Write(".hidden/secret.dcp", "Hidden", 1, new DateOnly(2026, 2, 1));
         Directory.CreateDirectory(Path.Combine(_dir, "DCP 9", "Empty"));
-        Directory.CreateDirectory(Path.Combine(_dir, ".hidden"));
         File.WriteAllText(Path.Combine(_dir, "DCP 2024", "form.pdf"), "not a dcp");
 
-        var snapshot = _library.ScanAll();
-        var byName = LibraryTree.Build(snapshot, LibrarySort.Name);
-        var byRecent = LibraryTree.Build(snapshot, LibrarySort.RecentlyChanged);
+        var entries = _library.ScanAll().Entries;
 
-        Assert.Equal(["DCP 9", "DCP 10", "DCP 2024"], byName.Folders.Select(f => f.Name));
-        // A folder without DCPs counts with its own time: "DCP 9" was just made
-        Assert.Equal(["DCP 9", "DCP 2024", "DCP 10"], byRecent.Folders.Select(f => f.Name));
-        Directory.SetLastWriteTime(Path.Combine(_dir, "DCP 9"), now.AddDays(-50));
-        Assert.Equal(["DCP 2024", "DCP 9", "DCP 10"], LibraryTree.Build(_library.ScanAll(), LibrarySort.RecentlyChanged).Folders.Select(f => f.Name));
-        Assert.Equal(["top"], byName.Entries.Select(e => e.Name));
-        Assert.Equal(["DCP 9/Empty"], byName.Folders[0].Folders.Select(f => f.RelativePath));
-        Assert.Equal("Deboriada 2024", byName.Folders[2].Folders.Single().Name);
-        Assert.DoesNotContain(byName.AllFolders, f => f.Name is "Presets" or ".hidden");
-        Assert.Equal(4, byName.AllEntries.Count());
-        Assert.Contains(snapshot.Entries, e => e.IsPreset);
-    }
-
-    [Fact]
-    public void CreateFolderAndMove()
-    {
-        var path = Write("a.dcp", "A", 1, new DateOnly(2026, 1, 1));
-        var modified = File.GetLastWriteTimeUtc(path);
-
-        var folder = _library.CreateFolder("", "SpoZi: 2026");
-        Assert.Equal("SpoZi 2026", folder);
-        var sub = _library.CreateFolder(folder, "Teil 2");
-        Assert.Equal("SpoZi 2026/Teil 2", sub);
-        Assert.Throws<DcpFileException>(() => _library.CreateFolder("", "SpoZi 2026"));
-        Assert.Throws<DcpFileException>(() => _library.CreateFolder("../..", "outside"));
-
-        var moved = _library.Move(path, sub);
-        Assert.Equal(Path.Combine(_dir, "SpoZi 2026", "Teil 2", "a.dcp"), moved);
-        Assert.False(File.Exists(path));
-        Assert.Equal(modified, File.GetLastWriteTimeUtc(moved));
-        Assert.Equal(moved, _library.Move(moved, sub));
-
-        Write("a.dcp", "Another A", 1, new DateOnly(2026, 1, 1));
-        Assert.Throws<DcpFileException>(() => _library.Move(moved, ""));
-        Assert.True(File.Exists(moved));
-
-        var entry = _library.ScanAll().Entries.Single(e => e.Path == moved);
-        Assert.Equal("SpoZi 2026/Teil 2", entry.Folder);
+        Assert.Equal(["DCP 2024/Deboriada 2024/Deboriada 1_24.dcp", "DCP 2024/zipp 1_24.dcp", "Presets/Preset.dcp", "top.dcp"],
+            entries.Select(e => e.RelativePath).Order(StringComparer.Ordinal));
+        Assert.Equal(["Preset"], entries.Where(e => e.IsPreset).Select(e => e.Name));
     }
 
     [Fact]
@@ -161,7 +98,8 @@ public sealed class LibraryFolderTests : IDisposable
 
         // Deleted and moved files are gone, a moved one is read at its new place
         File.Delete(b);
-        var moved = _library.Move(a, "sub");
+        var moved = Path.Combine(_dir, "sub", "a.dcp");
+        File.Move(a, moved);
         var after = _library.ScanAll();
         Assert.Equal([moved], after.Entries.Select(e => e.Path));
         Assert.Equal(1, _library.LastScanReads);
@@ -214,7 +152,7 @@ public sealed class LibraryFolderTests : IDisposable
         _library.ScanAll();
         DcpFile.Load(legacy);
         DcpLibrary.CreateNextEpisode(legacy);
-        _library.Duplicate(legacy);
+        DcpLibrary.CreateFromPreset(legacy);
 
         Assert.Equal(LegacyJson, File.ReadAllText(legacy));
         Assert.Equal(before, File.GetLastWriteTimeUtc(legacy));
@@ -276,7 +214,7 @@ public sealed class RealArchiveTests : IDisposable
     }
 
     [Fact]
-    public void EveryFileLoadsAndTheTreeIsComplete()
+    public void EveryFileLoads()
     {
         var archive = FindArchive();
         if (archive is null)
@@ -297,29 +235,9 @@ public sealed class RealArchiveTests : IDisposable
         Assert.True(files.Length >= 399, $"{files.Length} files");
         Assert.Empty(snapshot.Entries.Where(e => e.Error is not null).Select(e => $"{e.RelativePath}: {e.Error}"));
 
-        // Every folder in the tree (presets apart), every DCP in exactly one place, in its own folder
-        foreach (var sort in Enum.GetValues<LibrarySort>())
-        {
-            var tree = LibraryTree.Build(snapshot, sort);
-            var folders = Directory.GetDirectories(_copy, "*", SearchOption.AllDirectories)
-                .Select(d => Path.GetRelativePath(_copy, d).Replace('\\', '/'))
-                .Where(d => !d.StartsWith(DcpLibrary.PresetsFolderName, StringComparison.OrdinalIgnoreCase))
-                .Order(StringComparer.Ordinal);
-            Assert.Equal(folders, tree.AllFolders.Select(f => f.RelativePath).Order(StringComparer.Ordinal));
-            var inTree = tree.AllEntries.ToList();
-            Assert.Equal(snapshot.Entries.Count(e => !e.IsPreset), inTree.Count);
-            Assert.Equal(inTree.Count, inTree.Select(e => e.Path).Distinct().Count());
-            Assert.All(tree.AllFolders, f => Assert.All(f.Entries, e => Assert.Equal(f.RelativePath, e.Folder)));
-        }
-
         Assert.Contains(snapshot.Entries, e => e.RelativePath == "DCP Tool 2024/Deboriada 2024/Deboriada 1_24.dcp");
         Assert.Contains(snapshot.Entries, e => e.RelativePath == "SpoZi/SpoZi 01_26.dcp");
         Assert.Contains(snapshot.Entries, e => e is { RelativePath: "Presets/ZIPP TV.dcp", IsPreset: true });
-
-        // Natural order in a programme folder
-        var spozi = LibraryTree.Build(snapshot, LibrarySort.Name).Folders.Single(f => f.Name == "SpoZi");
-        Assert.Equal("SpoZi 01_26", spozi.Entries[0].Name);
-        Assert.True(spozi.Entries.FindIndex(e => e.Name == "SpoZi 02_26") < spozi.Entries.FindIndex(e => e.Name == "SpoZi 10_26"));
 
         // A second scan comes from memory
         watch.Restart();

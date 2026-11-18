@@ -144,6 +144,13 @@ https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
 Done when: a new user starts a DCP from a preset or a recent one, adds songs, uploads and exports
 without opening the menu, and the design has been reviewed on a real screen.
 
+Status 2026-11-18: built after the design canvas (https://claude.ai/code/artifact/b9d48760-2c3f-4156-a28f-3e07bc134044):
+drawer with Sendungen and Zuletzt bearbeitet (+ starts the next episode, Puntata counted per Uorg/Matricola), programme
+strip, songs table with field help, row menu and drag by the number, Add area with undo and "Warum?", guide (placeholder
+texts), export page with one console, document export with a replaceable template, settings page, drop anywhere, .dcp
+from the command line. The library browser, issue list and menu bar are gone. Prüfen checks locally only; it does not
+sign in at RAI. Not checked yet: upload against RAI, dropping files from Explorer, a real screen review.
+
 ## M4: Timeline import
 
 Goal: G1. Drop the master timeline, get the finished music list. The approach is proven by the Ablauf

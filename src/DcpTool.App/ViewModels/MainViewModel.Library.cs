@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,27 +12,22 @@ using DcpTool.Core.Persistence;
 namespace DcpTool.App.ViewModels;
 
 /// <summary>
-/// The library ("vault"): all DCPs as .dcp files in one folder, browsed in the side panel.
-/// A document whose file lies in the library is written to it automatically shortly after every change,
-/// before switching documents, before closing and before upload/export, so it never has an "unsaved" state.
-/// A new DCP gets its file in the library as soon as it has a Titolo italiano. Files outside the library
-/// keep the explicit Save / Save as.
+/// The library: all DCPs as .dcp files in one folder the user chooses. The app has no browser for it (Explorer does
+/// that, through "Bibliotheksordner öffnen"); the drawer shows the presets ("Sendungen") and the DCPs edited last.
+/// A document whose file lies in the library is written to it automatically shortly after every change, before
+/// switching documents, before closing and before upload/export, so it never has an "unsaved" state. A new DCP gets
+/// its file in the library as soon as it has a Titolo italiano. Files outside the library keep the explicit Speichern.
 /// </summary>
 public sealed partial class MainViewModel
 {
+    private const int MaxRecent = 10;
+
     private DcpLibrary? _library;
     private LibrarySnapshot _snapshot = LibrarySnapshot.Empty;
+
+    // Recently opened files outside the library, read in the background with each scan
+    private IReadOnlyList<LibraryEntry> _outsideRecent = [];
     private bool _initialized;
-
-    // Tree items by folder path and rows by file path: reused across scans, so expansion, selection and scroll position stay
-    private readonly Dictionary<string, LibraryFolderItem> _folderItems = new(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, LibraryRow> _rows = new(StringComparer.OrdinalIgnoreCase);
-
-    // Folders the user opened in the tree, for this session
-    private readonly HashSet<string> _expandedFolders = new(StringComparer.OrdinalIgnoreCase);
-
-    // The open file whose folders were last opened in the tree, so that is done once per file
-    private string? _revealedPath;
     private bool _scanning;
     private bool _scanAgain;
 
@@ -47,54 +43,26 @@ public sealed partial class MainViewModel
     // The file name is the one SuggestPath gives for the header, so it follows title, episode and date when they change
     private bool _nameFollowsHeader;
 
-    private Action<string>? _promptAccept;
+    // The preset being renamed in the drawer's name box; null while a new one is named
+    private PresetItem? _presetRenaming;
 
-    public ObservableCollection<LibraryRow> Presets { get; } = [];
+    public ObservableCollection<PresetItem> Presets { get; } = [];
+    public ObservableCollection<RecentItem> Recent { get; } = [];
 
-    /// <summary>The search results: matching DCPs of all folders, flat.</summary>
-    public ObservableCollection<LibraryRow> LibraryDcps { get; } = [];
+    [ObservableProperty] private bool _arePresetsExpanded = true;
+    [ObservableProperty] private bool _isRecentExpanded = true;
 
-    /// <summary>The library's folders and DCPs (presets apart), shown when not searching.</summary>
-    public ObservableCollection<LibraryTreeItem> LibraryTree { get; } = [];
+    /// <summary>The name box below the presets: a new preset (+) or a new name for one (⋯ › Umbenennen).</summary>
+    [ObservableProperty] private bool _isPresetEditorOpen;
+    [ObservableProperty] private string _presetEditorText = "";
+    [ObservableProperty] private string _presetEditorHint = "";
 
-    public IReadOnlyList<LibrarySortOption> LibrarySortOptions => LibrarySortOption.All;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(LibraryTargetText))]
-    private LibraryTreeItem? _selectedLibraryItem;
-
-    /// <summary>Folder (below the library, "" = the library itself) new DCPs and new folders go into: the selected folder, or the selected DCP's folder.</summary>
-    public string LibraryTargetFolder => SelectedLibraryItem switch
-    {
-        LibraryFolderItem folder => folder.RelativePath,
-        LibraryRow { IsPreset: false } row => row.Entry.Folder,
-        _ => "",
-    };
-
-    public string LibraryTargetText => Loc.Format("Library_TargetFolder", FolderDisplayName(LibraryTargetFolder));
-
-    public bool IsLibrarySearching => !string.IsNullOrWhiteSpace(LibrarySearch);
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowLibraryPanel), nameof(ShowLibraryStrip))]
-    private bool _isLibraryPanelOpen = true;
-
-    [ObservableProperty] private string _librarySearch = "";
+    /// <summary>A problem with the library folder, shown in the drawer.</summary>
     [ObservableProperty] private string _libraryNotice = "";
-    [ObservableProperty] private string _presetsEmptyText = "";
-    [ObservableProperty] private string _dcpsEmptyText = "";
-    [ObservableProperty] private string _presetsHeader = Loc.Format("Library_PresetsHeader", 0);
-    [ObservableProperty] private string _dcpsHeader = Loc.Format("Library_DcpsHeader", 0);
-
-    [ObservableProperty] private bool _isPromptOpen;
-    [ObservableProperty] private string _promptLabel = "";
-    [ObservableProperty] private string _promptValue = "";
-    [ObservableProperty] private string _promptAction = "";
 
     public bool HasLibrary => _library is not null;
-    public bool ShowLibraryBanner => _library is null;
-    public bool ShowLibraryPanel => _library is not null && IsLibraryPanelOpen;
-    public bool ShowLibraryStrip => _library is not null && !IsLibraryPanelOpen;
+    public bool HasNoLibrary => _library is null;
+    public bool HasNoPresets => _library is not null && Presets.Count == 0;
     public string LibraryFolderText => _library?.Folder ?? "";
 
     /// <summary>The open document is a file in the library: it is saved automatically.</summary>
@@ -105,30 +73,11 @@ public sealed partial class MainViewModel
 
     public bool IsAutoSaved => IsLibraryDocument || IsPendingLibraryDocument;
 
-    partial void OnLibrarySearchChanged(string value)
-    {
-        OnPropertyChanged(nameof(IsLibrarySearching));
-        ApplyLibraryFilter();
-    }
+    [RelayCommand]
+    private void TogglePresets() => ArePresetsExpanded = !ArePresetsExpanded;
 
-    public LibrarySortOption SelectedLibrarySort
-    {
-        get => LibrarySortOption.All.FirstOrDefault(o => o.Sort == LibrarySorting.FromSetting(_settings.LibrarySort)) ?? LibrarySortOption.All[0];
-        set
-        {
-            if (value is null || value.Sort == SelectedLibrarySort.Sort)
-            {
-                return;
-            }
-
-            _settings.LibrarySort = LibrarySorting.ToSetting(value.Sort);
-            SaveSettings();
-            OnPropertyChanged();
-            ApplyLibraryFilter();
-        }
-    }
-
-    private string FolderDisplayName(string relative) => relative.Length == 0 ? Loc.Get("Library_TopLevel") : relative;
+    [RelayCommand]
+    private void ToggleRecent() => IsRecentExpanded = !IsRecentExpanded;
 
     // ---------------------------------------------------------------- setting up
 
@@ -145,25 +94,22 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or IOException or System.Security.SecurityException)
         {
-            SetStatus("Status_LibraryUnusable", folder, ex.Message);
+            Report(ConsoleLevel.Warning, "Status_LibraryUnusable", folder, ex.Message);
             return null;
         }
     }
 
-    private void ApplyLibrarySetting()
+    /// <summary>The library folder setting changed.</summary>
+    internal void ApplyLibrarySetting()
     {
         _library = CreateLibrary(_settings.LibraryFolder);
-        _folderItems.Clear();
-        _expandedFolders.Clear();
-        _revealedPath = null;
-        SelectedLibraryItem = null;
         UpdateNameFollowsHeader();
         OnPropertyChanged(nameof(HasLibrary));
-        OnPropertyChanged(nameof(ShowLibraryBanner));
-        OnPropertyChanged(nameof(ShowLibraryPanel));
-        OnPropertyChanged(nameof(ShowLibraryStrip));
+        OnPropertyChanged(nameof(HasNoLibrary));
+        OnPropertyChanged(nameof(HasNoPresets));
         OnPropertyChanged(nameof(LibraryFolderText));
         OnFileStateChanged();
+        Settings.Refresh();
         _ = RefreshLibraryAsync();
 
         // An open DCP that has a title but no file now gets its file in the library
@@ -171,7 +117,7 @@ public sealed partial class MainViewModel
     }
 
     [RelayCommand]
-    private async Task ChooseLibraryFolder()
+    internal async Task ChooseLibraryFolder()
     {
         var folder = await _dialogs.PickFolder(Loc.Get("Picker_ChooseLibrary"));
         if (folder is null)
@@ -188,17 +134,30 @@ public sealed partial class MainViewModel
         }
     }
 
+    /// <summary>Older DCPs are found in Explorer: the library folder opens there.</summary>
     [RelayCommand]
-    private void ToggleLibraryPanel() => IsLibraryPanelOpen = !IsLibraryPanelOpen;
+    private void OpenLibraryFolder()
+    {
+        if (_library is not { } library)
+        {
+            OpenSettings();
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(library.Folder);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
+            return;
+        }
+
+        OpenWithShell(library.Folder);
+    }
 
     // ---------------------------------------------------------------- scanning
-
-    [RelayCommand]
-    private async Task RefreshLibrary()
-    {
-        CheckExternalChange();
-        await RefreshLibraryAsync();
-    }
 
     /// <summary>Reads the library folder again, off the UI thread. Calls during a scan are folded into one more scan.</summary>
     public async Task RefreshLibraryAsync()
@@ -216,32 +175,34 @@ public sealed partial class MainViewModel
             {
                 _scanAgain = false;
                 var library = _library;
-                if (library is null)
-                {
-                    _snapshot = LibrarySnapshot.Empty;
-                    LibraryNotice = "";
-                }
-                else
+                var recentFiles = _settings.RecentFiles.ToList();
+                var (snapshot, exists, outside) = await Task.Run(() =>
                 {
                     // Off the UI thread; only new and changed files are read (DcpLibrary keeps the rest in memory)
-                    var (snapshot, exists) = await Task.Run(() => (library.ScanAll(), library.Exists));
-                    if (!ReferenceEquals(library, _library))
-                    {
-                        _scanAgain = true; // the folder was changed meanwhile
-                        continue;
-                    }
-
-                    _snapshot = snapshot;
-                    LibraryNotice = exists ? "" : Loc.Get("Library_FolderMissing");
+                    var found = library?.ScanAll() ?? LibrarySnapshot.Empty;
+                    var others = recentFiles
+                        .Where(f => library?.Contains(f) != true && File.Exists(f))
+                        .Select(DcpLibrary.ReadFile)
+                        .ToList();
+                    return (found, library?.Exists ?? true, others);
+                });
+                if (!ReferenceEquals(library, _library))
+                {
+                    _scanAgain = true; // the folder was changed meanwhile
+                    continue;
                 }
 
-                ApplyLibraryFilter();
+                _snapshot = snapshot;
+                _outsideRecent = outside;
+                LibraryNotice = exists ? "" : Loc.Get("Library_FolderMissing");
+                RebuildPresets();
+                RebuildRecent();
             }
             while (_scanAgain);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DcpFileException)
         {
-            SetStatus("Status_LibraryReadFailed", ex.Message);
+            Report(ConsoleLevel.Warning, "Status_LibraryReadFailed", ex.Message);
         }
         finally
         {
@@ -249,190 +210,180 @@ public sealed partial class MainViewModel
         }
     }
 
-    private void ApplyLibraryFilter()
+    private void RebuildPresets()
     {
-        var entries = _snapshot.Entries;
-        var sort = SelectedLibrarySort.Sort;
-        var searching = IsLibrarySearching;
-        var rows = new Dictionary<string, LibraryRow>(StringComparer.OrdinalIgnoreCase);
-        LibraryRow RowFor(LibraryEntry entry)
+        var presets = _snapshot.Entries.Where(e => e.IsPreset && e.Error is null).OrderBy(e => e.Name, NaturalComparer.Instance).ToList();
+        if (!presets.Select(p => (p.Path, p.Title)).SequenceEqual(Presets.Select(p => (p.Path, p.Entry.Title))))
         {
-            if (!rows.TryGetValue(entry.Path, out var row))
+            Presets.Clear();
+            foreach (var preset in presets)
             {
-                if (_rows.TryGetValue(entry.Path, out var old))
-                {
-                    row = old;
-                    row.Update(entry);
-                }
-                else
-                {
-                    row = new LibraryRow(entry);
-                }
-
-                rows[entry.Path] = row;
-            }
-
-            return row;
-        }
-
-        var matching = entries.Where(e => e.Matches(LibrarySearch)).ToList();
-        var presets = matching.Where(e => e.IsPreset).OrderBy(e => e.Name, NaturalComparer.Instance).ToList();
-        var dcps = LibrarySorting.Sort(matching.Where(e => !e.IsPreset), sort).ToList();
-        SyncItems(Presets, presets.Select(RowFor).ToList());
-        SyncItems(LibraryDcps, searching ? dcps.Select(RowFor).ToList() : []);
-
-        // The tree is kept up to date while searching too, so it is as it was when the search is cleared
-        RevealOpenFile();
-        var tree = Core.Library.LibraryTree.Build(_snapshot, sort);
-        var folders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        SyncFolder(LibraryTree, tree, RowFor, folders);
-        foreach (var gone in _folderItems.Keys.Where(k => !folders.Contains(k)).ToList())
-        {
-            _folderItems.Remove(gone);
-        }
-
-        _rows = rows;
-        if (SelectedLibraryItem is LibraryFolderItem selectedFolder && !folders.Contains(selectedFolder.RelativePath)
-            || SelectedLibraryItem is LibraryRow selectedRow && !rows.ContainsKey(selectedRow.Path))
-        {
-            SelectedLibraryItem = null;
-        }
-
-        OnPropertyChanged(nameof(LibraryTargetText));
-        UpdateOpenRows();
-
-        var allPresets = entries.Count(e => e.IsPreset);
-        var allDcps = entries.Count - allPresets;
-        PresetsHeader = searching ? Loc.Format("Library_PresetsHeaderFiltered", presets.Count, allPresets) : Loc.Format("Library_PresetsHeader", allPresets);
-        DcpsHeader = searching ? Loc.Format("Library_DcpsHeaderFiltered", dcps.Count, allDcps) : Loc.Format("Library_DcpsHeader", allDcps);
-        PresetsEmptyText = presets.Count > 0 || _library is null ? ""
-            : allPresets == 0 ? Loc.Format("Library_NoPresets", Loc.Get("Library_SaveAsPreset"))
-            : Loc.Get("Library_NoPresetMatch");
-        DcpsEmptyText = dcps.Count > 0 || _library is null ? ""
-            : allDcps == 0 ? Loc.Format("Library_NoDcps", Loc.Get("Library_New"))
-            : Loc.Get("Library_NoDcpMatch");
-    }
-
-    private void SyncFolder(ObservableCollection<LibraryTreeItem> target, LibraryFolderNode node, Func<LibraryEntry, LibraryRow> rowFor,
-        HashSet<string> folders)
-    {
-        var items = new List<LibraryTreeItem>(node.Folders.Count + node.Entries.Count);
-        foreach (var folder in node.Folders)
-        {
-            if (!_folderItems.TryGetValue(folder.RelativePath, out var item))
-            {
-                item = new LibraryFolderItem(folder.RelativePath, OnFolderExpansionChanged)
-                {
-                    IsExpanded = _expandedFolders.Contains(folder.RelativePath),
-                };
-                _folderItems[folder.RelativePath] = item;
-            }
-
-            folders.Add(folder.RelativePath);
-            item.Update(folder);
-            SyncFolder(item.Children, folder, rowFor, folders);
-            items.Add(item);
-        }
-
-        items.AddRange(node.Entries.Select(rowFor));
-        SyncItems(target, items);
-    }
-
-    private void OnFolderExpansionChanged(LibraryFolderItem folder)
-    {
-        if (folder.IsExpanded)
-        {
-            _expandedFolders.Add(folder.RelativePath);
-        }
-        else
-        {
-            _expandedFolders.Remove(folder.RelativePath);
-        }
-    }
-
-    /// <summary>Opens the folders down to <paramref name="relativeFolder"/> in the tree.</summary>
-    private void ExpandFolder(string relativeFolder)
-    {
-        var parts = relativeFolder.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        for (var i = 1; i <= parts.Length; i++)
-        {
-            var path = string.Join('/', parts.Take(i));
-            _expandedFolders.Add(path);
-            if (_folderItems.TryGetValue(path, out var item))
-            {
-                item.IsExpanded = true;
+                Presets.Add(new PresetItem(preset));
             }
         }
-    }
 
-    /// <summary>Once per opened library file: its folders are opened in the tree, so it can be seen there.</summary>
-    private void RevealOpenFile()
-    {
-        if (_library is not { } library || FilePath is not { } path || !library.Contains(path) || SamePath(path, _revealedPath))
-        {
-            return;
-        }
-
-        _revealedPath = path;
-        var folder = Path.GetDirectoryName(Path.GetRelativePath(library.Folder, path))?.Replace('\\', '/') ?? "";
-        ExpandFolder(folder);
+        OnPropertyChanged(nameof(HasNoPresets));
     }
 
     /// <summary>
-    /// Makes <paramref name="target"/> hold <paramref name="items"/> in that order with as few changes as possible, never
-    /// holding an item twice, so the selection and the scroll position survive a refresh.
+    /// "Zuletzt bearbeitet": the DCPs of the library and the files opened outside it, last changed first, with the open
+    /// DCP marked (and added on top when it is not among them).
     /// </summary>
-    private static void SyncItems<T>(ObservableCollection<T> target, IReadOnlyList<T> items) where T : class
+    private void RebuildRecent()
     {
-        var wanted = new HashSet<T>(items, ReferenceEqualityComparer.Instance);
-        for (var i = target.Count - 1; i >= 0; i--)
+        var entries = _snapshot.Entries.Where(e => !e.IsPreset)
+            .Concat(_outsideRecent)
+            .GroupBy(e => Path.GetFullPath(e.Path), StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .OrderByDescending(e => e.Modified)
+            .Take(MaxRecent)
+            .ToList();
+
+        var items = new List<RecentItem>();
+        var currentFound = false;
+        foreach (var entry in entries)
         {
-            if (!wanted.Contains(target[i]))
+            var isCurrent = SamePath(entry.Path, FilePath);
+            currentFound |= isCurrent;
+            var item = new RecentItem(entry.Path) { IsCurrent = isCurrent, CanStartNext = entry.Error is null };
+            if (isCurrent)
             {
-                target.RemoveAt(i);
-            }
-        }
-
-        for (var i = 0; i < items.Count; i++)
-        {
-            if (i < target.Count && ReferenceEquals(target[i], items[i]))
-            {
-                continue;
-            }
-
-            var at = -1;
-            for (var j = i + 1; j < target.Count; j++)
-            {
-                if (ReferenceEquals(target[j], items[i]))
-                {
-                    at = j;
-                    break;
-                }
-            }
-
-            if (at >= 0)
-            {
-                target.Move(at, i);
+                FillFromOpenDcp(item);
             }
             else
             {
-                target.Insert(i, items[i]);
+                SetLabel(item, entry.Title, entry.Puntata, entry.Name);
+                item.Meta = Loc.Format("Recent_Meta", WhenText(entry.Modified), entry.Error is not null ? Loc.Get("Recent_Unreadable") : StateText(entry.LineCount, entry.UploadState));
+                item.NextEpisodeTip = NextEpisodeTip(Programme.Of(entry), entry.Puntata);
+            }
+
+            items.Add(item);
+        }
+
+        if (!currentFound && _initialized)
+        {
+            var current = new RecentItem(FilePath) { IsCurrent = true };
+            FillFromOpenDcp(current);
+            items.Insert(0, current);
+        }
+
+        if (!items.Select(i => i.Signature).SequenceEqual(Recent.Select(i => i.Signature)))
+        {
+            Recent.Clear();
+            foreach (var item in items)
+            {
+                Recent.Add(item);
             }
         }
-
-        while (target.Count > items.Count)
-        {
-            target.RemoveAt(target.Count - 1);
-        }
     }
 
-    private void UpdateOpenRows()
+    /// <summary>The open DCP's entry follows its header while it is edited.</summary>
+    private void UpdateCurrentRecent()
     {
-        foreach (var row in _rows.Values)
+        if (Recent.FirstOrDefault(r => r.IsCurrent) is { } item)
         {
-            row.IsOpen = SamePath(row.Path, FilePath);
+            FillFromOpenDcp(item);
         }
     }
+
+    private void FillFromOpenDcp(RecentItem item)
+    {
+        var upload = _dcp.Upload switch
+        {
+            null => LibraryUploadState.NotUploaded,
+            { Complete: true } => LibraryUploadState.Uploaded,
+            _ => LibraryUploadState.Partial,
+        };
+        SetLabel(item, _dcp.TitoloItaliano, _dcp.Puntata, FilePath is null ? Loc.Get("Doc_Untitled") : Path.GetFileNameWithoutExtension(FilePath));
+        var modified = FilePath is not null && !IsDirty ? LastWriteUtc(FilePath).ToLocalTime() : DateTime.Now;
+        item.Meta = Loc.Format("Recent_Meta", WhenText(modified), StateText(_dcp.Lines.Count, upload));
+        item.NextEpisodeTip = NextEpisodeTip(Programme.Of(_dcp), _dcp.Puntata);
+        item.CanStartNext = true;
+    }
+
+    // Puntata is the RAI form's term, the same in every language
+    private static void SetLabel(RecentItem item, string title, int? puntata, string fallback)
+    {
+        item.TitleText = string.IsNullOrWhiteSpace(title) ? fallback : title.Trim();
+        item.EpisodeText = puntata is { } p ? $" · Puntata {p:00}" : "";
+        item.Label = item.TitleText + item.EpisodeText;
+    }
+
+    private static string WhenText(DateTime modified)
+    {
+        var day = modified.Date;
+        if (day == DateTime.Today)
+        {
+            return Loc.Get("Recent_Today");
+        }
+
+        if (day == DateTime.Today.AddDays(-1))
+        {
+            return Loc.Get("Recent_Yesterday");
+        }
+
+        return day.Year == DateTime.Today.Year
+            ? day.ToString("dd.MM.", CultureInfo.InvariantCulture)
+            : day.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+    }
+
+    private static string StateText(int lineCount, LibraryUploadState upload) => upload switch
+    {
+        LibraryUploadState.Uploaded => Loc.Get("Recent_Uploaded"),
+        LibraryUploadState.Partial => Loc.Get("Recent_PartlyUploaded"),
+        _ when lineCount == 0 => Loc.Get("Recent_New"),
+        _ => Loc.Get("Recent_Working"),
+    };
+
+    private string NextEpisodeTip(Programme programme, int? puntata) =>
+        NextPuntata(programme, puntata) is { } next
+            ? Loc.Format("Recent_NextEpisodeNumber", next.ToString("00", CultureInfo.InvariantCulture))
+            : Loc.Get("Recent_NextEpisode");
+
+    /// <summary>
+    /// Which programme a DCP belongs to: RAI's Uorg and Matricola when it has them (several programmes may share a
+    /// title), its Titolo italiano otherwise.
+    /// </summary>
+    private readonly record struct Programme(string Title, int? Uorg, int? Matricola)
+    {
+        public static Programme Of(Dcp dcp) => new(dcp.TitoloItaliano.Trim(), dcp.Uorg, dcp.Matricola);
+        public static Programme Of(LibraryEntry e) => new(e.Title.Trim(), e.Uorg, e.Matricola);
+
+        public bool Includes(Programme other) => Matricola is not null && other.Matricola is not null
+            ? Matricola == other.Matricola && Uorg == other.Uorg
+            : Title.Length > 0 && string.Equals(Title, other.Title, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    /// <summary>
+    /// The episode after the last one of this programme: the highest Puntata of its DCPs (and of
+    /// <paramref name="atLeastAfter"/>) plus one. Null when the programme has no numbered episode yet.
+    /// </summary>
+    private int? NextPuntata(Programme programme, int? atLeastAfter = null)
+    {
+        var known = _snapshot.Entries
+            .Where(e => !e.IsPreset && e.Puntata is not null && programme.Includes(Programme.Of(e)))
+            .Select(e => e.Puntata!.Value)
+            .ToList();
+        if (atLeastAfter is { } after)
+        {
+            known.Add(after);
+        }
+
+        if (_dcp.Puntata is { } open && programme.Includes(Programme.Of(_dcp)))
+        {
+            known.Add(open);
+        }
+
+        return known.Count == 0 ? null : known.Max() + 1;
+    }
+
+    /// <summary>Where a new DCP of this programme gets its file: next to its last episode, else the library itself.</summary>
+    private string? FolderForProgramme(Programme programme) =>
+        _snapshot.Entries
+            .Where(e => !e.IsPreset && e.Error is null && programme.Includes(Programme.Of(e)))
+            .OrderByDescending(e => e.Modified)
+            .Select(e => Path.GetDirectoryName(e.Path))
+            .FirstOrDefault();
 
     /// <summary>The window became active: the user may have changed files outside the app meanwhile.</summary>
     public void OnWindowActivated()
@@ -443,6 +394,251 @@ public sealed partial class MainViewModel
         }
 
         CheckExternalChange();
+        _ = RefreshLibraryAsync();
+    }
+
+    // ---------------------------------------------------------------- drawer actions
+
+    /// <summary>A click on a recent DCP: continue it.</summary>
+    [RelayCommand]
+    private async Task OpenRecent(RecentItem? item)
+    {
+        if (item is null || IsBusy)
+        {
+            return;
+        }
+
+        if (item.IsCurrent || item.Path is null)
+        {
+            Page = AppPage.Songs;
+            return;
+        }
+
+        if (await LeaveDocumentAsync() && await TryOpenAsync(item.Path, quiet: true))
+        {
+            Page = AppPage.Songs;
+            _ = RefreshLibraryAsync();
+        }
+    }
+
+    /// <summary>The + on a recent DCP: its next episode, Puntata + 1, same programme information, no songs.</summary>
+    [RelayCommand]
+    private async Task StartNextEpisode(RecentItem? item)
+    {
+        if (item is null || IsBusy)
+        {
+            return;
+        }
+
+        var fromOpen = item.IsCurrent || item.Path is null;
+        if (fromOpen)
+        {
+            CommitPendingEdits?.Invoke();
+            SyncLines();
+        }
+
+        var source = fromOpen ? _dcp : null;
+        var folder = item.Path is null ? _newFileFolder : Path.GetDirectoryName(item.Path);
+        if (!await LeaveDocumentAsync())
+        {
+            return;
+        }
+
+        Dcp next;
+        try
+        {
+            // Read after leaving: when it was the open DCP, its last changes are in the file now
+            next = source?.CreateNextEpisode() ?? DcpLibrary.CreateNextEpisode(item.Path!);
+        }
+        catch (DcpFileException ex)
+        {
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
+            return;
+        }
+
+        if (NextPuntata(Programme.Of(next), next.Puntata - 1) is { } puntata)
+        {
+            next.Puntata = puntata;
+        }
+
+        StartNewDocument(next, folder, dirty: true, "Status_NextEpisodeOf", item.Label);
+        Page = AppPage.Songs;
+        FocusBroadcastDate?.Invoke();
+    }
+
+    /// <summary>A click on a preset: a new DCP with its programme information, as the next episode of the programme.</summary>
+    [RelayCommand]
+    private async Task StartFromPreset(PresetItem? preset)
+    {
+        if (preset is null || IsBusy || !await LeaveDocumentAsync())
+        {
+            return;
+        }
+
+        Dcp dcp;
+        try
+        {
+            dcp = DcpLibrary.CreateFromPreset(preset.Path);
+        }
+        catch (DcpFileException ex)
+        {
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
+            return;
+        }
+
+        dcp.Puntata ??= NextPuntata(Programme.Of(dcp));
+        StartNewDocument(dcp, FolderForProgramme(Programme.Of(dcp)), dirty: false, "Status_NewFromPreset", preset.Name);
+        Page = AppPage.Songs;
+        FocusBroadcastDate?.Invoke();
+    }
+
+    /// <summary>The + next to "Sendungen": names a new preset made of the open DCP's programme information.</summary>
+    [RelayCommand]
+    private void BeginNewPreset()
+    {
+        if (_library is null || IsBusy)
+        {
+            return;
+        }
+
+        if (IsPresetEditorOpen && _presetRenaming is null)
+        {
+            CancelPresetEditor();
+            return;
+        }
+
+        CommitPendingEdits?.Invoke();
+        _presetRenaming = null;
+        PresetEditorText = _dcp.TitoloItaliano.Trim();
+        PresetEditorHint = Loc.Get("Presets_EditorHint");
+        ArePresetsExpanded = true;
+        IsPresetEditorOpen = true;
+    }
+
+    [RelayCommand]
+    private void BeginRenamePreset(PresetItem? preset)
+    {
+        if (preset is null || IsBusy)
+        {
+            return;
+        }
+
+        _presetRenaming = preset;
+        PresetEditorText = preset.Name;
+        PresetEditorHint = Loc.Get("Presets_EditorHint");
+        ArePresetsExpanded = true;
+        IsPresetEditorOpen = true;
+    }
+
+    [RelayCommand]
+    private void CommitPresetEditor()
+    {
+        var name = PresetEditorText.Trim();
+        if (name.Length == 0)
+        {
+            return;
+        }
+
+        var renaming = _presetRenaming;
+        CancelPresetEditor();
+        if (renaming is null)
+        {
+            SavePreset(name, replacing: false);
+        }
+        else
+        {
+            RenamePreset(renaming, name);
+        }
+    }
+
+    [RelayCommand]
+    private void CancelPresetEditor()
+    {
+        _presetRenaming = null;
+        IsPresetEditorOpen = false;
+    }
+
+    /// <summary>⋯ › "Mit aktuellen Angaben aktualisieren": the preset takes the open DCP's programme information.</summary>
+    [RelayCommand]
+    private void UpdatePreset(PresetItem? preset)
+    {
+        if (preset is not null && !IsBusy)
+        {
+            CommitPendingEdits?.Invoke();
+            SavePreset(preset.Name, replacing: true);
+        }
+    }
+
+    private void SavePreset(string name, bool replacing)
+    {
+        if (_library is not { } library)
+        {
+            return;
+        }
+
+        SyncLines();
+        var presetPath = library.PresetPath(name);
+        var existed = File.Exists(presetPath);
+        if (!KeepLegacyOriginal(presetPath, out var original))
+        {
+            return;
+        }
+
+        try
+        {
+            var path = library.SavePreset(_dcp, name);
+            SetStatus(replacing ? "Status_PresetUpdated" : existed ? "Status_PresetReplaced" : "Status_PresetSaved", Path.GetFileNameWithoutExtension(path));
+            ReportLegacyConverted(true, path, original);
+        }
+        catch (DcpFileException ex)
+        {
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
+        }
+
+        _ = RefreshLibraryAsync();
+    }
+
+    private void RenamePreset(PresetItem preset, string newName)
+    {
+        try
+        {
+            var target = DcpLibrary.Rename(preset.Path, newName);
+            SetStatus("Status_Renamed", preset.Name, Path.GetFileNameWithoutExtension(target));
+        }
+        catch (DcpFileException ex)
+        {
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
+        }
+
+        _ = RefreshLibraryAsync();
+    }
+
+    [RelayCommand]
+    private async Task DeletePreset(PresetItem? preset)
+    {
+        if (preset is null || IsBusy)
+        {
+            return;
+        }
+
+        var recycle = FileManager.DeletesToRecycleBin;
+        var text = Loc.Format(recycle ? "Msg_RecyclePreset" : "Msg_DeletePreset", preset.Name) + " " + Loc.Get(recycle ? "Msg_RecycleNote" : "Msg_DeleteNote");
+        if (!await _dialogs.Confirm(Loc.Get("Dlg_DeletePreset"), text,
+                Loc.Get(recycle ? "Dlg_MoveToRecycleBin" : "Dlg_DeletePermanently"), Loc.Get("Common_Cancel")))
+        {
+            return;
+        }
+
+        try
+        {
+            FileManager.Delete(preset.Path);
+            SetStatus(recycle ? "Status_MovedToRecycleBin" : "Status_Deleted", Path.GetFileName(preset.Path));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Report(ConsoleLevel.Warning, "Status_NotDeleted", Path.GetFileName(preset.Path), ex.Message);
+        }
+
         _ = RefreshLibraryAsync();
     }
 
@@ -542,7 +738,7 @@ public sealed partial class MainViewModel
         }
         catch (DcpFileException ex)
         {
-            SetStatus("Status_LegacyBackupFailed", Path.GetFileName(path), ex.Message);
+            Report(ConsoleLevel.Error, "Status_LegacyBackupFailed", Path.GetFileName(path), ex.Message);
             return false;
         }
     }
@@ -576,7 +772,7 @@ public sealed partial class MainViewModel
         }
         catch (DcpFileException ex)
         {
-            SetStatus("Status_FileProblem", ex.Message);
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
             return false;
         }
     }
@@ -602,7 +798,7 @@ public sealed partial class MainViewModel
         catch (DcpFileException ex)
         {
             _nameFollowsHeader = false;
-            SetStatus("Status_FileProblem", ex.Message);
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
         }
     }
 
@@ -669,7 +865,7 @@ public sealed partial class MainViewModel
         }
         catch (DcpFileException ex)
         {
-            SetStatus("Status_FileProblem", ex.Message);
+            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
             return false;
         }
     }
@@ -694,7 +890,7 @@ public sealed partial class MainViewModel
                 }
                 catch (DcpFileException ex)
                 {
-                    SetStatus("Status_UploadNotRecorded", ex.Message);
+                    Report(ConsoleLevel.Error, "Status_UploadNotRecorded", ex.Message);
                 }
             }
         }
@@ -725,11 +921,11 @@ public sealed partial class MainViewModel
                     _externalNotice = DateTime.MaxValue;
                     if (IsLibraryDocument)
                     {
-                        SetStatus("Status_FileGoneLibrary", name);
+                        Report(ConsoleLevel.Warning, "Status_FileGoneLibrary", name);
                     }
                     else
                     {
-                        SetStatus("Status_FileGone", name, Loc.MenuName("Menu_Save"));
+                        Report(ConsoleLevel.Warning, "Status_FileGone", name, Loc.Get("Save_Button"));
                     }
                 }
 
@@ -764,7 +960,7 @@ public sealed partial class MainViewModel
                 if (_externalNotice != modified)
                 {
                     _externalNotice = modified;
-                    SetStatus("Status_ChangedUnreadable", name, ex.Message);
+                    Report(ConsoleLevel.Warning, "Status_ChangedUnreadable", name, ex.Message);
                 }
             }
 
@@ -779,449 +975,12 @@ public sealed partial class MainViewModel
         _externalNotice = modified;
         if (IsLibraryDocument)
         {
-            SetStatus("Status_ChangedKeptLibrary", name);
+            Report(ConsoleLevel.Warning, "Status_ChangedKeptLibrary", name);
         }
         else
         {
-            SetStatus("Status_ChangedKept", name, Loc.MenuName("Menu_Save"));
+            Report(ConsoleLevel.Warning, "Status_ChangedKept", name, Loc.Get("Save_Button"));
         }
-    }
-
-    // ---------------------------------------------------------------- panel actions
-
-    /// <summary>Click or Enter on a row: opens the DCP (or the preset itself, for editing it).</summary>
-    [RelayCommand]
-    private async Task OpenLibraryEntry(LibraryRow? row)
-    {
-        if (row is null || IsBusy || SamePath(row.Path, FilePath))
-        {
-            return;
-        }
-
-        if (row.Entry.Error is { } error)
-        {
-            SetStatus("Status_CannotOpenEntry", row.Name, error);
-            return;
-        }
-
-        if (await LeaveDocumentAsync() && await TryOpenAsync(row.Path, quiet: true))
-        {
-            RememberFile(row.Path);
-            _ = RefreshLibraryAsync();
-        }
-    }
-
-    [RelayCommand]
-    private async Task NewFromPreset(LibraryRow? row)
-    {
-        if (row is null || IsBusy || _library is null)
-        {
-            return;
-        }
-
-        if (!await LeaveDocumentAsync())
-        {
-            return;
-        }
-
-        Dcp dcp;
-        try
-        {
-            // Read after leaving: when the preset itself was open, its last changes are in the file now
-            dcp = DcpLibrary.CreateFromPreset(row.Path);
-        }
-        catch (DcpFileException ex)
-        {
-            SetStatus("Status_FileProblem", ex.Message);
-            return;
-        }
-
-        StartNewDocument(dcp, NewDocumentFolder(), dirty: false, "Status_NewFromPreset", row.Name);
-    }
-
-    /// <summary>Where a new DCP gets its file: the folder selected in the library panel.</summary>
-    private string? NewDocumentFolder() => _library?.FolderPath(LibraryTargetFolder);
-
-    // ---------------------------------------------------------------- folders
-
-    [RelayCommand]
-    private void NewFolder(LibraryFolderItem? parent)
-    {
-        if (_library is null || IsBusy)
-        {
-            return;
-        }
-
-        var parentPath = parent?.RelativePath ?? LibraryTargetFolder;
-        OpenPrompt(Loc.Format("Prompt_NewFolderLabel", FolderDisplayName(parentPath)), "", Loc.Get("Prompt_Create"),
-            name => _ = CreateFolderAsync(parentPath, name));
-    }
-
-    private async Task CreateFolderAsync(string parentPath, string name)
-    {
-        if (_library is not { } library)
-        {
-            return;
-        }
-
-        string created;
-        try
-        {
-            created = library.CreateFolder(parentPath, name);
-        }
-        catch (DcpFileException ex)
-        {
-            SetStatus("Status_FileProblem", ex.Message);
-            return;
-        }
-
-        ExpandFolder(parentPath);
-        SetStatus("Status_FolderCreated", created);
-        await RefreshLibraryAsync();
-        if (_folderItems.TryGetValue(created, out var item))
-        {
-            SelectedLibraryItem = item;
-        }
-    }
-
-    /// <summary>The folders a DCP can be moved to: the library itself and every folder in the tree, as (path, display name).</summary>
-    public IReadOnlyList<(string Path, string Display)> MoveTargets() =>
-        [("", FolderDisplayName("")),
-         .. _folderItems.Keys.Order(NaturalComparer.Instance).Select(f => (f, f))];
-
-    public async Task MoveEntryAsync(LibraryRow row, string targetFolder)
-    {
-        if (IsBusy || _library is not { } library || row.IsPreset)
-        {
-            return;
-        }
-
-        var path = row.Path;
-        var isOpen = SamePath(path, FilePath);
-        if (isOpen)
-        {
-            // What is on screen goes into the file first, at its old place
-            CommitPendingEdits?.Invoke();
-            if (!SaveLibraryDocument(leaving: false))
-            {
-                return;
-            }
-
-            path = FilePath!;
-        }
-
-        try
-        {
-            var target = library.Move(path, targetFolder);
-            ReplaceRecent(path, target);
-            if (isOpen)
-            {
-                FilePath = target;
-                _revealedPath = target;
-                UpdateNameFollowsHeader();
-                ScheduleRecovery();
-            }
-
-            ExpandFolder(targetFolder);
-            SetStatus("Status_Moved", Path.GetFileName(target), FolderDisplayName(targetFolder));
-        }
-        catch (DcpFileException ex)
-        {
-            SetStatus("Status_FileProblem", ex.Message);
-        }
-
-        await RefreshLibraryAsync();
-    }
-
-    [RelayCommand]
-    private void OpenFolderInFileManager(LibraryFolderItem? folder)
-    {
-        if (_library is { } library)
-        {
-            OpenWithShell(library.FolderPath(folder?.RelativePath ?? ""));
-        }
-    }
-
-    /// <summary>A new DCP for the next episode of <paramref name="row"/>, or of the open DCP when null.</summary>
-    [RelayCommand]
-    private async Task DuplicateNextEpisode(LibraryRow? row)
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        if (row is null || SamePath(row.Path, FilePath))
-        {
-            await NewNextEpisode();
-            return;
-        }
-
-        if (!await LeaveDocumentAsync())
-        {
-            return;
-        }
-
-        Dcp next;
-        try
-        {
-            next = DcpLibrary.CreateNextEpisode(row.Path);
-        }
-        catch (DcpFileException ex)
-        {
-            SetStatus("Status_FileProblem", ex.Message);
-            return;
-        }
-
-        StartNewDocument(next, Path.GetDirectoryName(row.Path), dirty: true, "Status_NextEpisodeOf", row.Name);
-    }
-
-    /// <summary>An exact copy (never uploaded) of <paramref name="row"/>, or of the open DCP when null, which is then opened.</summary>
-    [RelayCommand]
-    private async Task DuplicateDcp(LibraryRow? row)
-    {
-        if (IsBusy || _library is not { } library)
-        {
-            return;
-        }
-
-        var isCurrent = row is null || SamePath(row.Path, FilePath);
-        if (isCurrent && !IsLibraryDocument)
-        {
-            // Not a library file: the copy is made from what is on screen
-            CommitPendingEdits?.Invoke();
-            SyncLines();
-            var clone = DcpFile.Clone(_dcp);
-            clone.Upload = null;
-            if (await LeaveDocumentAsync())
-            {
-                StartNewDocument(clone, null, dirty: true, "Status_CopyOfDcp");
-            }
-
-            return;
-        }
-
-        // Writes the open DCP first, so a copy of it has everything
-        if (!await LeaveDocumentAsync())
-        {
-            return;
-        }
-
-        var source = isCurrent ? FilePath! : row!.Path;
-        try
-        {
-            var copy = library.Duplicate(source);
-            if (await TryOpenAsync(copy, quiet: true))
-            {
-                RememberFile(copy);
-                SetStatus("Status_Duplicated", Path.GetFileName(source), RelativeName(copy));
-            }
-        }
-        catch (DcpFileException ex)
-        {
-            SetStatus("Status_FileProblem", ex.Message);
-        }
-
-        _ = RefreshLibraryAsync();
-    }
-
-    [RelayCommand]
-    private void RenameEntry(LibraryRow? row)
-    {
-        var path = row?.Path ?? (IsLibraryDocument ? FilePath : null);
-        if (path is null || IsBusy)
-        {
-            return;
-        }
-
-        var name = Path.GetFileNameWithoutExtension(path);
-        OpenPrompt(Loc.Format("Prompt_RenameLabel", name), name, Loc.Get("Prompt_Rename"), newName => RenameFile(path, newName));
-    }
-
-    private void RenameFile(string path, string newName)
-    {
-        var isOpen = SamePath(path, FilePath);
-        if (isOpen)
-        {
-            CommitPendingEdits?.Invoke();
-            if (!SaveLibraryDocument(leaving: false))
-            {
-                return;
-            }
-
-            path = FilePath!; // saving may have given it the name that fits the header
-        }
-
-        try
-        {
-            var target = DcpLibrary.Rename(path, newName);
-            ReplaceRecent(path, target);
-            if (isOpen)
-            {
-                FilePath = target;
-                UpdateNameFollowsHeader();
-            }
-
-            SetStatus("Status_Renamed", Path.GetFileName(path), Path.GetFileName(target));
-        }
-        catch (DcpFileException ex)
-        {
-            SetStatus("Status_FileProblem", ex.Message);
-        }
-
-        _ = RefreshLibraryAsync();
-    }
-
-    [RelayCommand]
-    private void SaveAsPreset()
-    {
-        if (_library is null || IsBusy)
-        {
-            return;
-        }
-
-        CommitPendingEdits?.Invoke();
-        SyncLines();
-        var dcp = _dcp;
-        var name = dcp.TitoloItaliano.Trim();
-        OpenPrompt(Loc.Get("Prompt_PresetLabel"),
-            name, Loc.Get("Prompt_SavePreset"), presetName => SavePreset(dcp, presetName));
-    }
-
-    private void SavePreset(Dcp dcp, string name)
-    {
-        if (_library is not { } library)
-        {
-            return;
-        }
-
-        if (ReferenceEquals(dcp, _dcp))
-        {
-            SyncLines();
-        }
-
-        var presetPath = library.PresetPath(name);
-        var existed = File.Exists(presetPath);
-        if (!KeepLegacyOriginal(presetPath, out var original))
-        {
-            return;
-        }
-
-        try
-        {
-            var path = library.SavePreset(dcp, name);
-            SetStatus(existed ? "Status_PresetReplaced" : "Status_PresetSaved", Path.GetFileNameWithoutExtension(path));
-            ReportLegacyConverted(true, path, original);
-        }
-        catch (DcpFileException ex)
-        {
-            SetStatus("Status_FileProblem", ex.Message);
-        }
-
-        _ = RefreshLibraryAsync();
-    }
-
-    [RelayCommand]
-    private void ShowInFileManager(LibraryRow? row)
-    {
-        var path = row?.Path ?? FilePath;
-        if (path is null)
-        {
-            SetStatus("Status_NoFileYet");
-            return;
-        }
-
-        FileManager.Reveal(path);
-    }
-
-    [RelayCommand]
-    private async Task DeleteEntry(LibraryRow? row)
-    {
-        if (row is null || IsBusy)
-        {
-            return;
-        }
-
-        var name = Path.GetFileName(row.Path);
-        var isOpen = SamePath(row.Path, FilePath);
-        var recycle = FileManager.DeletesToRecycleBin;
-        var question = (row.IsPreset, recycle) switch
-        {
-            (true, true) => Loc.Format("Msg_RecyclePreset", name),
-            (true, false) => Loc.Format("Msg_DeletePreset", name),
-            (false, true) => Loc.Format("Msg_RecycleDcp", name),
-            (false, false) => Loc.Format("Msg_DeleteDcp", name),
-        };
-        var text = string.Join(" ", new[]
-        {
-            question,
-            isOpen ? Loc.Get("Msg_DeleteOpenNote") : "",
-            Loc.Get(recycle ? "Msg_RecycleNote" : "Msg_DeleteNote"),
-        }.Where(s => s.Length > 0));
-        if (!await _dialogs.Confirm(Loc.Get(row.IsPreset ? "Dlg_DeletePreset" : "Dlg_DeleteDcp"), text,
-                Loc.Get(recycle ? "Dlg_MoveToRecycleBin" : "Dlg_DeletePermanently"), Loc.Get("Common_Cancel")))
-        {
-            return;
-        }
-
-        // Nothing may write the file again once it is gone
-        _recoveryTimer.Stop();
-        try
-        {
-            FileManager.Delete(row.Path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            SetStatus("Status_NotDeleted", name, ex.Message);
-            ScheduleRecovery();
-            return;
-        }
-
-        if (_settings.RecentFiles.RemoveAll(f => SamePath(f, row.Path)) > 0)
-        {
-            SaveSettings();
-            OnPropertyChanged(nameof(RecentFiles));
-        }
-
-        if (isOpen)
-        {
-            LoadDcp(_settings.Company.CreateDcp(), null, false);
-        }
-
-        SetStatus(recycle ? "Status_MovedToRecycleBin" : "Status_Deleted", name);
-        _ = RefreshLibraryAsync();
-    }
-
-    // ---------------------------------------------------------------- name prompt (inline in the panel, not a dialog)
-
-    private void OpenPrompt(string label, string value, string action, Action<string> accept)
-    {
-        _promptAccept = accept;
-        PromptLabel = label;
-        PromptValue = value;
-        PromptAction = action;
-        IsPromptOpen = true;
-    }
-
-    [RelayCommand]
-    private void AcceptPrompt()
-    {
-        var value = PromptValue.Trim();
-        if (value.Length == 0)
-        {
-            return;
-        }
-
-        var accept = _promptAccept;
-        CancelPrompt();
-        accept?.Invoke(value);
-    }
-
-    [RelayCommand]
-    private void CancelPrompt()
-    {
-        _promptAccept = null;
-        IsPromptOpen = false;
     }
 
     // ---------------------------------------------------------------- helpers
@@ -1283,6 +1042,5 @@ public sealed partial class MainViewModel
 
         _settings.RecentFiles[index] = Path.GetFullPath(newPath);
         SaveSettings();
-        OnPropertyChanged(nameof(RecentFiles));
     }
 }

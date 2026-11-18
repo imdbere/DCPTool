@@ -1,9 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using DcpTool.App.Localisation;
-using DcpTool.App.ViewModels;
 using DcpTool.Core.Rai;
-using DcpTool.Core.Settings;
 
 namespace DcpTool.App.Views;
 
@@ -30,24 +29,6 @@ public sealed class Dialogs
 
     public async Task<bool> Confirm(string title, string text, string yes, string no) =>
         await Show<bool>(new MessageWindow(title, text, yes, no));
-
-    public async Task ShowText(string title, string text) => await Show<bool>(new MessageWindow(title, text, Loc.Get("Common_Close"), null, monospace: true));
-
-    public async Task<LoginInput?> ShowLogin(string username, string password, bool remember, bool canRemember, string? error) =>
-        await Show<LoginInput>(new LoginWindow(username, password, remember, canRemember, error));
-
-    /// <summary>Edits <paramref name="settings"/> in place when accepted.</summary>
-    public async Task<bool> ShowSettings(AppSettings settings)
-    {
-        var vm = new SettingsViewModel(settings);
-        if (await Show<bool>(new SettingsWindow(vm)))
-        {
-            vm.Apply(settings);
-            return true;
-        }
-
-        return false;
-    }
 
     /// <summary>False when the built-in browser could not be created.</summary>
     public async Task<bool> ShowBrowser(Uri uri, IRaiClient client)
@@ -110,6 +91,27 @@ public sealed class Dialogs
         });
         var path = file?.TryGetLocalPath();
         return path is not null && Path.GetExtension(path).Length == 0 ? path + extension : path;
+    }
+
+    /// <param name="pattern">E.g. <c>*.docx</c>.</param>
+    public async Task<string?> PickFile(string title, string typeName, string pattern, string? folder)
+    {
+        var files = await Storage!.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = false,
+            SuggestedStartLocation = await FolderAsync(folder),
+            FileTypeFilter = [new FilePickerFileType(typeName) { Patterns = [pattern] }],
+        });
+        return files.Count == 0 ? null : files[0].TryGetLocalPath();
+    }
+
+    public async Task CopyText(string text)
+    {
+        if (Owner?.Clipboard is { } clipboard)
+        {
+            await clipboard.SetTextAsync(text);
+        }
     }
 
     public async Task<string?> PickFolder(string title)

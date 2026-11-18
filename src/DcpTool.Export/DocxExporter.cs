@@ -24,20 +24,36 @@ public sealed class DocxExporter : IDocumentExporter
     public string DisplayName => "Word document";
     public string FileExtension => ".docx";
 
-    public void Export(Dcp dcp, CompanyProfile company, Stream output)
+    public void Export(Dcp dcp, CompanyProfile company, Stream output, Stream? template = null)
     {
         ArgumentNullException.ThrowIfNull(dcp);
         ArgumentNullException.ThrowIfNull(company);
         ArgumentNullException.ThrowIfNull(output);
 
         using var buffer = new MemoryStream();
-        using (var template = typeof(DocxExporter).Assembly.GetManifestResourceStream(TemplateResource)
-                   ?? throw new ExportException("The Word template is missing from the application."))
+        if (template is not null)
         {
             template.CopyTo(buffer);
+            buffer.Position = 0;
+        }
+        else
+        {
+            using var builtIn = typeof(DocxExporter).Assembly.GetManifestResourceStream(TemplateResource)
+                                ?? throw new ExportException("The Word template is missing from the application.");
+            builtIn.CopyTo(buffer);
         }
 
-        using (var doc = WordprocessingDocument.Open(buffer, true))
+        WordprocessingDocument doc;
+        try
+        {
+            doc = WordprocessingDocument.Open(buffer, true);
+        }
+        catch (Exception ex) when (ex is OpenXmlPackageException or InvalidDataException or IOException or FileFormatException)
+        {
+            throw new ExportException("The template is not a Word document (.docx).", ex);
+        }
+
+        using (doc)
         {
             var body = doc.MainDocumentPart?.Document?.Body
                        ?? throw new ExportException("The Word template has no document body.");

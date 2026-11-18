@@ -1,0 +1,168 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DcpTool.App.ViewModels"
+             xmlns:l="using:DcpTool.App.Localisation"
+             x:Class="DcpTool.App.Views.SettingsView"
+             x:DataType="vm:MainViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.segment">
+      <Setter Property="Height" Value="32" />
+      <Setter Property="Padding" Value="16,0" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="Foreground" Value="{StaticResource Grey900}" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.segment:pointerover">
+      <Setter Property="Background" Value="{StaticResource Grey100}" />
+    </Style>
+    <Style Selector="Button.segment.selected">
+      <Setter Property="Background" Value="{StaticResource Sheet}" />
+    </Style>
+    <Style Selector="Button.segment.selected /template/ Border#PART_Border">
+      <Setter Property="BoxShadow" Value="0 1 2 0 #2414171D" />
+    </Style>
+    <Style Selector="TextBox.setting">
+      <Setter Property="Height" Value="36" />
+      <Setter Property="MinHeight" Value="36" />
+      <Setter Property="Padding" Value="10,0" />
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="MinHeight" Value="36" />
+    </Style>
+  </UserControl.Styles>
+
+  <!-- Einstellungen: a page like the export page. Every change is applied and saved at once. -->
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,28,32,40" MaxWidth="760" Spacing="28" DataContext="{Binding Settings}" x:DataType="vm:SettingsPageViewModel">
+      <TextBlock Classes="h1" Text="{l:Tr Settings_Title}" />
+
+      <StackPanel Spacing="8">
+        <TextBlock Classes="h3" Margin="0,0,0,4" Text="{l:Tr Settings_Library}" />
+        <TextBlock Classes="label" Text="{l:Tr Settings_LibraryFolder}" />
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <TextBox Classes="setting" Text="{Binding LibraryFolder, Mode=OneWay}" IsReadOnly="True" PlaceholderText="{l:Tr Settings_LibraryFolderNone}" />
+          <Button Grid.Column="1" Classes="secondary" Padding="14,0" Content="{l:Tr Settings_Change}" Command="{Binding ChangeLibraryCommand}" />
+        </Grid>
+        <TextBlock Classes="secondary" Text="{l:Tr Settings_LibraryHint}" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <Rectangle Height="1" Fill="{StaticResource Grey200}" />
+
+      <StackPanel Spacing="12">
+        <TextBlock Classes="h3" Text="{l:Tr Settings_Rai}" />
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="{l:Tr Settings_User}" />
+            <TextBox Classes="setting" Text="{Binding RaiUsername, UpdateSourceTrigger=LostFocus}" AutomationProperties.Name="{l:Tr Settings_User}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="4">
+            <TextBlock Classes="label" Text="{l:Tr Settings_Password}" />
+            <TextBox Classes="setting" Text="{Binding RaiPassword, UpdateSourceTrigger=LostFocus}" PasswordChar="•"
+                     AutomationProperties.Name="{l:Tr Settings_Password}" />
+          </StackPanel>
+        </Grid>
+        <WrapPanel ItemSpacing="12" LineSpacing="8">
+          <Button Classes="secondary" Padding="14,0" Content="{l:Tr Settings_Test}" Command="{Binding TestConnectionCommand}" />
+          <TextBlock Classes="secondary" Text="{Binding TestResult}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="560" />
+        </WrapPanel>
+        <TextBlock Classes="meta" Text="{Binding PasswordNote}" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <Rectangle Height="1" Fill="{StaticResource Grey200}" />
+
+      <StackPanel Spacing="10">
+        <TextBlock Classes="h3" Text="{l:Tr Settings_Language}" />
+        <Border HorizontalAlignment="Left" Padding="3" CornerRadius="8" Background="{StaticResource Grey150}">
+          <ItemsControl ItemsSource="{Binding Languages}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="2" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:LanguageOption">
+                <Button Classes="plain segment" Classes.selected="{Binding IsSelected}" Content="{Binding Name}"
+                        Command="{Binding $parent[ItemsControl].((vm:SettingsPageViewModel)DataContext).SelectLanguageCommand}" CommandParameter="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Border>
+        <TextBlock Text="{Binding LanguageNote}" FontWeight="Medium" TextWrapping="Wrap"
+                   IsVisible="{Binding LanguageNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <TextBlock Classes="secondary" Text="{l:Tr Settings_LanguageHint}" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <Rectangle Height="1" Fill="{StaticResource Grey200}" />
+
+      <!-- Fornitore, Compilatore, Legale rappresentante, Sede, Rete, Genere SIAE, Ruolo and Tipo generazione are the
+           terms of RAI's forms and stay as they are in every language -->
+      <StackPanel Spacing="12">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="h3" Text="{l:Tr Settings_Company}" />
+          <TextBlock Classes="secondary" Text="{l:Tr Settings_CompanyHint}" TextWrapping="Wrap" />
+        </StackPanel>
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="16" RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Fornitore del Programma" />
+            <TextBox Classes="setting" Text="{Binding Fornitore, UpdateSourceTrigger=LostFocus}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="4">
+            <TextBlock Classes="label" Text="Compilatore" />
+            <TextBox Classes="setting" Text="{Binding Compilatore, UpdateSourceTrigger=LostFocus}" />
+          </StackPanel>
+          <StackPanel Grid.Row="1" Spacing="4">
+            <TextBlock Classes="label" Text="Legale rappresentante" />
+            <TextBox Classes="setting" Text="{Binding LegaleRappresentante, UpdateSourceTrigger=LostFocus}" />
+          </StackPanel>
+          <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+            <TextBlock Classes="label" Text="{l:Tr Settings_DefaultResponsabile}" />
+            <TextBox Classes="setting" Text="{Binding DefaultResponsabileRai, UpdateSourceTrigger=LostFocus}" />
+          </StackPanel>
+          <StackPanel Grid.Row="2" Spacing="4">
+            <TextBlock Classes="label" Text="{l:Tr Settings_DefaultSede}" />
+            <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Sedi}" SelectedItem="{Binding DefaultSede}" />
+          </StackPanel>
+          <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+            <TextBlock Classes="label" Text="{l:Tr Settings_DefaultRete}" />
+            <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Reti}" SelectedItem="{Binding DefaultRete}" />
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+
+      <Rectangle Height="1" Fill="{StaticResource Grey200}" />
+
+      <StackPanel Spacing="12">
+        <TextBlock Classes="h3" Text="{l:Tr Settings_NewLines}" />
+        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+          <StackPanel Spacing="4">
+            <TextBlock Classes="label" Text="Genere SIAE" />
+            <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Generi}" SelectedItem="{Binding Genere}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="4">
+            <TextBlock Classes="label" Text="Ruolo" />
+            <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Ruoli}" SelectedItem="{Binding Ruolo}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="4">
+            <TextBlock Classes="label" Text="Tipo generazione" />
+            <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Tipi}" SelectedItem="{Binding Tipo}" />
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+
+      <Rectangle Height="1" Fill="{StaticResource Grey200}" />
+
+      <StackPanel Spacing="10">
+        <TextBlock Classes="h3" Text="{l:Tr Settings_Updates}" />
+        <CheckBox Content="{l:Tr Settings_CheckForUpdates}" IsChecked="{Binding CheckForUpdates}" />
+        <CheckBox Content="{l:Tr Settings_IncludePrereleases}" IsChecked="{Binding IncludePrereleases}" />
+        <WrapPanel ItemSpacing="12" LineSpacing="8">
+          <Button Classes="secondary" Padding="14,0" Content="{l:Tr Settings_CheckNow}" Command="{Binding CheckUpdatesNowCommand}" />
+          <TextBlock Classes="secondary" Text="{Binding UpdateText}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="560" />
+        </WrapPanel>
+        <TextBlock Classes="meta" Text="{Binding VersionText}" />
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

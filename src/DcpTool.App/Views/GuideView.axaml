@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DcpTool.App.ViewModels"
+             xmlns:l="using:DcpTool.App.Localisation"
+             xmlns:c="using:DcpTool.App.Views.Controls"
+             x:Class="DcpTool.App.Views.GuideView"
+             x:DataType="vm:MainViewModel">
+  <UserControl.Styles>
+    <Style Selector="Button.question c|LineIcon">
+      <Setter Property="RenderTransform" Value="rotate(-90deg)" />
+    </Style>
+    <Style Selector="Button.question.expanded c|LineIcon">
+      <Setter Property="RenderTransform" Value="none" />
+    </Style>
+    <Style Selector="Button.question:pointerover">
+      <Setter Property="Background" Value="{StaticResource Grey50}" />
+    </Style>
+  </UserControl.Styles>
+
+  <!-- The guide ("Wie?") takes the middle; the Add area stays below as the drop target -->
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="32,28,32,48" MaxWidth="720" HorizontalAlignment="Left" DataContext="{Binding Guide}" x:DataType="vm:GuideViewModel">
+      <TextBlock Classes="kicker" Text="{l:Tr Guide_Kicker}" />
+      <TextBlock Margin="0,6,0,8" Text="{Binding SelectedWay.Title}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding SelectedWay.Lead}" FontSize="15" LineHeight="23" Foreground="{StaticResource Grey700}" TextWrapping="Wrap" />
+
+      <!-- After "Warum?": what the last import left out -->
+      <Border Margin="0,20,0,0" Padding="16,12" CornerRadius="8" Background="{StaticResource Grey100}" IsVisible="{Binding ShowImportProblems}">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="section" Text="{l:Tr Guide_LastImport}" />
+          <ItemsControl ItemsSource="{Binding ImportProblems}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock Text="{Binding}" FontSize="14" LineHeight="21" TextWrapping="Wrap" Margin="0,0,0,4" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Margin="0,20,0,0" Padding="16,12" CornerRadius="8" Background="{StaticResource Grey100}">
+        <StackPanel Spacing="6">
+          <TextBlock Classes="section" Text="{l:Tr Guide_Prerequisites}" />
+          <ItemsControl ItemsSource="{Binding SelectedWay.Prerequisites}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <Grid ColumnDefinitions="18,*">
+                  <TextBlock Text="•" FontSize="14" />
+                  <TextBlock Grid.Column="1" Text="{Binding}" FontSize="14" LineHeight="21" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Classes="h3" Margin="0,28,0,14" Text="{l:Tr Guide_Steps}" />
+      <ItemsControl ItemsSource="{Binding SelectedWay.Steps}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Spacing="20" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:GuideStep">
+            <Grid ColumnDefinitions="28,*" ColumnSpacing="12">
+              <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource Grey900}" VerticalAlignment="Top">
+                <TextBlock Text="{Binding Number}" Foreground="White" FontSize="13" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <StackPanel Grid.Column="1" Spacing="10" Margin="0,3,0,0">
+                <TextBlock Text="{Binding Text}" FontSize="15" LineHeight="22" TextWrapping="Wrap" />
+                <!-- Screenshot placeholder until the guide's pictures exist -->
+                <Panel IsVisible="{Binding HasShot}" MaxWidth="520" Height="292" HorizontalAlignment="Left" Width="520">
+                  <Rectangle Stroke="{StaticResource Grey300}" StrokeThickness="1" StrokeDashArray="4,3" Fill="{StaticResource Grey100}"
+                             RadiusX="8" RadiusY="8" />
+                  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8" Margin="12">
+                    <c:LineIcon Width="24" Height="24" StrokeThickness="1.75" Foreground="{StaticResource Grey500}" Data="{StaticResource Icon.Image}" />
+                    <TextBlock Text="{Binding ShotText}" Classes="secondary" Foreground="{StaticResource Grey500}" TextAlignment="Center" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Panel>
+              </StackPanel>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Classes="h3" Margin="0,32,0,6" Text="{l:Tr Guide_Trouble}" />
+      <Border BorderBrush="{StaticResource Grey200}" BorderThickness="0,1,0,0">
+        <ItemsControl ItemsSource="{Binding SelectedWay.Questions}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:GuideQuestion">
+              <Border BorderBrush="{StaticResource Grey200}" BorderThickness="0,0,0,1" Padding="0,4">
+                <StackPanel>
+                  <Button Classes="plain question" Classes.expanded="{Binding IsExpanded}" Command="{Binding ToggleCommand}"
+                          HorizontalAlignment="Stretch" Padding="0,8" CornerRadius="6" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <c:LineIcon Width="14" Height="14" Data="{StaticResource Icon.ChevronDown}" Foreground="{StaticResource Grey700}" />
+                      <TextBlock Text="{Binding Question}" FontSize="15" FontWeight="Medium" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Button>
+                  <TextBlock IsVisible="{Binding IsExpanded}" Margin="20,0,0,10" Text="{Binding Answer}" FontSize="14" LineHeight="21"
+                             Foreground="{StaticResource Grey700}" TextWrapping="Wrap" />
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
