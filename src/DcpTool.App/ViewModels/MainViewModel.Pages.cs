@@ -110,6 +110,22 @@ public sealed partial class MainViewModel
     [RelayCommand]
     private void GoSongs() => Page = AppPage.Songs;
 
+    /// <summary>
+    /// A click on the Add area: on the songs page it opens the file dialog, like "Hinzufügen…"; on any other page
+    /// (guide, export, settings) it only brings the songs back, like a tab.
+    /// </summary>
+    [RelayCommand]
+    private async Task AddArea()
+    {
+        if (Page != AppPage.Songs)
+        {
+            Page = AppPage.Songs;
+            return;
+        }
+
+        await AddMusicFiles();
+    }
+
     [RelayCommand]
     private void GoExport() => Page = AppPage.Export;
 

@@ -246,9 +246,9 @@
             <Panel Grid.Column="0" Margin="12,13,12,24" Classes="addCard" Classes.current="{Binding IsAddStep}">
               <Rectangle Classes="addFrame" IsVisible="{Binding !IsDraggingSongs}" />
               <Rectangle Classes="dropFrame" IsVisible="{Binding IsDraggingSongs}" />
-              <!-- A click anywhere on the area (or Enter / Space when it has the focus) opens the file dialog, like
-                   "Hinzufügen…"; its own buttons keep their actions -->
-              <Button Classes="plain" CornerRadius="10" Command="{Binding AddMusicFilesCommand}" Cursor="Hand"
+              <!-- A click anywhere on the area (or Enter / Space when it has the focus): on the songs page the file
+                   dialog, like "Hinzufügen…"; on any other page back to the songs. Its own buttons keep their actions -->
+              <Button Classes="plain" CornerRadius="10" Command="{Binding AddAreaCommand}" Cursor="Hand"
                       AutomationProperties.Name="{l:Tr Add_Pick}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
               <!-- Centred in height with 2 px on top: 14 px from the top like the Export area, and room for a notice of two lines -->
               <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16,2,16,0">
