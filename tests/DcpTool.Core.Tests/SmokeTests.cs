@@ -100,4 +100,34 @@ public class SmokeTests
         }
         finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
     }
+
+    /// <summary>
+    /// The snapshot is the crash safety net: what was written last comes back with its file and its unsaved state; after
+    /// a normal close or "Nicht speichern" (both clear it) nothing comes back.
+    /// </summary>
+    [Fact]
+    public void RecoverySnapshotOnlySurvivesAnAbnormalEnd()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "dcptool-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var paths = new DcpTool.Core.Settings.AppPaths(dir);
+            var file = Path.Combine(dir, "ZIPP TV 33 2026-11-18.dcp");
+            new RecoveryStore(paths).Write(new Dcp { Sendung = "ZIPP TV", TitoloItaliano = "edited" }, file, hasUnsavedChanges: true);
+
+            // The process was killed: the next start finds the edit, its file and that it was not saved
+            var session = new RecoveryStore(paths).TryRead();
+            Assert.NotNull(session);
+            Assert.Equal(("edited", "ZIPP TV", file, true), (session.Dcp.TitoloItaliano, session.Dcp.Sendung, session.FilePath, session.HasUnsavedChanges));
+
+            // Saved since: restored as saved
+            new RecoveryStore(paths).Write(new Dcp { TitoloItaliano = "edited" }, file, hasUnsavedChanges: false);
+            Assert.False(new RecoveryStore(paths).TryRead()!.HasUnsavedChanges);
+
+            // Closed normally, or "Nicht speichern": the next start is a fresh one
+            new RecoveryStore(paths).Clear();
+            Assert.Null(new RecoveryStore(paths).TryRead());
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+    }
 }

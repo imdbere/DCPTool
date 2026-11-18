@@ -6,6 +6,14 @@ using DcpTool.Core.Rai;
 
 namespace DcpTool.App.Views;
 
+/// <summary>The answer to "save the changes?" before leaving a DCP.</summary>
+public enum SaveChoice
+{
+    Save,
+    DontSave,
+    Cancel,
+}
+
 /// <summary>Message boxes, file pickers and the dialog windows, all owned by the main window.</summary>
 public sealed class Dialogs
 {
@@ -25,10 +33,19 @@ public sealed class Dialogs
         return await dialog.ShowDialog<T?>(Owner);
     }
 
-    public async Task Message(string title, string text) => await Show<bool>(new MessageWindow(title, text, Loc.Get("Common_Ok"), null));
+    public async Task Message(string title, string text) => await Show<int?>(new MessageWindow(title, text, [Loc.Get("Common_Ok")]));
 
     public async Task<bool> Confirm(string title, string text, string yes, string no) =>
-        await Show<bool>(new MessageWindow(title, text, yes, no));
+        await Show<int?>(new MessageWindow(title, text, [yes, no])) == 0;
+
+    /// <summary>Before leaving a DCP with unsaved changes: Speichern / Nicht speichern / Abbrechen. Closing the window cancels.</summary>
+    public async Task<SaveChoice> AskToSave(string title, string text, string save, string dontSave, string cancel) =>
+        await Show<int?>(new MessageWindow(title, text, [save, dontSave, cancel])) switch
+        {
+            0 => SaveChoice.Save,
+            1 => SaveChoice.DontSave,
+            _ => SaveChoice.Cancel,
+        };
 
     /// <summary>False when the built-in browser could not be created.</summary>
     public async Task<bool> ShowBrowser(Uri uri, IRaiClient client)

@@ -44,7 +44,7 @@ public sealed record UploadFailure(string Text, string Hint, bool CanForget);
 
 /// <summary>
 /// The export page (step 4): RAI (Prüfen, Hochladen, the console) and the documents (Allegato B, its template).
-/// The DCP is saved automatically; nothing here asks for it.
+/// Nothing here saves the DCP: after an upload, what RAI saved is in the DCP and goes into its file with Speichern.
 /// </summary>
 public sealed partial class MainViewModel
 {
@@ -315,11 +315,10 @@ public sealed partial class MainViewModel
             return;
         }
 
-        // What goes to RAI is in the library file first
-        SaveLibraryDocument(leaving: false);
         IsBusy = true;
         IsUploading = true;
         var dcp = _dcp;
+        var uploaded = false;
         _operation = new CancellationTokenSource();
         try
         {
@@ -337,7 +336,8 @@ public sealed partial class MainViewModel
             var result = await _rai.UploadAsync(dcp, progress, _operation.Token);
             dcp.Upload = result.Record;
             OnChanged();
-            SaveUploadRecord(dcp);
+            RecordUpload(dcp);
+            uploaded = true;
             var record = result.Record;
             var (key, args) = record.Codice is { } c
                 ? ("Status_UploadedAs", new object?[] { record.LinesSaved, record.Stato is { } st ? $"{c} ({st})" : c })
@@ -350,6 +350,8 @@ public sealed partial class MainViewModel
                 // The client's checks of RAI's answer, in English
                 ReportText(ConsoleLevel.Warning, Loc.Format("Issue_Upload", w), "Upload: " + w, quiet: true);
             }
+
+            Report(ConsoleLevel.Info, "Status_SaveUploadRecord", Loc.Get("Save_Button"));
         }
         catch (OperationCanceledException)
         {
@@ -365,6 +367,24 @@ public sealed partial class MainViewModel
             IsBusy = false;
             IsUploading = false;
             OnUploadStateChanged();
+        }
+
+        // The DCP at RAI, in the app's browser window, as "Bei RAI öffnen" does
+        if (uploaded && ReferenceEquals(dcp, _dcp) && dcp.Upload is { Url.Length: > 0 })
+        {
+            await OpenRaiPageAsync();
+        }
+    }
+
+    /// <summary>
+    /// Right after an upload: what RAI saved is in the DCP, which is unsaved now. The recovery snapshot gets it at
+    /// once, so a crash does not lose it; the file gets it with Speichern.
+    /// </summary>
+    private void RecordUpload(Dcp dcp)
+    {
+        if (ReferenceEquals(dcp, _dcp))
+        {
+            WriteRecovery();
         }
     }
 
@@ -401,7 +421,7 @@ public sealed partial class MainViewModel
         {
             dcp.Upload = partial;
             OnChanged();
-            SaveUploadRecord(dcp);
+            RecordUpload(dcp);
             Report(ConsoleLevel.Error, "Issue_PartialUpload", partial.LinesSaved, dcp.Lines.Count);
         }
 
@@ -463,7 +483,10 @@ public sealed partial class MainViewModel
 
     /// <summary>"Bei RAI öffnen": the page of this DCP at RAI, much easier than finding it in RAI's search.</summary>
     [RelayCommand]
-    private async Task OpenRaiDcp()
+    private async Task OpenRaiDcp() => await OpenRaiPageAsync();
+
+    /// <summary>The DCP's page at RAI in the app's browser window (signed in), or the system browser when that fails.</summary>
+    private async Task OpenRaiPageAsync()
     {
         if (_dcp.Upload is not { Url.Length: > 0 } record || !Uri.TryCreate(record.Url, UriKind.Absolute, out var uri)
             || !string.Equals(uri.Host, _rai.PortalUri.Host, StringComparison.OrdinalIgnoreCase))
@@ -564,7 +587,6 @@ public sealed partial class MainViewModel
         CommitPendingEdits?.Invoke();
         SyncLines();
         var issues = DcpValidator.Validate(_dcp, ValidationPurpose.Document);
-        SaveLibraryDocument(leaving: false);
         var errors = issues.Where(i => i.IsError).ToList();
         if (errors.Count > 0)
         {

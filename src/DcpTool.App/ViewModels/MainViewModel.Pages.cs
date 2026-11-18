@@ -138,8 +138,11 @@ public sealed partial class MainViewModel
     [NotifyPropertyChangedFor(nameof(IsAddIdle), nameof(IsAddImporting), nameof(IsAddAdded), nameof(IsAddPartial), nameof(ShowAddButtons))]
     private AddState _addState;
 
-    /// <summary>The line in the Add area after an import: "8 Titel aus „Kompass_12.drt“ hinzugefügt".</summary>
+    /// <summary>The line in the Add area after an import: "8 Titel hinzugefügt aus „Kompass_12.drt“".</summary>
     [ObservableProperty] private string _addNotice = "";
+
+    /// <summary>The notice with the full file name, when <see cref="AddNotice"/> shows it shortened; else null (no tip).</summary>
+    [ObservableProperty] private string? _addNoticeTip;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDraggingSongs), nameof(IsDraggingDcp), nameof(IsAddIdle), nameof(IsAddAdded),
@@ -157,10 +160,23 @@ public sealed partial class MainViewModel
     public bool IsAddPartial => !IsDraggingSongs && AddState == AddState.Partial;
     public bool ShowAddButtons => !IsDraggingSongs && AddState != AddState.Importing;
 
-    private void SetAddState(AddState state, string notice)
+    private void SetAddState(AddState state, string notice, string? tip = null)
     {
         AddState = state;
         AddNotice = notice;
+        AddNoticeTip = tip;
+    }
+
+    /// <summary>A long file name for the Add area: its start and its end (with the extension), "…" in the middle.</summary>
+    internal static string ShortFileName(string name, int max = 26)
+    {
+        if (name.Length <= max)
+        {
+            return name;
+        }
+
+        var tail = Math.Min(10, max / 2);
+        return name[..(max - tail - 1)].TrimEnd() + "…" + name[^tail..];
     }
 
     private void ClearAddNotice()
@@ -173,5 +189,6 @@ public sealed partial class MainViewModel
         _undoLines = null;
         AddState = AddState.Idle;
         AddNotice = "";
+        AddNoticeTip = null;
     }
 }

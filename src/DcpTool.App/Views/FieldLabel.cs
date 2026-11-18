@@ -98,9 +98,10 @@ public sealed class FieldLabel : Grid
     {
         if (IsColumnHeader)
         {
-            // Font and colour come from the column header; a narrow column wraps the name to two lines
+            // Font and colour come from the column header; a narrow column wraps the name to two lines, between words
+            // only (the column's minimum width fits the longest word)
             ColumnDefinitions = new ColumnDefinitions("*,Auto");
-            _label.TextWrapping = TextWrapping.Wrap;
+            _label.TextWrapping = TextWrapping.WrapWithOverflow;
             _label.LineHeight = 15.6;
             _label.MaxLines = 2;
             _label.ClearValue(TextBlock.FontSizeProperty);

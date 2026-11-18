@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using DcpTool.App.Localisation;
 using DcpTool.App.ViewModels;
@@ -11,7 +12,9 @@ using DcpTool.App.Views.Controls;
 namespace DcpTool.App.Views;
 
 /// <summary>
-/// The songs table (step 3). A cell is edited like in a spreadsheet: Enter or typing edits, Esc cancels, Tab moves on.
+/// The songs table (step 3). A cell is edited like in a spreadsheet: Enter, F2 or typing edits, Enter again commits and
+/// stays on the cell, Esc cancels, Tab moves on, the arrow keys move between cells. While a cell is edited, ← and →
+/// only move the caret: at the start or end of the text they stay there and never leave the cell.
 /// A row's ⋯ (or Alt+↑/↓, Ctrl+D, Del) moves, duplicates and deletes it; dragging its number moves it too.
 /// </summary>
 public partial class SongsView : UserControl
@@ -22,6 +25,12 @@ public partial class SongsView : UserControl
     private int? _dragIndex;
     private Point _dragStart;
     private bool _dragging;
+
+    // The control of the cell being edited, null when no cell is edited
+    private Control? _editor;
+
+    // The edit was started with Enter: the caret goes to the end of the text instead of selecting it
+    private bool _editByEnter;
 
     private void InitializeComponent()
     {
@@ -34,6 +43,8 @@ public partial class SongsView : UserControl
         InitializeComponent();
         AddHandler(Button.ClickEvent, OnRowMenuClick, RoutingStrategies.Bubble);
         SongsGrid.AddHandler(KeyDownEvent, OnGridKeyDown, RoutingStrategies.Tunnel);
+        SongsGrid.PreparingCellForEdit += OnPreparingCellForEdit;
+        SongsGrid.CellEditEnded += (_, _) => EndEditor();
         SongsGrid.AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
         SongsGrid.AddHandler(PointerMovedEvent, OnPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
         SongsGrid.AddHandler(PointerReleasedEvent, OnPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
@@ -86,8 +97,80 @@ public partial class SongsView : UserControl
         e.Handled = true;
     }
 
+    // ---------------------------------------------------------------- editing with the keyboard
+
+    private void OnPreparingCellForEdit(object? sender, DataGridPreparingCellForEditEventArgs e)
+    {
+        EndEditor();
+        _editor = e.EditingElement;
+        _editor.AddHandler(KeyDownEvent, OnEditorKeyDown, RoutingStrategies.Bubble);
+        if (_editByEnter)
+        {
+            _editByEnter = false;
+            var editor = _editor;
+            Dispatcher.UIThread.Post(() =>
+            {
+                if ((editor as TextBox ?? editor.GetVisualDescendants().OfType<TextBox>().FirstOrDefault()) is { } box)
+                {
+                    box.Focus();
+                    box.ClearSelection();
+                    box.CaretIndex = box.Text?.Length ?? 0;
+                }
+            }, DispatcherPriority.Input);
+        }
+    }
+
+    private void EndEditor()
+    {
+        _editor?.RemoveHandler(KeyDownEvent, OnEditorKeyDown);
+        _editor = null;
+    }
+
+    /// <summary>
+    /// ← → Home End inside the edited cell: what the text box did not use (the caret is at that edge already) is
+    /// swallowed here, so the table does not end the edit and move to another cell.
+    /// </summary>
+    private static void OnEditorKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key is Key.Left or Key.Right or Key.Home or Key.End)
+        {
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>Enter: starts editing the current cell, or commits the edit and stays on the cell.</summary>
+    private bool HandleEnter()
+    {
+        if (_editor is { } editor)
+        {
+            // Enter in an open list picks the item first
+            if ((editor as ComboBox ?? editor.GetVisualDescendants().OfType<ComboBox>().FirstOrDefault()) is { IsDropDownOpen: true })
+            {
+                return false;
+            }
+
+            SongsGrid.CommitEdit(DataGridEditingUnit.Row, exitEditingMode: true);
+            SongsGrid.Focus(NavigationMethod.Directional);
+            return true;
+        }
+
+        _editByEnter = true;
+        if (!SongsGrid.BeginEdit())
+        {
+            _editByEnter = false;
+        }
+
+        return true;
+    }
+
     private void OnGridKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Enter && e.KeyModifiers == KeyModifiers.None && Vm is { SelectedLine: not null })
+        {
+            e.Handled = HandleEnter();
+            return;
+        }
+
         // Keys typed into a cell being edited belong to the cell
         if (Vm is not { } vm || vm.SelectedLine is null || e.Source is TextBox or ComboBox)
         {

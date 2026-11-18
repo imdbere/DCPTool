@@ -57,9 +57,6 @@
   <data name="Dlg_OpenFile" xml:space="preserve">
     <value>Open file</value>
   </data>
-  <data name="Dlg_Replace" xml:space="preserve">
-    <value>Replace</value>
-  </data>
   <data name="Dlg_SystemBrowser" xml:space="preserve">
     <value>Opened in the system browser</value>
   </data>
@@ -308,9 +305,6 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   <data name="Msg_DeletePreset" xml:space="preserve">
     <value>Delete the preset &quot;{0}&quot; permanently?</value>
   </data>
-  <data name="Msg_DiscardChanges" xml:space="preserve">
-    <value>The current DCP has changes that are not saved to a file. Replace it anyway?</value>
-  </data>
   <data name="Msg_ExportFailed" xml:space="preserve">
     <value>The document could not be written: {0}</value>
   </data>
@@ -452,9 +446,6 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   <data name="Status_ChangedKept" xml:space="preserve">
     <value>{0} was changed outside DCP Tool. Your unsaved changes are kept; &quot;{1}&quot; writes them over that version.</value>
   </data>
-  <data name="Status_ChangedKeptLibrary" xml:space="preserve">
-    <value>{0} was changed outside DCP Tool. Your changes are kept and replace that version.</value>
-  </data>
   <data name="Status_ChangedUnreadable" xml:space="preserve">
     <value>{0} was changed outside DCP Tool and cannot be read now: {1}</value>
   </data>
@@ -469,9 +460,6 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   </data>
   <data name="Status_FileGone" xml:space="preserve">
     <value>{0} was moved or deleted outside DCP Tool. The DCP stays open; &quot;{1}&quot; writes it again.</value>
-  </data>
-  <data name="Status_FileGoneLibrary" xml:space="preserve">
-    <value>{0} was moved or deleted outside DCP Tool. The DCP stays open and is written there again when you change it.</value>
   </data>
   <data name="Status_FileProblem" xml:space="preserve">
     <value>File problem: {0}</value>
@@ -507,7 +495,7 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Moved {0} to the Recycle Bin.</value>
   </data>
   <data name="Status_NewDcp" xml:space="preserve">
-    <value>New DCP. It is saved to the library once it has a Titolo italiano.</value>
+    <value>New DCP.</value>
   </data>
   <data name="Status_NewFromPreset" xml:space="preserve">
     <value>New DCP from the preset &quot;{0}&quot;.</value>
@@ -542,17 +530,8 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   <data name="Status_Renamed" xml:space="preserve">
     <value>Renamed {0} to {1}.</value>
   </data>
-  <data name="Status_RenamedToMatch" xml:space="preserve">
-    <value>Renamed the file to {0} to match the DCP.</value>
-  </data>
   <data name="Status_Saved" xml:space="preserve">
     <value>Saved {0}</value>
-  </data>
-  <data name="Status_SavedNewInLibrary" xml:space="preserve">
-    <value>Saved the new DCP in the library as {0}.</value>
-  </data>
-  <data name="Status_SessionSaved" xml:space="preserve">
-    <value>Saved the DCP from the last session as {0}.</value>
   </data>
   <data name="Status_SettingsNotSaved" xml:space="preserve">
     <value>Could not save the settings: {0}</value>
@@ -565,9 +544,6 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   </data>
   <data name="Status_UploadForgotten" xml:space="preserve">
     <value>The earlier upload was forgotten.</value>
-  </data>
-  <data name="Status_UploadNotRecorded" xml:space="preserve">
-    <value>The upload could not be recorded in the file: {0}</value>
   </data>
   <data name="Status_UploadProgress" xml:space="preserve">
     <value>Uploading: {0}/{1} lines.</value>
@@ -786,7 +762,7 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>No programmes yet. + keeps the details of the open DCP for its next episodes.</value>
   </data>
   <data name="Presets_NoLibrary" xml:space="preserve">
-    <value>Choose a library folder: DCP Tool keeps your DCPs and programmes there and saves them automatically.</value>
+    <value>Choose a library folder: DCP Tool keeps your DCPs and programmes there.</value>
   </data>
   <data name="Presets_ChooseLibrary" xml:space="preserve">
     <value>Choose folder…</value>
@@ -828,7 +804,7 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Save</value>
   </data>
   <data name="Save_Tip" xml:space="preserve">
-    <value>Save (Ctrl+S). DCPs in the library are also saved automatically.</value>
+    <value>Save (Ctrl+S)</value>
   </data>
   <data name="Save_More" xml:space="preserve">
     <value>More save options</value>
@@ -1122,7 +1098,7 @@ Placeholder – to be confirmed: where exactly to find them.</value>
     <value>Change…</value>
   </data>
   <data name="Settings_LibraryHint" xml:space="preserve">
-    <value>DCP Tool keeps all DCPs here as .dcp files and saves them automatically. Older DCPs are found with Explorer.</value>
+    <value>DCP Tool saves new DCPs here as .dcp files, in a folder per programme and year. Older DCPs are found with Explorer.</value>
   </data>
   <data name="Settings_Rai" xml:space="preserve">
     <value>RAI access</value>
@@ -1225,5 +1201,29 @@ Placeholder – to be confirmed: where exactly to find them.</value>
   </data>
   <data name="Save_AsKey" xml:space="preserve">
     <value>Ctrl+Shift+S</value>
+  </data>
+  <data name="Save_CopyAsNew" xml:space="preserve">
+    <value>Copy as new DCP</value>
+  </data>
+  <data name="Save_AsPreset" xml:space="preserve">
+    <value>Save as programme</value>
+  </data>
+  <data name="Dlg_DontSave" xml:space="preserve">
+    <value>Don&apos;t save</value>
+  </data>
+  <data name="Msg_SaveChanges" xml:space="preserve">
+    <value>Do you want to save the changes to &quot;{0}&quot;?</value>
+  </data>
+  <data name="Msg_SaveNewDcp" xml:space="preserve">
+    <value>Do you want to save this new DCP? It is saved in the library as {0}.</value>
+  </data>
+  <data name="Status_CopiedAsNew" xml:space="preserve">
+    <value>New DCP copied from {0}. It is not saved yet.</value>
+  </data>
+  <data name="Status_Recovered" xml:space="preserve">
+    <value>DCP Tool did not close normally last time. The unsaved changes were restored; save them or discard them.</value>
+  </data>
+  <data name="Status_SaveUploadRecord" xml:space="preserve">
+    <value>&quot;{0}&quot; records the upload in the DCP file.</value>
   </data>
 </root>

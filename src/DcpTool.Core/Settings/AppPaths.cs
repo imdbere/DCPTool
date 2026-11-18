@@ -20,7 +20,7 @@ public sealed class AppPaths
 
     public string SettingsFile => Path.Combine(Root, "settings.json");
 
-    /// <summary>The DCP that was open when the app closed or crashed, see <c>RecoveryStore</c>.</summary>
+    /// <summary>The DCP that was open when the app crashed or was killed, see <c>RecoveryStore</c>.</summary>
     public string RecoveryFolder => Path.Combine(Root, "recovery");
 
     /// <summary>

@@ -26,6 +26,10 @@ public partial class MainWindow : Window
     private SongsView Songs = null!;
     private readonly DispatcherTimer _dragLeave = new() { Interval = TimeSpan.FromMilliseconds(120) };
 
+    // The user answered the prompt about unsaved changes (or there were none): the next Closing goes through
+    private bool _closeAllowed;
+    private bool _askingToClose;
+
     private void InitializeComponent()
     {
         AvaloniaXamlLoader.Load(this);
@@ -51,7 +55,7 @@ public partial class MainWindow : Window
                 vm.Drag = DragKind.None;
             }
         };
-        Closing += (_, _) => Vm?.Shutdown();
+        Closing += OnClosing;
         Activated += (_, _) => Vm?.OnWindowActivated();
         SaveMoreButton.Click += (_, _) => ShowSaveMenu();
 
@@ -99,7 +103,52 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>The ▾ of the save button: Speichern unter…</summary>
+    /// <summary>
+    /// Before the window closes: unsaved changes are asked about (Speichern / Nicht speichern / Abbrechen). When Windows
+    /// shuts down nobody can answer, so the recovery snapshot keeps the work for the next start.
+    /// </summary>
+    private async void OnClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (Vm is not { } vm)
+        {
+            return;
+        }
+
+        if (e.CloseReason == WindowCloseReason.OSShutdown)
+        {
+            vm.Shutdown(normal: false);
+            return;
+        }
+
+        vm.CommitPendingEdits?.Invoke();
+        if (_closeAllowed || !vm.IsDirty)
+        {
+            vm.Shutdown(normal: true);
+            return;
+        }
+
+        e.Cancel = true;
+        if (_askingToClose)
+        {
+            return;
+        }
+
+        _askingToClose = true;
+        try
+        {
+            if (await vm.ConfirmCloseAsync())
+            {
+                _closeAllowed = true;
+                Dispatcher.UIThread.Post(Close);
+            }
+        }
+        finally
+        {
+            _askingToClose = false;
+        }
+    }
+
+    /// <summary>The ▾ of the save button: Speichern unter…, Kopie als neuer DCP, Als Sendung speichern.</summary>
     private void ShowSaveMenu()
     {
         if (Vm is not { } vm)
@@ -108,7 +157,9 @@ public partial class MainWindow : Window
         }
 
         var saveAs = new MenuItem { Header = MenuHeader.WithKey(Loc.Get("Save_As"), Loc.Get("Save_AsKey")), Command = vm.SaveAsCommand };
-        var menu = new MenuFlyout { Placement = PlacementMode.BottomEdgeAlignedRight, Items = { saveAs } };
+        var copy = new MenuItem { Header = Loc.Get("Save_CopyAsNew"), Command = vm.CopyAsNewCommand };
+        var preset = new MenuItem { Header = Loc.Get("Save_AsPreset"), Command = vm.SaveAsPresetCommand, IsEnabled = vm.HasLibrary };
+        var menu = new MenuFlyout { Placement = PlacementMode.BottomEdgeAlignedRight, Items = { saveAs, copy, new Separator(), preset } };
         menu.ShowAt(SaveMoreButton);
     }
 

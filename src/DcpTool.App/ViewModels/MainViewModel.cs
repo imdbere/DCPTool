@@ -9,6 +9,7 @@ using DcpTool.App.Services;
 using DcpTool.App.Views;
 using DcpTool.Core.Export;
 using DcpTool.Core.Import;
+using DcpTool.Core.Library;
 using DcpTool.Core.Model;
 using DcpTool.Core.Persistence;
 using DcpTool.Core.Rai;
@@ -18,7 +19,7 @@ namespace DcpTool.App.ViewModels;
 
 /// <summary>
 /// Everything the main window shows: one DCP and its songs, the drawer (presets and recent DCPs), the guide, the
-/// export page and the settings page. Split over several files by area: Library (drawer, automatic saving),
+/// export page and the settings page. Split over several files by area: Library (drawer, leaving a DCP),
 /// Pages (what the middle shows, the two areas at the bottom), Export (RAI, documents, the console), Settings, Guide.
 /// </summary>
 public sealed partial class MainViewModel : ObservableObject
@@ -61,13 +62,7 @@ public sealed partial class MainViewModel : ObservableObject
         _library = CreateLibrary(settings.LibraryFolder);
         Settings = new SettingsPageViewModel(this, settings, credentials);
         Guide = new GuideViewModel();
-        _recoveryTimer.Tick += (_, _) =>
-        {
-            _recoveryTimer.Stop();
-            // A library document goes to its file first, so the snapshot then records it as saved
-            SaveLibraryDocument(leaving: false);
-            WriteRecovery();
-        };
+        _recoveryTimer.Tick += (_, _) => WriteRecovery();
         _statusTimer.Tick += (_, _) =>
         {
             _statusTimer.Stop();
@@ -102,7 +97,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private string DocumentName => FilePath is null ? Loc.Get("Doc_Untitled") : Path.GetFileName(FilePath);
 
-    public string WindowTitle => $"{DocumentName}{(IsDirty && !IsAutoSaved ? "*" : "")} – DCP Tool";
+    public string WindowTitle => $"{DocumentName}{(IsDirty ? "*" : "")} – DCP Tool";
 
     public bool HasLines => Lines.Count > 0;
 
@@ -185,8 +180,6 @@ public sealed partial class MainViewModel : ObservableObject
     private void LoadDcp(Dcp dcp, string? path, bool dirty)
     {
         _loading = true;
-        _newFileFolder = null;
-        _nameFollowsHeader = false;
         try
         {
             _dcp = dcp;
@@ -264,7 +257,7 @@ public sealed partial class MainViewModel : ObservableObject
         _recoveryTimer.Start();
     }
 
-    /// <summary>Writes the recovery snapshot now. Never throws.</summary>
+    /// <summary>Writes the recovery snapshot now: what a crash or a killed process would otherwise lose. Never throws.</summary>
     public void WriteRecovery()
     {
         try
@@ -277,6 +270,16 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Report(ConsoleLevel.Warning, "Status_RecoveryFailed", ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Removes the recovery snapshot: the window closed normally or the user discarded the changes, so the next start
+    /// must not bring them back.
+    /// </summary>
+    private void DiscardRecovery()
+    {
+        _recoveryTimer.Stop();
+        _recovery.Clear();
     }
 
     // ---------------------------------------------------------------- startup / shutdown
@@ -298,12 +301,13 @@ public sealed partial class MainViewModel : ObservableObject
     {
         // A .dcp passed on the command line: double-clicked in Explorer
         var arg = args.FirstOrDefault(a => a.EndsWith(DcpFile.Extension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
+
+        // A snapshot is only left after a crash or a killed process: a normal close removes it
         var session = _recovery.TryRead();
         if (arg is not null)
         {
-            // Opening the file would overwrite the snapshot, the only copy of unsaved work from last time.
-            // A DCP of the library is simply written to its file first.
-            var keep = session is { HasUnsavedChanges: true } && !SaveSessionToLibrary(session) && !await _dialogs.Confirm(
+            // Opening the file would overwrite the snapshot, the only copy of unsaved work from last time
+            var keep = session is { HasUnsavedChanges: true } && !await _dialogs.Confirm(
                 Loc.Get("Dlg_UnsavedChanges"),
                 Loc.Format("Msg_UnsavedSession", Path.GetFileName(arg)),
                 Loc.Get("Dlg_OpenFile"),
@@ -335,12 +339,18 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        LoadDcp(session.Dcp, file, session.HasUnsavedChanges);
+        // An untouched new DCP is nothing to ask about later
+        var unsaved = session.HasUnsavedChanges && (file is not null || HasContent(session.Dcp));
+        LoadDcp(session.Dcp, file, unsaved);
+        if (unsaved)
+        {
+            Report(ConsoleLevel.Warning, "Status_Recovered");
+        }
+
         if (fileExists)
         {
             // A file newer than the snapshot was changed by something else: reported, and our version is kept
             _lastWriteUtc = session.SavedAt.UtcDateTime;
-            UpdateNameFollowsHeader();
             CheckExternalChange();
         }
     }
@@ -360,8 +370,18 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>Restarts into the downloaded update, after the open DCP's unsaved changes were saved or discarded.</summary>
     [RelayCommand]
-    private void RestartForUpdate() => _updates.ApplyAndRestart();
+    private async Task RestartForUpdate()
+    {
+        if (IsBusy || !await LeaveDocumentAsync())
+        {
+            return;
+        }
+
+        DiscardRecovery();
+        _updates.ApplyAndRestart();
+    }
 
     /// <summary>"Jetzt suchen" in the settings. Returns the result in words.</summary>
     internal async Task<string> CheckForUpdatesAsync()
@@ -381,7 +401,17 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    public void Shutdown()
+    /// <summary>
+    /// The window may close: false when the open DCP has unsaved changes and the user cancelled the prompt
+    /// (Speichern / Nicht speichern / Abbrechen).
+    /// </summary>
+    public Task<bool> ConfirmCloseAsync() => LeaveDocumentAsync();
+
+    /// <param name="normal">
+    /// True for a normal close (after <see cref="ConfirmCloseAsync"/>): the recovery snapshot is removed, so the next start
+    /// is a fresh one. False when Windows shuts down and nobody could be asked: the snapshot keeps the work.
+    /// </param>
+    public void Shutdown(bool normal)
     {
         try
         {
@@ -392,8 +422,15 @@ public sealed partial class MainViewModel : ObservableObject
             CrashLog.Write(ex, "shutdown");
         }
 
-        SaveLibraryDocument(leaving: false);
-        WriteRecovery();
+        if (normal)
+        {
+            DiscardRecovery();
+        }
+        else
+        {
+            WriteRecovery();
+        }
+
         (_rai as IDisposable)?.Dispose();
     }
 
@@ -408,7 +445,7 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        StartNewDocument(_settings.Company.CreateDcp(), null, dirty: false, _library is null ? null : "Status_NewDcp");
+        StartNewDocument(_settings.Company.CreateDcp(), dirty: false, "Status_NewDcp");
         Page = AppPage.Songs;
         IsStripExpanded = true;
     }
@@ -429,7 +466,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Opens a .dcp dropped onto the window or picked; the open DCP is saved (or confirmed) first.</summary>
+    /// <summary>Opens a .dcp dropped onto the window or picked; unsaved changes of the open DCP are asked about first.</summary>
     public async Task OpenFileAsync(string path)
     {
         if (IsBusy)
@@ -437,7 +474,8 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (IsOpenLibraryFile(path))
+        // The open file again, with nothing unsaved: nothing to do
+        if (!IsDirty && SamePath(path, FilePath))
         {
             Page = AppPage.Songs;
             return;
@@ -450,9 +488,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    // Opening the open library file again does nothing: there is nothing unsaved to revert
-    private bool IsOpenLibraryFile(string path) => IsLibraryDocument && SamePath(path, FilePath);
-
     /// <param name="quiet">Problems go to the status text instead of a message box (drawer, session restore).</param>
     private async Task<bool> TryOpenAsync(string path, bool quiet = false)
     {
@@ -461,10 +496,9 @@ public sealed partial class MainViewModel : ObservableObject
             var content = DcpFile.Load(path);
             var inLibrary = _library?.Contains(path) == true;
 
-            // A library file is only rewritten when it is edited, never just because it was opened
-            LoadDcp(content.Dcp, path, content.IsLegacy && !inLibrary && !quiet);
+            // An older file is written in the new format only when the user saves it
+            LoadDcp(content.Dcp, path, false);
             _lastWriteUtc = LastWriteUtc(path);
-            UpdateNameFollowsHeader();
             RememberFile(path);
 
             if (content.IsLegacy)
@@ -498,55 +532,67 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Speichern (Ctrl+S). A DCP of the library is saved automatically anyway; this writes it right now. A DCP
-    /// outside the library is only written here, and a new one without a library asks where.
+    /// Speichern (Ctrl+S): to the DCP's file; a DCP that was never saved goes into the library as
+    /// <c>&lt;Sendung&gt;/&lt;year&gt;/&lt;Sendung&gt; &lt;Puntata&gt; &lt;date&gt;.dcp</c> without a dialog, or, without a
+    /// library, to the file the user picks.
     /// </summary>
     [RelayCommand]
-    private async Task Save()
+    private async Task Save() => await SaveDocumentAsync();
+
+    /// <summary>Speichern unter… (Ctrl+Shift+S): always asks for the file.</summary>
+    [RelayCommand]
+    private async Task SaveAs() => await SaveAsAsync();
+
+    /// <summary>True when the DCP is in its file now.</summary>
+    private async Task<bool> SaveDocumentAsync()
     {
         CommitPendingEdits?.Invoke();
-        if (IsAutoSaved && (FilePath is not null || !string.IsNullOrWhiteSpace(_dcp.TitoloItaliano)))
+        SyncLines();
+        var plan = SavePlan.For(FilePath, _library, _dcp);
+        return plan.Kind == SaveKind.AskForPath ? await SaveAsAsync() : SaveTo(plan.Path!);
+    }
+
+    private async Task<bool> SaveAsAsync()
+    {
+        CommitPendingEdits?.Invoke();
+        SyncLines();
+        string name;
+        string? folder;
+        if (FilePath is { } current)
         {
-            if (SaveLibraryDocument(leaving: false) && FilePath is { } path)
-            {
-                WriteRecovery();
-                SetStatus("Status_Saved", Path.GetFileName(path));
-            }
-        }
-        else if (FilePath is null)
-        {
-            await SaveAs();
+            name = Path.GetFileNameWithoutExtension(current);
+            folder = Path.GetDirectoryName(current);
         }
         else
         {
-            SaveTo(FilePath);
+            name = DcpLibrary.SuggestName(_dcp);
+            folder = _library is { } library ? ExistingFolder(library.SuggestFolder(_dcp), library.Folder) : _settings.LastDocumentFolder;
         }
+
+        var path = await _dialogs.PickSave(Loc.Get("Picker_SaveDcp"), name, DcpFile.Extension, Loc.Get("Picker_DcpFile"), folder);
+        return path is not null && SaveTo(path);
     }
 
-    [RelayCommand]
-    private async Task SaveAs()
+    /// <summary>The suggested folder when it exists already, else the nearest folder above it, up to <paramref name="root"/>.</summary>
+    private static string ExistingFolder(string folder, string root)
     {
-        CommitPendingEdits?.Invoke();
-        var name = string.IsNullOrWhiteSpace(_dcp.TitoloItaliano) ? "DCP" : _dcp.TitoloItaliano.Trim();
-        if (_dcp.Puntata is { } p)
+        for (var dir = folder; !string.IsNullOrEmpty(dir); dir = Path.GetDirectoryName(dir))
         {
-            name += $" {p}";
+            if (Directory.Exists(dir) || SamePath(dir, root))
+            {
+                return dir;
+            }
         }
 
-        var folder = FilePath is { } current ? Path.GetDirectoryName(current) : _settings.LastDocumentFolder ?? _library?.Folder;
-        var path = await _dialogs.PickSave(Loc.Get("Picker_SaveDcp"), Sanitize(name), DcpFile.Extension, Loc.Get("Picker_DcpFile"), folder);
-        if (path is not null)
-        {
-            SaveTo(path);
-        }
+        return root;
     }
 
-    private void SaveTo(string path)
+    private bool SaveTo(string path)
     {
         CommitPendingEdits?.Invoke();
         if (!KeepLegacyOriginal(path, out var original))
         {
-            return;
+            return false;
         }
 
         try
@@ -555,22 +601,22 @@ public sealed partial class MainViewModel : ObservableObject
             DcpFile.Save(path, _dcp);
             ReportLegacyConverted(true, path, original);
             _lastWriteUtc = LastWriteUtc(path);
-            _newFileFolder = null;
             FilePath = path;
             IsDirty = false;
-            UpdateNameFollowsHeader();
             RememberFile(path);
             WriteRecovery();
             if (original is null)
             {
-                SetStatus("Status_Saved", Path.GetFileName(path));
+                SetStatus("Status_Saved", RelativeName(path));
             }
 
             _ = RefreshLibraryAsync();
+            return true;
         }
         catch (DcpFileException ex)
         {
             _ = _dialogs.Message(Loc.Get("Common_Save"), Loc.Format("Msg_SaveFailed", ex.Message));
+            return false;
         }
     }
 
@@ -592,9 +638,6 @@ public sealed partial class MainViewModel : ObservableObject
             Report(ConsoleLevel.Warning, "Status_SettingsNotSaved", ex.Message);
         }
     }
-
-    private async Task<bool> ConfirmDiscardAsync() =>
-        !IsDirty || await _dialogs.Confirm(Loc.Get("Dlg_UnsavedChanges"), Loc.Get("Msg_DiscardChanges"), Loc.Get("Dlg_Replace"), Loc.Get("Common_Cancel"));
 
     private static string Sanitize(string name) =>
         string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
@@ -723,13 +766,19 @@ public sealed partial class MainViewModel : ObservableObject
         {
             _undoLines = before;
             var single = paths.Count == 1 ? Path.GetFileName(paths[0]) : null;
-            var text = (completed, single) switch
+            var shortName = single is null ? null : ShortFileName(single);
+            var text = (completed, shortName) switch
             {
                 ( > 0, _) => Loc.Format("Add_AddedCompleted", added, completed),
-                (_, not null) => Loc.Format(added == 1 ? "Add_AddedOneFrom" : "Add_AddedFrom", added, single),
+                (_, not null) => Loc.Format(added == 1 ? "Add_AddedOneFrom" : "Add_AddedFrom", added, shortName),
                 _ => Loc.Format(added == 1 ? "Add_AddedOne" : "Add_Added", added),
             };
-            SetAddState(AddState.Added, text);
+
+            // The full name as a tip, when the notice shows it shortened
+            var tip = completed == 0 && single is not null && shortName != single
+                ? Loc.Format(added == 1 ? "Add_AddedOneFrom" : "Add_AddedFrom", added, single)
+                : null;
+            SetAddState(AddState.Added, text, tip);
             SetStatus(completed > 0 ? "Status_ImportedCompleted" : "Status_Imported", added, completed);
         }
         else

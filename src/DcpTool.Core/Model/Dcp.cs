@@ -6,6 +6,13 @@ namespace DcpTool.Core.Model;
 /// </summary>
 public sealed class Dcp
 {
+    /// <summary>
+    /// Name of the programme preset ("Sendung") the DCP was started from, e.g. <c>ZIPP TV</c> while Titolo italiano is
+    /// <c>ZIPP TV 2026 - DAS KINDERFERNSEHEN</c>. Not a RAI field: it only names the DCP's folder and file in the library.
+    /// Empty for DCPs started without one and for files written before it existed.
+    /// </summary>
+    public string Sendung { get; set; } = "";
+
     public string TitoloItaliano { get; set; } = "";
     public string TitoloOriginale { get; set; } = "";
     public string Sottotitolo { get; set; } = "";
@@ -71,6 +78,7 @@ public sealed class Dcp
     /// </summary>
     public Dcp CreateNextEpisode() => new()
     {
+        Sendung = Sendung,
         TitoloItaliano = TitoloItaliano,
         TitoloOriginale = TitoloOriginale,
         Puntata = Puntata + 1,

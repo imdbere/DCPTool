@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DcpTool.App.Localisation;
 using DcpTool.App.Services;
+using DcpTool.App.Views;
 using DcpTool.Core.Library;
 using DcpTool.Core.Model;
 using DcpTool.Core.Persistence;
@@ -14,9 +14,9 @@ namespace DcpTool.App.ViewModels;
 /// <summary>
 /// The library: all DCPs as .dcp files in one folder the user chooses. The app has no browser for it (Explorer does
 /// that, through "Bibliotheksordner öffnen"); the drawer shows the presets ("Sendungen") and the DCPs edited last.
-/// A document whose file lies in the library is written to it automatically shortly after every change, before
-/// switching documents, before closing and before upload/export, so it never has an "unsaved" state. A new DCP gets
-/// its file in the library as soon as it has a Titolo italiano. Files outside the library keep the explicit Speichern.
+/// Nothing is saved automatically: a .dcp file is only written by Speichern, Speichern unter… and the Speichern of the
+/// prompt shown before leaving a DCP with unsaved changes. A new DCP is saved into the library as
+/// <c>&lt;Sendung&gt;/&lt;year&gt;/&lt;Sendung&gt; &lt;Puntata&gt; &lt;date&gt;.dcp</c> (<see cref="DcpLibrary.SuggestPath"/>).
 /// </summary>
 public sealed partial class MainViewModel
 {
@@ -31,17 +31,11 @@ public sealed partial class MainViewModel
     private bool _scanning;
     private bool _scanAgain;
 
-    // Folder a new, still untitled document gets its file in (the original's folder for a next episode). Null = library root.
-    private string? _newFileFolder;
-
     // Modified time of the open file when this app last read or wrote it. A newer one means someone else changed it.
     private DateTime _lastWriteUtc;
 
     // The external change already reported, so it is said once and not on every activation
     private DateTime? _externalNotice;
-
-    // The file name is the one SuggestPath gives for the header, so it follows title, episode and date when they change
-    private bool _nameFollowsHeader;
 
     // The preset being renamed in the drawer's name box; null while a new one is named
     private PresetItem? _presetRenaming;
@@ -64,14 +58,6 @@ public sealed partial class MainViewModel
     public bool HasNoLibrary => _library is null;
     public bool HasNoPresets => _library is not null && Presets.Count == 0;
     public string LibraryFolderText => _library?.Folder ?? "";
-
-    /// <summary>The open document is a file in the library: it is saved automatically.</summary>
-    public bool IsLibraryDocument => _library is not null && FilePath is not null && _library.Contains(FilePath);
-
-    /// <summary>The open document has no file yet and gets one in the library once it has a Titolo italiano.</summary>
-    public bool IsPendingLibraryDocument => _library is not null && FilePath is null;
-
-    public bool IsAutoSaved => IsLibraryDocument || IsPendingLibraryDocument;
 
     [RelayCommand]
     private void TogglePresets() => ArePresetsExpanded = !ArePresetsExpanded;
@@ -103,7 +89,6 @@ public sealed partial class MainViewModel
     internal void ApplyLibrarySetting()
     {
         _library = CreateLibrary(_settings.LibraryFolder);
-        UpdateNameFollowsHeader();
         OnPropertyChanged(nameof(HasLibrary));
         OnPropertyChanged(nameof(HasNoLibrary));
         OnPropertyChanged(nameof(HasNoPresets));
@@ -111,9 +96,6 @@ public sealed partial class MainViewModel
         OnFileStateChanged();
         Settings.Refresh();
         _ = RefreshLibraryAsync();
-
-        // An open DCP that has a title but no file now gets its file in the library
-        ScheduleRecovery();
     }
 
     [RelayCommand]
@@ -377,14 +359,6 @@ public sealed partial class MainViewModel
         return known.Count == 0 ? null : known.Max() + 1;
     }
 
-    /// <summary>Where a new DCP of this programme gets its file: next to its last episode, else the library itself.</summary>
-    private string? FolderForProgramme(Programme programme) =>
-        _snapshot.Entries
-            .Where(e => !e.IsPreset && e.Error is null && programme.Includes(Programme.Of(e)))
-            .OrderByDescending(e => e.Modified)
-            .Select(e => Path.GetDirectoryName(e.Path))
-            .FirstOrDefault();
-
     /// <summary>The window became active: the user may have changed files outside the app meanwhile.</summary>
     public void OnWindowActivated()
     {
@@ -438,7 +412,6 @@ public sealed partial class MainViewModel
         }
 
         var source = fromOpen ? _dcp : null;
-        var folder = item.Path is null ? _newFileFolder : Path.GetDirectoryName(item.Path);
         if (!await LeaveDocumentAsync())
         {
             return;
@@ -447,7 +420,7 @@ public sealed partial class MainViewModel
         Dcp next;
         try
         {
-            // Read after leaving: when it was the open DCP, its last changes are in the file now
+            // The open DCP as it is on screen, saved or not; another one from its file
             next = source?.CreateNextEpisode() ?? DcpLibrary.CreateNextEpisode(item.Path!);
         }
         catch (DcpFileException ex)
@@ -461,7 +434,7 @@ public sealed partial class MainViewModel
             next.Puntata = puntata;
         }
 
-        StartNewDocument(next, folder, dirty: true, "Status_NextEpisodeOf", item.Label);
+        StartNewDocument(next, dirty: false, "Status_NextEpisodeOf", item.Label);
         Page = AppPage.Songs;
         FocusBroadcastDate?.Invoke();
     }
@@ -487,7 +460,7 @@ public sealed partial class MainViewModel
         }
 
         dcp.Puntata ??= NextPuntata(Programme.Of(dcp));
-        StartNewDocument(dcp, FolderForProgramme(Programme.Of(dcp)), dirty: false, "Status_NewFromPreset", preset.Name);
+        StartNewDocument(dcp, dirty: false, "Status_NewFromPreset", preset.Name);
         Page = AppPage.Songs;
         FocusBroadcastDate?.Invoke();
     }
@@ -513,6 +486,27 @@ public sealed partial class MainViewModel
         PresetEditorHint = Loc.Get("Presets_EditorHint");
         ArePresetsExpanded = true;
         IsPresetEditorOpen = true;
+    }
+
+    /// <summary>"Als Sendung speichern" (▾ of Speichern): the same as the + next to "Sendungen", with the drawer shown.</summary>
+    [RelayCommand]
+    private void SaveAsPreset()
+    {
+        if (_library is null || IsBusy)
+        {
+            return;
+        }
+
+        IsDrawerOpen = true;
+        if (IsGuidePage)
+        {
+            Page = AppPage.Songs;
+        }
+
+        if (!IsPresetEditorOpen || _presetRenaming is not null)
+        {
+            BeginNewPreset();
+        }
     }
 
     [RelayCommand]
@@ -589,6 +583,13 @@ public sealed partial class MainViewModel
             var path = library.SavePreset(_dcp, name);
             SetStatus(replacing ? "Status_PresetUpdated" : existed ? "Status_PresetReplaced" : "Status_PresetSaved", Path.GetFileNameWithoutExtension(path));
             ReportLegacyConverted(true, path, original);
+
+            // A new DCP without a Sendung belongs to the one made from it: that is where it will be saved.
+            // Not an edit of a saved DCP, so nothing becomes unsaved by this.
+            if (!replacing && FilePath is null && string.IsNullOrWhiteSpace(_dcp.Sendung))
+            {
+                _dcp.Sendung = Path.GetFileNameWithoutExtension(path);
+            }
         }
         catch (DcpFileException ex)
         {
@@ -642,77 +643,69 @@ public sealed partial class MainViewModel
         _ = RefreshLibraryAsync();
     }
 
-    // ---------------------------------------------------------------- saving library documents
+    // ---------------------------------------------------------------- leaving a DCP
 
     /// <summary>
-    /// Before another document replaces the open one. A library document is written to its file (an untitled one
-    /// with content gets a file too, so nothing is lost and nothing is asked). Other documents ask as before.
+    /// Before another DCP replaces the open one (Recent, a Sendung, a new DCP, a dropped .dcp, closing the window): when
+    /// it has unsaved changes the user chooses Speichern, Nicht speichern or Abbrechen. False: stay with the open DCP.
     /// </summary>
-    private async Task<bool> LeaveDocumentAsync()
+    internal async Task<bool> LeaveDocumentAsync()
     {
         CommitPendingEdits?.Invoke();
-        if (IsAutoSaved)
-        {
-            return SaveLibraryDocument(leaving: true);
-        }
-
-        return await ConfirmDiscardAsync();
-    }
-
-    /// <param name="statusKey">Status text to show (with <paramref name="statusArgs"/>), or null for none.</param>
-    private void StartNewDocument(Dcp dcp, string? folder, bool dirty, string? statusKey, params object?[] statusArgs)
-    {
-        LoadDcp(dcp, null, dirty);
-        _newFileFolder = folder;
-        if (statusKey is not null)
-        {
-            SetStatus(statusKey, statusArgs);
-        }
-
-        // Has it a title already (preset, next episode)? Then it gets its file right away
-        SaveLibraryDocument(leaving: false);
-    }
-
-    /// <summary>
-    /// Writes a changed library document to its file, and gives a new document its file once it has a title.
-    /// <paramref name="leaving"/>: the document is about to be replaced, so an untitled one with content is filed too.
-    /// Returns false when writing failed (the status text says why).
-    /// </summary>
-    private bool SaveLibraryDocument(bool leaving)
-    {
-        if (_library is not { } library)
-        {
-            return true;
-        }
-
-        if (FilePath is null)
-        {
-            var titled = !string.IsNullOrWhiteSpace(_dcp.TitoloItaliano);
-            if (!titled && !(leaving && IsDirty && HasContent(_dcp)))
-            {
-                return true;
-            }
-
-            SyncLines();
-            var folder = _newFileFolder is { } f && library.Contains(f) ? f : library.Folder;
-            return WriteLibraryFile(library.SuggestPath(_dcp, RelativeFolder(library, folder)), isNew: true);
-        }
-
-        if (!IsDirty || !library.Contains(FilePath))
+        if (!IsDirty)
         {
             return true;
         }
 
         SyncLines();
-        if (!KeepLegacyOriginal(FilePath, out var original))
+        var plan = SavePlan.For(FilePath, _library, _dcp);
+        var text = plan.Kind == SaveKind.NewInLibrary
+            ? Loc.Format("Msg_SaveNewDcp", RelativeName(plan.Path!))
+            : Loc.Format("Msg_SaveChanges", DocumentName);
+        switch (await _dialogs.AskToSave(Loc.Get("Dlg_UnsavedChanges"), text, Loc.Get("Save_Button"), Loc.Get("Dlg_DontSave"), Loc.Get("Common_Cancel")))
         {
-            return false;
+            case SaveChoice.Save:
+                return await SaveDocumentAsync();
+            case SaveChoice.DontSave:
+                // Discarded on purpose: the snapshot must not bring the changes back on the next start
+                DiscardRecovery();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <param name="dirty">True when the new DCP holds something that is in no file (a copy of songs); false for one made only of defaults.</param>
+    /// <param name="statusKey">Status text to show (with <paramref name="statusArgs"/>), or null for none.</param>
+    private void StartNewDocument(Dcp dcp, bool dirty, string? statusKey, params object?[] statusArgs)
+    {
+        LoadDcp(dcp, null, dirty);
+        if (statusKey is not null)
+        {
+            SetStatus(statusKey, statusArgs);
+        }
+    }
+
+    /// <summary>"Kopie als neuer DCP" (▾ of Speichern): a new, unsaved DCP with the same header and songs, never uploaded.</summary>
+    [RelayCommand]
+    private async Task CopyAsNew()
+    {
+        if (IsBusy)
+        {
+            return;
         }
 
-        FollowHeaderName(library);
-        var saved = WriteLibraryFile(FilePath, isNew: false);
-        ReportLegacyConverted(saved, FilePath, original);
-        return saved;
+        CommitPendingEdits?.Invoke();
+        SyncLines();
+        var copy = DcpLibrary.CreateCopy(_dcp);
+        var from = FilePath is null ? DocumentName : Path.GetFileNameWithoutExtension(FilePath);
+        if (!await LeaveDocumentAsync())
+        {
+            return;
+        }
+
+        StartNewDocument(copy, dirty: true, "Status_CopiedAsNew", from);
+        Page = AppPage.Songs;
     }
 
     /// <summary>Folder for the originals of files written by DCP Tool 0.x (see <see cref="KeepLegacyOriginal"/>). Set once at start.</summary>
@@ -751,154 +744,6 @@ public sealed partial class MainViewModel
         }
     }
 
-    private bool WriteLibraryFile(string path, bool isNew)
-    {
-        try
-        {
-            DcpFile.Save(path, _dcp);
-            _lastWriteUtc = LastWriteUtc(path);
-            FilePath = path;
-            IsDirty = false;
-            UpdateNameFollowsHeader();
-            if (isNew)
-            {
-                _newFileFolder = null;
-                RememberFile(path);
-                SetStatus("Status_SavedNewInLibrary", RelativeName(path));
-            }
-
-            _ = RefreshLibraryAsync();
-            return true;
-        }
-        catch (DcpFileException ex)
-        {
-            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
-            return false;
-        }
-    }
-
-    /// <summary>Renames the open file when its name was the suggested one and the header no longer fits it.</summary>
-    private void FollowHeaderName(DcpLibrary library)
-    {
-        if (!_nameFollowsHeader || FilePath is not { } current
-            || NameMatches(Path.GetFileNameWithoutExtension(current), ConventionalName(_dcp)))
-        {
-            return;
-        }
-
-        var folder = Path.GetDirectoryName(current)!;
-        var target = library.SuggestPath(_dcp, RelativeFolder(library, folder));
-        try
-        {
-            var moved = DcpLibrary.Rename(current, Path.GetFileNameWithoutExtension(target));
-            ReplaceRecent(current, moved);
-            FilePath = moved;
-            SetStatus("Status_RenamedToMatch", Path.GetFileName(moved));
-        }
-        catch (DcpFileException ex)
-        {
-            _nameFollowsHeader = false;
-            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
-        }
-    }
-
-    private void UpdateNameFollowsHeader() =>
-        _nameFollowsHeader = _library is { } library && FilePath is { } path && library.Contains(path)
-                             && !IsInPresets(library, path)
-                             && NameMatches(Path.GetFileNameWithoutExtension(path), ConventionalName(_dcp));
-
-    /// <summary>The name <see cref="DcpLibrary.SuggestPath"/> gives this DCP, without folder, counter and extension.</summary>
-    private static string ConventionalName(Dcp dcp)
-    {
-        var parts = new List<string> { string.IsNullOrWhiteSpace(dcp.TitoloItaliano) ? "DCP" : dcp.TitoloItaliano.Trim() };
-        if (dcp.Puntata is { } puntata)
-        {
-            parts.Add(puntata.ToString("00"));
-        }
-
-        parts.Add(dcp.DataTrasmissione.ToString("yyyy-MM-dd"));
-        return DcpLibrary.SafeFileName(string.Join(' ', parts));
-    }
-
-    private static bool NameMatches(string name, string conventional) =>
-        string.Equals(name, conventional, StringComparison.CurrentCultureIgnoreCase)
-        || Regex.IsMatch(name, "^" + Regex.Escape(conventional) + @" \(\d+\)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
-    /// <summary>Writes the unsaved DCP of the last session to its library file. False when it is not a library DCP or writing failed.</summary>
-    private bool SaveSessionToLibrary(RecoveredSession session)
-    {
-        if (_library is not { } library)
-        {
-            return false;
-        }
-
-        string path;
-        if (session.FilePath is { } file && library.Contains(file))
-        {
-            path = file;
-        }
-        else if (session.FilePath is null)
-        {
-            if (!HasContent(session.Dcp))
-            {
-                return true; // an empty new DCP: nothing to keep
-            }
-
-            path = library.SuggestPath(session.Dcp);
-        }
-        else
-        {
-            return false;
-        }
-
-        if (!KeepLegacyOriginal(path, out var original))
-        {
-            return false;
-        }
-
-        try
-        {
-            DcpFile.Save(path, session.Dcp);
-            SetStatus("Status_SessionSaved", RelativeName(path));
-            ReportLegacyConverted(true, path, original);
-            return true;
-        }
-        catch (DcpFileException ex)
-        {
-            Report(ConsoleLevel.Warning, "Status_FileProblem", ex.Message);
-            return false;
-        }
-    }
-
-    /// <summary>Right after an upload: what RAI saved goes into the file, so a second upload is warned about.</summary>
-    private void SaveUploadRecord(Dcp dcp)
-    {
-        if (ReferenceEquals(dcp, _dcp))
-        {
-            if (IsAutoSaved)
-            {
-                SaveLibraryDocument(leaving: true);
-            }
-            else if (FilePath is { } path)
-            {
-                try
-                {
-                    SyncLines();
-                    DcpFile.Save(path, _dcp);
-                    _lastWriteUtc = LastWriteUtc(path);
-                    IsDirty = false;
-                }
-                catch (DcpFileException ex)
-                {
-                    Report(ConsoleLevel.Error, "Status_UploadNotRecorded", ex.Message);
-                }
-            }
-        }
-
-        WriteRecovery();
-        _ = RefreshLibraryAsync();
-    }
-
     /// <summary>
     /// The open file was changed by something else: reloaded when we have no unsaved changes, otherwise ours are
     /// kept and the status text says so.
@@ -919,14 +764,7 @@ public sealed partial class MainViewModel
                 if (_externalNotice != DateTime.MaxValue)
                 {
                     _externalNotice = DateTime.MaxValue;
-                    if (IsLibraryDocument)
-                    {
-                        Report(ConsoleLevel.Warning, "Status_FileGoneLibrary", name);
-                    }
-                    else
-                    {
-                        Report(ConsoleLevel.Warning, "Status_FileGone", name, Loc.Get("Save_Button"));
-                    }
+                    Report(ConsoleLevel.Warning, "Status_FileGone", name, Loc.Get("Save_Button"));
                 }
 
                 return;
@@ -951,7 +789,6 @@ public sealed partial class MainViewModel
                 var content = DcpFile.Load(path);
                 LoadDcp(content.Dcp, path, false);
                 _lastWriteUtc = modified;
-                UpdateNameFollowsHeader();
                 SetStatus("Status_Reloaded", name);
                 _ = RefreshLibraryAsync();
             }
@@ -973,14 +810,7 @@ public sealed partial class MainViewModel
         }
 
         _externalNotice = modified;
-        if (IsLibraryDocument)
-        {
-            Report(ConsoleLevel.Warning, "Status_ChangedKeptLibrary", name);
-        }
-        else
-        {
-            Report(ConsoleLevel.Warning, "Status_ChangedKept", name, Loc.Get("Save_Button"));
-        }
+        Report(ConsoleLevel.Warning, "Status_ChangedKept", name, Loc.Get("Save_Button"));
     }
 
     // ---------------------------------------------------------------- helpers
@@ -1019,28 +849,6 @@ public sealed partial class MainViewModel
         }
     }
 
-    private static string RelativeFolder(DcpLibrary library, string folder)
-    {
-        var relative = Path.GetRelativePath(library.Folder, folder);
-        return relative == "." ? "" : relative;
-    }
-
-    private static bool IsInPresets(DcpLibrary library, string path) =>
-        Path.GetRelativePath(library.Folder, path).Replace('\\', '/')
-            .StartsWith(DcpLibrary.PresetsFolderName + "/", StringComparison.OrdinalIgnoreCase);
-
     private string RelativeName(string path) =>
         _library is { } library && library.Contains(path) ? Path.GetRelativePath(library.Folder, path) : Path.GetFileName(path);
-
-    private void ReplaceRecent(string oldPath, string newPath)
-    {
-        var index = _settings.RecentFiles.FindIndex(f => SamePath(f, oldPath));
-        if (index < 0)
-        {
-            return;
-        }
-
-        _settings.RecentFiles[index] = Path.GetFullPath(newPath);
-        SaveSettings();
-    }
 }

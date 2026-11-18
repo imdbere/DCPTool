@@ -83,7 +83,7 @@
             </StackPanel>
           </Button>
           <!-- After the upload -->
-          <Button Classes="secondary" Padding="14,0" Command="{Binding OpenRaiDcpCommand}" IsVisible="{Binding IsUploaded}" IsEnabled="{Binding !IsBusy}">
+          <Button Classes="primary" Padding="18,0,14,0" Command="{Binding OpenRaiDcpCommand}" IsVisible="{Binding IsUploaded}" IsEnabled="{Binding !IsBusy}">
             <StackPanel Orientation="Horizontal" Spacing="8">
               <TextBlock Text="{l:Tr Export_OpenAtRai}" />
               <c:LineIcon Width="15" Height="15" Data="{StaticResource Icon.External}" />

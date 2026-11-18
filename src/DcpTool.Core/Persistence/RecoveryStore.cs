@@ -11,9 +11,10 @@ namespace DcpTool.Core.Persistence;
 public sealed record RecoveredSession(Dcp Dcp, string? FilePath, bool HasUnsavedChanges, DateTimeOffset SavedAt);
 
 /// <summary>
-/// Keeps a snapshot of the open DCP in the app's data folder, so the next start continues where the
-/// last one stopped: after a normal exit, after a crash and after an update. The app writes the snapshot
-/// shortly after every change; the user's own .dcp file is only written by Save.
+/// Keeps a snapshot of the open DCP in the app's data folder, so work survives a crash or a killed process: the next
+/// start restores it. The app writes the snapshot shortly after every change and clears it when the window closes
+/// normally or the user discards the changes ("Nicht speichern"), so only an abnormal end leaves one behind. The
+/// user's own .dcp file is only written by Speichern.
 /// </summary>
 public sealed class RecoveryStore(AppPaths paths)
 {

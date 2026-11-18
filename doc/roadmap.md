@@ -12,7 +12,7 @@ Work one milestone at a time; each has a "done when" list that can be checked.
 | # | Goal | Milestone |
 |---|---|---|
 | G1 | Only the master timeline is imported: the app finds the music, the files, the metadata and the time each piece was on air | M4 |
-| G2 | DCPs are plain `.dcp` files in a library folder the user chooses, saved automatically. Finding old ones is Explorer's job; the app offers presets, recent DCPs and a button that opens the folder | M2, M3 |
+| G2 | DCPs are plain `.dcp` files in a library folder the user chooses, filed by Sendung and year when first saved. Finding old ones is Explorer's job; the app offers presets, recent DCPs and a button that opens the folder | M2, M3 |
 | G3 | Presets: the programme (Sendung) information is entered once and reused | M2 |
 | G4 | UI overhaul | M3 |
 | G5 | The UI follows the workflow. No trips to the top menu | M3 |
@@ -28,7 +28,7 @@ Decided 2026-11-17 (design brief: https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZ
 2. **Add**: drop songs or a timeline onto the Add area, pick files with Add, or learn how in the guide (How?).
 3. **Adjust**: edit the table of songs, like today.
 4. **Export or upload**: the export page with RAI (verify, upload, log) and documents (export, edit template).
-   The DCP is saved automatically.
+   Speichern writes the DCP; leaving it with unsaved changes asks first (no automatic saving since 2026-11-18).
 
 ## M1: Release v2 as a safe replacement for v1
 
@@ -116,7 +116,8 @@ https://claude.ai/artifact/ERPGZZFu1X9yVLFqvCZmdz
   No validation marks in the table.
 - **Export page (step 4).** Sections *RAI* (Verify, Upload, show log; after an upload the DCP number and
   "Open at RAI") and *Documents* (one export per document, today the music list on Allegato B, each with
-  "Edit template"). No save button: the DCP is saved automatically.
+  "Edit template"). No save button on the page: Speichern is in the programme strip (superseded below: no
+  automatic saving since 2026-11-18).
 - **Look.** As plain as today's app: neutral greys, one accent colour for the active step and main
   buttons. No hint panels, warning lists, badges or colour-coded states.
 - **Open, to be designed:** the programme strip and how it is edited; Recent (continue vs. new episode);
@@ -150,6 +151,14 @@ strip, songs table with field help, row menu and drag by the number, Add area wi
 texts), export page with one console, document export with a replaceable template, settings page, drop anywhere, .dcp
 from the command line. The library browser, issue list and menu bar are gone. Prüfen checks locally only; it does not
 sign in at RAI. Not checked yet: upload against RAI, dropping files from Explorer, a real screen review.
+
+Changed on 2026-11-18 after the first review on a real screen: **no automatic saving.** A .dcp is written only by
+Speichern, Speichern unter… and the Speichern of the prompt (Speichern / Nicht speichern / Abbrechen) before leaving a DCP
+with unsaved changes. New DCPs are saved as `<library>/<Sendung>/<year>/<Sendung> <Puntata> <date>.dcp`, where Sendung is
+the preset the DCP was started from (stored in the .dcp) or its Titolo italiano; existing files stay where they are and the
+file name no longer follows the header. The recovery snapshot only restores after a crash or a killed process. The ▾ of
+Speichern also has "Kopie als neuer DCP" and "Als Sendung speichern"; after an upload the RAI page opens by itself.
+This supersedes "automatic saving" and "Session restore stays" in M2.
 
 ## M4: Timeline import
 

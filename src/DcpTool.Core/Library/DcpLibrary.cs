@@ -293,22 +293,53 @@ public sealed class DcpLibrary(string folder)
     // ---------------------------------------------------------------- creating files
 
     /// <summary>
-    /// A free path in <paramref name="subFolder"/> of the library for this DCP:
-    /// <c>&lt;title&gt; &lt;episode&gt; &lt;broadcast date&gt;.dcp</c>, with a counter if that name is taken.
+    /// The name a DCP is filed under: its <see cref="Dcp.Sendung"/>, or its Titolo italiano when it was started without
+    /// one, or "DCP". Safe as a file and folder name.
     /// </summary>
-    public string SuggestPath(Dcp dcp, string subFolder = "")
+    public static string SendungName(Dcp dcp)
     {
-        var parts = new List<string>();
-        var title = string.IsNullOrWhiteSpace(dcp.TitoloItaliano) ? "DCP" : dcp.TitoloItaliano.Trim();
-        parts.Add(title);
-        if (dcp.Puntata is { } puntata)
+        var name = !string.IsNullOrWhiteSpace(dcp.Sendung) ? dcp.Sendung
+            : !string.IsNullOrWhiteSpace(dcp.TitoloItaliano) ? dcp.TitoloItaliano
+            : "DCP";
+        return SafeFileName(name);
+    }
+
+    /// <summary>
+    /// The folder of the library a new DCP belongs in: <c>&lt;Sendung&gt;/&lt;year of the broadcast&gt;</c>. It may not
+    /// exist yet. A Sendung called like the presets folder gets a suffix, so its DCPs are not taken for presets.
+    /// </summary>
+    public string SuggestFolder(Dcp dcp)
+    {
+        var sendung = SendungName(dcp);
+        if (string.Equals(sendung, PresetsFolderName, StringComparison.OrdinalIgnoreCase))
         {
-            parts.Add(puntata.ToString("00"));
+            sendung += " DCP";
         }
 
-        parts.Add(dcp.DataTrasmissione.ToString("yyyy-MM-dd"));
-        return FreePath(Path.Combine(Folder, subFolder), string.Join(' ', parts));
+        return Path.Combine(Folder, sendung, dcp.DataTrasmissione.Year.ToString("0000", System.Globalization.CultureInfo.InvariantCulture));
     }
+
+    /// <summary>
+    /// The file name (without folder and extension) of a new DCP: <c>&lt;Sendung&gt; &lt;Puntata&gt; &lt;Data trasmissione&gt;</c>,
+    /// e.g. <c>ZIPP TV 33 2026-11-18</c>. Without a Puntata it is left out.
+    /// </summary>
+    public static string SuggestName(Dcp dcp)
+    {
+        var parts = new List<string> { SendungName(dcp) };
+        if (dcp.Puntata is { } puntata)
+        {
+            parts.Add(puntata.ToString("00", System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        parts.Add(dcp.DataTrasmissione.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
+        return SafeFileName(string.Join(' ', parts));
+    }
+
+    /// <summary>
+    /// A free path for a new DCP: <see cref="SuggestName"/> in <see cref="SuggestFolder"/>, e.g.
+    /// <c>ZIPP TV/2026/ZIPP TV 33 2026-11-18.dcp</c>, with a counter if that name is taken. Creates nothing.
+    /// </summary>
+    public string SuggestPath(Dcp dcp) => FreePath(SuggestFolder(dcp), SuggestName(dcp));
 
     /// <summary>
     /// Saves the header of <paramref name="dcp"/> as a preset: no lines, no upload, no episode, no dates.
@@ -322,6 +353,9 @@ public sealed class DcpLibrary(string folder)
         preset.Puntata = null;
         preset.Sottotitolo = "";
         preset.DataRegistrazione = null;
+
+        // A preset is named by its file; the DCPs started from it take that name
+        preset.Sendung = "";
         var path = PresetPath(name);
         DcpFile.Save(path, preset);
         return path;
@@ -330,7 +364,10 @@ public sealed class DcpLibrary(string folder)
     /// <summary>The path of the preset named <paramref name="name"/>, whether it exists or not.</summary>
     public string PresetPath(string name) => Path.Combine(PresetsFolder, SafeFileName(name) + DcpFile.Extension);
 
-    /// <summary>A new DCP with the preset's programme information and today's broadcast date. Not saved yet.</summary>
+    /// <summary>
+    /// A new DCP with the preset's programme information and today's broadcast date. Its <see cref="Dcp.Sendung"/> is the
+    /// preset's name. Not saved yet.
+    /// </summary>
     public static Dcp CreateFromPreset(string presetPath)
     {
         var dcp = DcpFile.Load(presetPath).Dcp;
@@ -338,11 +375,28 @@ public sealed class DcpLibrary(string folder)
         dcp.Upload = null;
         dcp.DataTrasmissione = DateOnly.FromDateTime(DateTime.Today);
         dcp.DataRegistrazione = null;
+        dcp.Sendung = Path.GetFileNameWithoutExtension(presetPath);
         return dcp;
     }
 
     /// <summary>The next episode of the DCP in <paramref name="path"/>: same header, episode + 1, no lines. Not saved yet.</summary>
     public static Dcp CreateNextEpisode(string path) => DcpFile.Load(path).Dcp.CreateNextEpisode();
+
+    /// <summary>
+    /// "Kopie als neuer DCP": everything of <paramref name="dcp"/>, header and songs, as a new DCP that was never
+    /// uploaded. <paramref name="dcp"/> is not changed. Not saved yet.
+    /// </summary>
+    public static Dcp CreateCopy(Dcp dcp)
+    {
+        var copy = DcpFile.Clone(dcp);
+        copy.Upload = null;
+        foreach (var line in copy.Lines)
+        {
+            line.Id = Guid.NewGuid();
+        }
+
+        return copy;
+    }
 
     /// <summary>Renames a file inside its folder. Returns the new path. Throws <see cref="DcpFileException"/> when the name is taken or invalid.</summary>
     public static string Rename(string path, string newName)

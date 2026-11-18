@@ -248,7 +248,8 @@
               <Rectangle Classes="dropFrame" IsVisible="{Binding IsDraggingSongs}" />
               <Button Classes="plain" CornerRadius="10" Command="{Binding GoSongsCommand}" Cursor="Hand"
                       AutomationProperties.Name="{l:Tr Area_ToSongs}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-              <StackPanel HorizontalAlignment="Center" Margin="16,14,16,0">
+              <!-- Centred in height with 2 px on top: 14 px from the top like the Export area, and room for a notice of two lines -->
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16,2,16,0">
                 <Panel Width="48" Height="48" HorizontalAlignment="Center" IsHitTestVisible="False">
                   <c:LineIcon Classes="areaIcon" Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.Plus}"
                               IsVisible="{Binding IsAddIdle}" />
@@ -261,23 +262,30 @@
                   <c:LineIcon Width="48" Height="48" StrokeThickness="1.75" Data="{StaticResource Icon.Download}"
                               Foreground="{StaticResource AccentText}" IsVisible="{Binding IsDraggingSongs}" />
                 </Panel>
-                <Panel Height="20" Margin="0,6,0,12" HorizontalAlignment="Center">
+                <Panel MinHeight="20" Margin="0,6,0,12" HorizontalAlignment="Center">
                   <TextBlock Text="{l:Tr Add_DropTitle}" FontSize="15" FontWeight="SemiBold" IsVisible="{Binding IsAddIdle}" IsHitTestVisible="False" />
                   <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" IsVisible="{Binding IsAddImporting}" IsHitTestVisible="False" />
-                  <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAddAdded}">
-                    <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" IsHitTestVisible="False"
-                               TextTrimming="CharacterEllipsis" MaxWidth="440" />
-                    <Button Classes="link" Command="{Binding UndoImportCommand}">
+                  <!-- The notice wraps to two lines within the area; Rückgängig / Warum? always keeps its place on the right -->
+                  <DockPanel HorizontalAlignment="Center" IsVisible="{Binding IsAddAdded}">
+                    <Button DockPanel.Dock="Right" Classes="link" Margin="8,0,0,0" VerticalAlignment="Center" Command="{Binding UndoImportCommand}">
                       <TextBlock Text="{l:Tr Add_Undo}" FontSize="14" />
                     </Button>
-                  </StackPanel>
-                  <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAddPartial}">
-                    <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" IsHitTestVisible="False"
-                               TextTrimming="CharacterEllipsis" MaxWidth="440" />
-                    <Button Classes="link" Command="{Binding OpenImportHelpCommand}">
+                    <!-- The tip sits on a panel: on the text block it would inherit its trimming -->
+                    <Panel Background="Transparent" ToolTip.Tip="{Binding AddNoticeTip}" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" LineHeight="19"
+                                 TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" TextAlignment="Center" MaxWidth="440" />
+                    </Panel>
+                  </DockPanel>
+                  <DockPanel HorizontalAlignment="Center" IsVisible="{Binding IsAddPartial}">
+                    <Button DockPanel.Dock="Right" Classes="link" Margin="8,0,0,0" VerticalAlignment="Center" Command="{Binding OpenImportHelpCommand}">
                       <TextBlock Text="{l:Tr Add_Why}" FontSize="14" />
                     </Button>
-                  </StackPanel>
+                    <!-- The tip sits on a panel: on the text block it would inherit its trimming -->
+                    <Panel Background="Transparent" ToolTip.Tip="{Binding AddNoticeTip}" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding AddNotice}" FontSize="15" FontWeight="SemiBold" LineHeight="19"
+                                 TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" TextAlignment="Center" MaxWidth="440" />
+                    </Panel>
+                  </DockPanel>
                   <TextBlock Text="{l:Tr Add_Release}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource AccentText}"
                              IsVisible="{Binding IsDraggingSongs}" IsHitTestVisible="False" />
                 </Panel>

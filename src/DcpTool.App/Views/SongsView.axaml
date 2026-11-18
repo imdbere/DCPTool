@@ -19,12 +19,14 @@
   </UserControl.Styles>
 
   <Grid RowDefinitions="*,Auto">
-    <!-- Step 3: the songs. Field help from the ? next to some headers; no validation marks in the table. -->
+    <!-- Step 3: the songs. Field help from the ? next to some headers; no validation marks in the table.
+         Every column has a minimum width that fits its header's longest word and its ?; when the window is too narrow
+         for all of them, the table scrolls sideways. -->
     <DataGrid x:Name="SongsGrid" ItemsSource="{Binding Lines}" SelectedItem="{Binding SelectedLine}" IsEnabled="{Binding !IsBusy}"
               AutoGenerateColumns="False" CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeColumns="True"
-              SelectionMode="Single" HeadersVisibility="Column" IsReadOnly="False">
+              SelectionMode="Single" HeadersVisibility="Column" IsReadOnly="False" HorizontalScrollBarVisibility="Auto">
       <DataGrid.Columns>
-        <DataGridTemplateColumn Header="#" Width="44" IsReadOnly="True" CanUserResize="False">
+        <DataGridTemplateColumn Header="#" Width="44" MinWidth="44" IsReadOnly="True" CanUserResize="False">
           <DataGridTemplateColumn.CellTemplate>
             <DataTemplate x:DataType="vm:LineRow">
               <Border Classes="dragHandle" ToolTip.Tip="{l:Tr Songs_DragTip}" ToolTip.ShowDelay="900">
@@ -35,14 +37,14 @@
           </DataGridTemplateColumn.CellTemplate>
         </DataGridTemplateColumn>
         <!-- The headers are the RAI form's own terms, the same in every language; the ? explains them -->
-        <DataGridTextColumn x:DataType="vm:LineRow" Header="Titolo" Binding="{Binding Titolo}" Width="1.5*" MinWidth="136" />
-        <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="1.5*" MinWidth="136">
+        <DataGridTextColumn x:DataType="vm:LineRow" Header="Titolo" Binding="{Binding Titolo}" Width="1.5*" MinWidth="124" />
+        <DataGridTextColumn x:DataType="vm:LineRow" Binding="{Binding AutoriText}" Width="1.5*" MinWidth="124">
           <DataGridTextColumn.Header>
             <v:FieldLabel Text="Autori" Info="{l:Tr Info_Autori}" IsColumnHeader="True" />
           </DataGridTextColumn.Header>
         </DataGridTextColumn>
-        <DataGridTextColumn x:DataType="vm:LineRow" Header="Esecutori" Binding="{Binding Esecutori}" Width="1.1*" MinWidth="104" />
-        <DataGridTemplateColumn Width="76" MinWidth="64">
+        <DataGridTextColumn x:DataType="vm:LineRow" Header="Esecutori" Binding="{Binding Esecutori}" Width="1.1*" MinWidth="100" />
+        <DataGridTemplateColumn Width="84" MinWidth="84">
           <DataGridTemplateColumn.Header>
             <v:FieldLabel Text="Durata" Info="{l:Tr Info_LineDurata}" IsColumnHeader="True" />
           </DataGridTemplateColumn.Header>
@@ -72,7 +74,7 @@
             <v:FieldLabel Text="Edizione" Info="{l:Tr Info_Edizione}" IsColumnHeader="True" />
           </DataGridTextColumn.Header>
         </DataGridTextColumn>
-        <DataGridTemplateColumn Width="88">
+        <DataGridTemplateColumn Width="96" MinWidth="92">
           <DataGridTemplateColumn.Header>
             <v:FieldLabel Text="Genere SIAE" Info="{l:Tr Info_Genere}" IsColumnHeader="True" />
           </DataGridTemplateColumn.Header>
@@ -87,7 +89,7 @@
             </DataTemplate>
           </DataGridTemplateColumn.CellEditingTemplate>
         </DataGridTemplateColumn>
-        <DataGridTemplateColumn Width="76">
+        <DataGridTemplateColumn Width="80" MinWidth="80">
           <DataGridTemplateColumn.Header>
             <v:FieldLabel Text="Ruolo" Info="{l:Tr Info_Ruolo}" IsColumnHeader="True" />
           </DataGridTemplateColumn.Header>
@@ -102,7 +104,7 @@
             </DataTemplate>
           </DataGridTemplateColumn.CellEditingTemplate>
         </DataGridTemplateColumn>
-        <DataGridTemplateColumn Width="120">
+        <DataGridTemplateColumn Width="120" MinWidth="116">
           <DataGridTemplateColumn.Header>
             <v:FieldLabel Text="Tipo generazione" Info="{l:Tr Info_TipoGenerazione}" IsColumnHeader="True" />
           </DataGridTemplateColumn.Header>
@@ -118,7 +120,7 @@
           </DataGridTemplateColumn.CellEditingTemplate>
         </DataGridTemplateColumn>
         <!-- ⋯ on the selected row: move up/down, duplicate, delete -->
-        <DataGridTemplateColumn Width="40" IsReadOnly="True" CanUserResize="False">
+        <DataGridTemplateColumn Width="40" MinWidth="40" IsReadOnly="True" CanUserResize="False">
           <DataGridTemplateColumn.CellTemplate>
             <DataTemplate x:DataType="vm:LineRow">
               <Button Classes="mini rowMore" HorizontalAlignment="Center" VerticalAlignment="Center"

@@ -5,10 +5,13 @@ using Avalonia.Media;
 
 namespace DcpTool.App.Views;
 
-/// <summary>A message with one or two buttons. Closes with true for the first button.</summary>
+/// <summary>
+/// A message with one to three buttons. Closes with the index of the button pressed (0 = the first, the default),
+/// or null when the window was closed. With several buttons the first is the primary one and the last cancels (Esc).
+/// </summary>
 public sealed class MessageWindow : Window
 {
-    public MessageWindow(string title, string text, string ok, string? cancel)
+    public MessageWindow(string title, string text, IReadOnlyList<string> buttons)
     {
         Title = title;
         Width = 460;
@@ -23,20 +26,26 @@ public sealed class MessageWindow : Window
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 21,
         };
-        var okButton = new Button { Content = ok, IsDefault = true, MinWidth = 88, Classes = { cancel is null ? "secondary" : "primary" } };
-        okButton.Click += (_, _) => Close(true);
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8, Children = { okButton } };
-        if (cancel is not null)
+        var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
+        for (var i = 0; i < buttons.Count; i++)
         {
-            var cancelButton = new Button { Content = cancel, IsCancel = true, MinWidth = 88, Classes = { "secondary" } };
-            cancelButton.Click += (_, _) => Close(false);
-            buttons.Children.Add(cancelButton);
+            var index = i;
+            var button = new Button
+            {
+                Content = buttons[i],
+                MinWidth = 88,
+                IsDefault = i == 0,
+                IsCancel = buttons.Count > 1 && i == buttons.Count - 1,
+                Classes = { buttons.Count > 1 && i == 0 ? "primary" : "secondary" },
+            };
+            button.Click += (_, _) => Close(index);
+            row.Children.Add(button);
         }
 
         var panel = new DockPanel { Margin = new Thickness(20, 18, 20, 16), LastChildFill = true };
-        DockPanel.SetDock(buttons, Dock.Bottom);
-        buttons.Margin = new Thickness(0, 16, 0, 0);
-        panel.Children.Add(buttons);
+        DockPanel.SetDock(row, Dock.Bottom);
+        row.Margin = new Thickness(0, 16, 0, 0);
+        panel.Children.Add(row);
         panel.Children.Add(body);
         Content = panel;
     }

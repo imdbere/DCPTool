@@ -166,6 +166,7 @@ public static class DcpFile
     /// <summary>Repairs what a hand-edited or damaged file can contain: nulls where the model expects values, duplicate line ids.</summary>
     internal static Dcp Normalize(Dcp dcp)
     {
+        dcp.Sendung ??= "";
         dcp.TitoloItaliano ??= "";
         dcp.TitoloOriginale ??= "";
         dcp.Sottotitolo ??= "";
